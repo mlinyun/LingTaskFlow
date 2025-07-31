@@ -6,6 +6,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import UserProfile
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -142,3 +143,48 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """用户档案序列化器"""
+    user = UserSerializer(read_only=True)
+    avatar_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserProfile
+        fields = (
+            'user', 'avatar', 'avatar_url', 'timezone', 
+            'task_count', 'completed_task_count', 'completion_rate',
+            'theme_preference', 'email_notifications',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = (
+            'user', 'task_count', 'completed_task_count', 
+            'created_at', 'updated_at'
+        )
+    
+    def get_avatar_url(self, obj):
+        """获取头像URL"""
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
+    
+    def to_representation(self, instance):
+        """自定义序列化输出"""
+        data = super().to_representation(instance)
+        # 添加完成率
+        data['completion_rate'] = instance.completion_rate
+        return data
+
+
+class UserWithProfileSerializer(serializers.ModelSerializer):
+    """用户信息及档案序列化器（完整信息）"""
+    profile = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'date_joined', 'last_login', 'profile')
+        read_only_fields = ('id', 'date_joined', 'last_login')

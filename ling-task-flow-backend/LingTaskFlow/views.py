@@ -9,10 +9,13 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from .models import UserProfile
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
     UserSerializer,
+    UserProfileSerializer,
+    UserWithProfileSerializer,
     get_tokens_for_user
 )
 
@@ -125,10 +128,13 @@ def user_profile_view(request):
     """
     获取当前用户信息API
     
-    需要JWT认证，返回当前登录用户的详细信息
+    需要JWT认证，返回当前登录用户的详细信息和档案
     """
     if request.user.is_authenticated:
-        serializer = UserSerializer(request.user)
+        serializer = UserWithProfileSerializer(
+            request.user, 
+            context={'request': request}
+        )
         return Response({
             'success': True,
             'data': {
@@ -140,3 +146,45 @@ def user_profile_view(request):
         'success': False,
         'message': '用户未认证'
     }, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['PUT', 'PATCH'])
+def update_profile_view(request):
+    """
+    更新用户档案API
+    
+    需要JWT认证，允许用户更新档案信息
+    """
+    if not request.user.is_authenticated:
+        return Response({
+            'success': False,
+            'message': '用户未认证'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # 获取或创建用户档案
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    # 使用partial=True来支持部分更新
+    partial = request.method == 'PATCH'
+    serializer = UserProfileSerializer(
+        profile, 
+        data=request.data, 
+        partial=partial,
+        context={'request': request}
+    )
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'success': True,
+            'message': '档案更新成功',
+            'data': {
+                'profile': serializer.data
+            }
+        }, status=status.HTTP_200_OK)
+    
+    return Response({
+        'success': False,
+        'message': '档案更新失败',
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)

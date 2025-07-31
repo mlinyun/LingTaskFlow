@@ -18,8 +18,8 @@
 - [x] 1.1.5 配置数据库设置(SQLite开发环境) ✅
 
 ### 1.2 用户认证系统
-- [ ] 1.2.1 创建UserProfile扩展模型
-- [ ] 1.2.2 实现用户注册API(`/api/auth/register/`)
+- [x] 1.2.1 创建UserProfile扩展模型 ✅
+- [x] 1.2.2 实现用户注册API(`/api/auth/register/`) ✅
 - [ ] 1.2.3 实现用户登录API(`/api/auth/login/`)
 - [ ] 1.2.4 实现Token刷新API(`/api/auth/token/refresh/`)
 - [ ] 1.2.5 创建权限类`IsOwnerOrReadOnly`

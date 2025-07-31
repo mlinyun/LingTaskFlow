@@ -40,23 +40,70 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         }
 
     def validate_username(self, value):
-        """验证用户名唯一性"""
+        """验证用户名唯一性和格式"""
+        import re
+        
+        # 检查用户名是否已存在
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("用户名已存在")
+        
+        # 检查用户名格式（只允许字母、数字、下划线）
+        if not re.match(r'^[a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError("用户名只能包含字母、数字和下划线")
+        
+        # 检查是否以字母开头
+        if not value[0].isalpha():
+            raise serializers.ValidationError("用户名必须以字母开头")
+        
         return value
 
     def validate_email(self, value):
         """验证邮箱唯一性和格式"""
+        import re
+        
+        # 检查邮箱是否已被注册
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("邮箱已被注册")
-        return value
+        
+        # 增强的邮箱格式验证
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, value):
+            raise serializers.ValidationError("请输入有效的邮箱地址")
+        
+        return value.lower()  # 统一转换为小写
 
     def validate_password(self, value):
         """验证密码强度"""
+        import re
+        
+        # 检查密码长度
+        if len(value) < 8:
+            raise serializers.ValidationError("密码长度不能少于8位")
+        
+        if len(value) > 128:
+            raise serializers.ValidationError("密码长度不能超过128位")
+        
+        # 检查是否包含数字
         if not any(char.isdigit() for char in value):
             raise serializers.ValidationError("密码必须包含至少一个数字")
+        
+        # 检查是否包含字母
         if not any(char.isalpha() for char in value):
             raise serializers.ValidationError("密码必须包含至少一个字母")
+        
+        # 检查是否包含特殊字符（可选，增强安全性）
+        special_chars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+        if not any(char in special_chars for char in value):
+            raise serializers.ValidationError("密码建议包含特殊字符以提高安全性")
+        
+        # 检查常见弱密码
+        weak_passwords = [
+            'password', '12345678', 'qwerty123', 'abc123456', 
+            'password123', '123456789', 'admin123'
+        ]
+        if value.lower() in weak_passwords:
+            raise serializers.ValidationError("请使用更强的密码，避免常见密码")
+        
         return value
 
     def validate(self, attrs):
@@ -68,17 +115,40 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        """创建用户"""
+        """创建用户并自动创建用户档案"""
+        from django.db import transaction
+        
         # 移除确认密码字段
         validated_data.pop('password_confirm')
         
-        # 创建用户
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password']
-        )
-        return user
+        try:
+            # 使用事务确保数据一致性
+            with transaction.atomic():
+                # 创建用户
+                user = User.objects.create_user(
+                    username=validated_data['username'],
+                    email=validated_data['email'],
+                    password=validated_data['password']
+                )
+                
+                # 确保UserProfile已创建（由信号处理器自动创建）
+                if not hasattr(user, 'profile'):
+                    from .models import UserProfile
+                    UserProfile.objects.create(user=user)
+                
+                return user
+                
+        except Exception as e:
+            # 如果创建失败，抛出验证错误
+            raise serializers.ValidationError(f"用户创建失败：{str(e)}")
+    
+    def to_representation(self, instance):
+        """自定义序列化输出，移除敏感信息"""
+        data = super().to_representation(instance)
+        # 移除密码相关字段
+        data.pop('password', None)
+        data.pop('password_confirm', None)
+        return data
 
 
 class UserLoginSerializer(serializers.Serializer):

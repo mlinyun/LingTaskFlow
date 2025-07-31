@@ -1,0 +1,368 @@
+# =============================================================================
+# LingTaskFlow - 凌云任务管理应用
+# .gitignore 文件 - 定义不需要版本控制的文件和目录
+# =============================================================================
+
+# =============================================================================
+# 通用忽略规则
+# =============================================================================
+
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 编辑器和IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+*.cache
+
+# =============================================================================
+# Python / Django 后端相关
+# =============================================================================
+
+# Python 字节码文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C 扩展
+*.so
+
+# 分发 / 打包
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# 单元测试 / 覆盖率报告
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django 相关
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask 相关
+instance/
+.webassets-cache
+
+# Scrapy 相关
+.scrapy
+
+# Sphinx 文档
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# 环境变量文件
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Django 静态文件收集目录
+/ling-task-flow-backend/staticfiles/
+/ling-task-flow-backend/static/
+/ling-task-flow-backend/media/
+
+# Django 迁移文件（根据团队策略，可能需要包含）
+# ling-task-flow-backend/*/migrations/
+
+# =============================================================================
+# Node.js / Vue.js 前端相关
+# =============================================================================
+
+# 依赖目录
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# 运行时数据
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript v1 declaration files
+typings/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Rollup.js default build output
+dist/
+
+# Uncomment the following line if you want to ignore the entire tmp dir
+tmp/
+
+# Ignore Sass files
+.sass-cache/
+
+# =============================================================================
+# Quasar 框架相关
+# =============================================================================
+
+# Quasar build directories
+/ling-task-flow-frontend/dist/
+/ling-task-flow-frontend/src-cordova/
+/ling-task-flow-frontend/src-electron/
+/ling-task-flow-frontend/src-capacitor/
+
+# Quasar generated files
+/ling-task-flow-frontend/.quasar/
+
+# =============================================================================
+# 数据库文件
+# =============================================================================
+
+# SQLite
+*.sqlite
+*.sqlite3
+*.db
+
+# PostgreSQL
+*.sql
+
+# =============================================================================
+# 日志文件
+# =============================================================================
+
+# 应用日志
+logs/
+*.log
+log/
+
+# =============================================================================
+# 配置文件（包含敏感信息）
+# =============================================================================
+
+# 本地配置文件
+local_settings.py
+.env.local
+.env.*.local
+config/local.py
+
+# 密钥文件
+*.key
+*.pem
+
+# =============================================================================
+# 备份文件
+# =============================================================================
+
+*.bak
+*.backup
+*.old
+
+# =============================================================================
+# 压缩文件
+# =============================================================================
+
+*.zip
+*.tar.gz
+*.rar
+
+# =============================================================================
+# 开发工具生成的文件
+# =============================================================================
+
+# Conda 环境
+*.conda
+.conda/
+
+# Docker
+.dockerignore
+
+# =============================================================================
+# 项目特定忽略
+# =============================================================================
+
+# 用户上传的文件
+/ling-task-flow-backend/uploads/
+/ling-task-flow-backend/user_uploads/
+
+# API 文档生成文件
+/docs/build/
+/docs/api/
+
+# 性能测试结果
+/performance-results/
+
+# 部署脚本中的敏感信息
+deploy/*.secret
+deploy/secrets/
+
+# =============================================================================
+# 可选：取消注释以下行来忽略特定的开发文件
+# =============================================================================
+
+# 原型文件（HTML 静态原型，根据需要决定是否忽略）
+# ling_task_flow_prototype.html
+
+# TODO 文件（如果是个人笔记）
+# TODO.md
+# NOTES.md
+
+# 测试数据文件
+# test_data/
+# fixtures/test_*.json

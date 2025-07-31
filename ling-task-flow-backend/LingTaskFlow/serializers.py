@@ -152,44 +152,105 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-    """用户登录序列化器"""
+    """增强的用户登录序列化器"""
     username = serializers.CharField(
         max_length=150,
-        help_text='用户名或邮箱'
+        help_text='用户名或邮箱地址'
     )
     password = serializers.CharField(
         write_only=True,
         style={'input_type': 'password'},
-        help_text='密码'
+        help_text='用户密码'
+    )
+    remember_me = serializers.BooleanField(
+        default=False,
+        required=False,
+        help_text='是否记住登录状态（延长Token有效期）'
     )
 
+    def validate_username(self, value):
+        """验证用户名格式"""
+        if not value or not value.strip():
+            raise serializers.ValidationError('用户名不能为空')
+        return value.strip()
+
+    def validate_password(self, value):
+        """验证密码格式"""
+        if not value:
+            raise serializers.ValidationError('密码不能为空')
+        if len(value) > 128:
+            raise serializers.ValidationError('密码长度不能超过128字符')
+        return value
+
     def validate(self, attrs):
-        """验证用户凭据"""
+        """验证用户凭据并检查账户状态"""
+        from django.core.cache import cache
+        from django.utils import timezone
+        import hashlib
+        
         username = attrs.get('username')
         password = attrs.get('password')
-
-        if username and password:
-            # 尝试用户名登录
-            user = authenticate(username=username, password=password)
-            
-            # 如果用户名登录失败，尝试邮箱登录
-            if not user:
-                try:
-                    user_obj = User.objects.get(email=username)
-                    user = authenticate(username=user_obj.username, password=password)
-                except User.DoesNotExist:
-                    pass
-
-            if not user:
-                raise serializers.ValidationError('用户名/邮箱或密码错误')
-            
-            if not user.is_active:
-                raise serializers.ValidationError('用户账户已被禁用')
-
-            attrs['user'] = user
-            return attrs
-        else:
+        
+        if not username or not password:
             raise serializers.ValidationError('必须提供用户名和密码')
+
+        # 生成登录尝试缓存键
+        attempt_key = f"login_attempts_{hashlib.md5(username.encode()).hexdigest()}"
+        lock_key = f"account_locked_{hashlib.md5(username.encode()).hexdigest()}"
+        
+        # 检查账户是否被锁定
+        if cache.get(lock_key):
+            lock_time = cache.get(f"{lock_key}_time", 0)
+            remaining_time = max(0, 1800 - (timezone.now().timestamp() - lock_time))  # 30分钟锁定
+            raise serializers.ValidationError(
+                f'账户已被暂时锁定，请{int(remaining_time//60)}分钟后再试'
+            )
+
+        # 获取当前失败尝试次数
+        failed_attempts = cache.get(attempt_key, 0)
+        max_attempts = 5  # 最大尝试次数
+
+        # 尝试用户名登录
+        user = authenticate(username=username, password=password)
+        
+        # 如果用户名登录失败，尝试邮箱登录
+        if not user:
+            try:
+                user_obj = User.objects.get(email__iexact=username)
+                user = authenticate(username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                pass
+
+        if not user:
+            # 登录失败，增加失败计数
+            failed_attempts += 1
+            cache.set(attempt_key, failed_attempts, 1800)  # 30分钟过期
+            
+            if failed_attempts >= max_attempts:
+                # 锁定账户
+                cache.set(lock_key, True, 1800)  # 锁定30分钟
+                cache.set(f"{lock_key}_time", timezone.now().timestamp(), 1800)
+                raise serializers.ValidationError(
+                    f'登录失败次数过多，账户已被锁定30分钟'
+                )
+            
+            remaining_attempts = max_attempts - failed_attempts
+            raise serializers.ValidationError(
+                f'用户名/邮箱或密码错误，还有{remaining_attempts}次尝试机会'
+            )
+        
+        # 检查用户账户状态
+        if not user.is_active:
+            raise serializers.ValidationError('用户账户已被禁用，请联系管理员')
+
+        # 登录成功，清除失败记录
+        cache.delete(attempt_key)
+        cache.delete(lock_key)
+        cache.delete(f"{lock_key}_time")
+
+        attrs['user'] = user
+        attrs['failed_attempts'] = failed_attempts  # 传递给视图用于日志记录
+        return attrs
 
 
 class UserSerializer(serializers.ModelSerializer):

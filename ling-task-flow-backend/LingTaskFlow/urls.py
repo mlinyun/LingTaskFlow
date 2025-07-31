@@ -28,6 +28,7 @@ urlpatterns = [
     # 认证相关端点
     path('auth/register/', views.register_view, name='register'),
     path('auth/login/', views.login_view, name='login'),
+    path('auth/token/refresh/', views.token_refresh_view, name='token_refresh'),
     path('auth/logout/', views.logout_view, name='logout'),
     path('auth/profile/', views.user_profile_view, name='user_profile'),
     path('auth/profile/update/', views.update_profile_view, name='update_profile'),

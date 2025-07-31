@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import UserProfile
+from .models import UserProfile, LoginHistory
 
 
 class UserProfileInline(admin.StackedInline):
@@ -60,3 +60,57 @@ class UserProfileAdmin(admin.ModelAdmin):
 # 重新注册User模型以包含UserProfile内联
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+
+
+@admin.register(LoginHistory)
+class LoginHistoryAdmin(admin.ModelAdmin):
+    """登录历史管理"""
+    list_display = (
+        'username_attempted', 'user', 'status', 'ip_address', 
+        'location', 'login_time', 'is_suspicious'
+    )
+    list_filter = (
+        'status', 'login_time', 'location'
+    )
+    search_fields = (
+        'username_attempted', 'user__username', 'user__email', 
+        'ip_address', 'user_agent'
+    )
+    readonly_fields = (
+        'username_attempted', 'user', 'status', 'ip_address', 
+        'user_agent', 'device_fingerprint', 'location', 
+        'login_time', 'failure_reason'
+    )
+    date_hierarchy = 'login_time'
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user', 'username_attempted', 'status', 'login_time')
+        }),
+        ('网络信息', {
+            'fields': ('ip_address', 'location', 'user_agent'),
+            'classes': ('collapse',)
+        }),
+        ('设备信息', {
+            'fields': ('device_fingerprint',),
+            'classes': ('collapse',)
+        }),
+        ('其他信息', {
+            'fields': ('failure_reason', 'session_duration'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def is_suspicious(self, obj):
+        """显示是否为可疑登录"""
+        return obj.is_suspicious
+    is_suspicious.boolean = True
+    is_suspicious.short_description = '可疑登录'
+
+    def has_add_permission(self, request):
+        """禁止手动添加登录历史"""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """禁止修改登录历史"""
+        return False

@@ -136,3 +136,115 @@ def save_user_profile(sender, instance, **kwargs):
     else:
         # 如果没有profile，创建一个
         UserProfile.objects.create(user=instance)
+
+
+class LoginHistory(models.Model):
+    """
+    用户登录历史模型
+    记录用户的登录活动，用于安全监控和分析
+    """
+    LOGIN_STATUS_CHOICES = [
+        ('success', '成功'),
+        ('failed', '失败'),
+        ('locked', '账户锁定'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='login_history',
+        verbose_name='用户',
+        null=True,
+        blank=True
+    )
+    
+    username_attempted = models.CharField(
+        max_length=150,
+        verbose_name='尝试的用户名',
+        help_text='记录登录尝试时使用的用户名或邮箱'
+    )
+    
+    status = models.CharField(
+        max_length=10,
+        choices=LOGIN_STATUS_CHOICES,
+        verbose_name='登录状态'
+    )
+    
+    ip_address = models.GenericIPAddressField(
+        verbose_name='IP地址',
+        help_text='用户登录时的IP地址'
+    )
+    
+    user_agent = models.TextField(
+        verbose_name='用户代理',
+        help_text='浏览器和设备信息'
+    )
+    
+    device_fingerprint = models.CharField(
+        max_length=64,
+        verbose_name='设备指纹',
+        help_text='基于多个因素生成的设备唯一标识',
+        null=True,
+        blank=True
+    )
+    
+    location = models.CharField(
+        max_length=255,
+        verbose_name='地理位置',
+        null=True,
+        blank=True,
+        help_text='基于IP地址的大致地理位置'
+    )
+    
+    login_time = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='登录时间'
+    )
+    
+    session_duration = models.DurationField(
+        null=True,
+        blank=True,
+        verbose_name='会话持续时间',
+        help_text='从登录到登出的时间长度'
+    )
+    
+    failure_reason = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name='失败原因',
+        help_text='登录失败时的具体原因'
+    )
+
+    class Meta:
+        verbose_name = '登录历史'
+        verbose_name_plural = '登录历史记录'
+        ordering = ['-login_time']
+        indexes = [
+            models.Index(fields=['user', '-login_time']),
+            models.Index(fields=['ip_address', '-login_time']),
+            models.Index(fields=['status', '-login_time']),
+        ]
+
+    def __str__(self):
+        return f"{self.username_attempted} - {self.get_status_display()} - {self.login_time}"
+
+    @property
+    def is_suspicious(self):
+        """
+        判断是否为可疑登录
+        基于多个因素判断登录活动是否异常
+        """
+        # 检查是否来自新设备
+        if self.user and self.device_fingerprint:
+            recent_logins = LoginHistory.objects.filter(
+                user=self.user,
+                status='success',
+                login_time__gte=timezone.now() - timezone.timedelta(days=30)
+            ).exclude(id=self.id)
+            
+            known_devices = recent_logins.values_list('device_fingerprint', flat=True)
+            if self.device_fingerprint not in known_devices:
+                return True
+        
+        return False

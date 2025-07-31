@@ -115,3 +115,121 @@ def sanitize_user_input(data):
         sanitized[key] = value
     
     return sanitized
+
+
+def generate_device_fingerprint(request):
+    """
+    生成设备指纹
+    
+    基于用户代理、IP地址和其他HTTP头部信息生成设备唯一标识
+    """
+    import hashlib
+    
+    # 收集设备特征信息
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    accept_language = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
+    accept_encoding = request.META.get('HTTP_ACCEPT_ENCODING', '')
+    accept = request.META.get('HTTP_ACCEPT', '')
+    
+    # 组合特征信息
+    fingerprint_data = f"{user_agent}|{accept_language}|{accept_encoding}|{accept}"
+    
+    # 生成MD5哈希
+    return hashlib.md5(fingerprint_data.encode('utf-8')).hexdigest()
+
+
+def get_client_location(ip_address):
+    """
+    根据IP地址获取大致地理位置
+    
+    注意：这里使用简单的实现，生产环境可以集成专业的IP地理位置服务
+    """
+    # 简单的内网IP检测
+    if ip_address.startswith(('192.168.', '10.', '172.')):
+        return '内网地址'
+    
+    if ip_address in ['127.0.0.1', 'localhost']:
+        return '本地主机'
+    
+    # 这里可以集成第三方IP地理位置服务
+    # 例如：ipapi.co, geoip2, ip-api.com等
+    return '未知位置'
+
+
+def log_login_attempt(user, username_attempted, status, request, failure_reason=None, login_type='login', **kwargs):
+    """
+    记录登录尝试
+    
+    Args:
+        user: User对象（成功时）或None（失败时）
+        username_attempted: 尝试的用户名
+        status: 登录状态 ('success', 'failed', 'locked')
+        request: HTTP请求对象
+        failure_reason: 失败原因（可选）
+        login_type: 登录类型 ('login', 'token_refresh') 默认为'login'
+        **kwargs: 其他参数（向后兼容）
+    """
+    from .models import LoginHistory
+    
+    # 处理kwargs中的参数（向后兼容旧的调用方式）
+    if 'ip_address' in kwargs:
+        ip_address = kwargs['ip_address']
+    else:
+        ip_address = get_client_ip(request)
+    
+    if 'user_agent' in kwargs:
+        user_agent = kwargs['user_agent']
+    else:
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+    
+    device_fingerprint = generate_device_fingerprint(request)
+    location = get_client_location(ip_address)
+    
+    # 如果是token刷新类型，调整记录内容
+    if login_type == 'token_refresh':
+        if status == 'success':
+            failure_reason = f"Token刷新成功 - {failure_reason}" if failure_reason else "Token刷新成功"
+        else:
+            failure_reason = f"Token刷新失败 - {failure_reason}" if failure_reason else "Token刷新失败"
+    
+    LoginHistory.objects.create(
+        user=user,
+        username_attempted=username_attempted,
+        status=status,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        device_fingerprint=device_fingerprint,
+        location=location,
+        failure_reason=failure_reason
+    )
+
+
+def get_enhanced_tokens_for_user(user, remember_me=False):
+    """
+    为用户生成增强的JWT Token
+    
+    Args:
+        user: User对象
+        remember_me: 是否记住登录状态
+        
+    Returns:
+        dict: 包含access和refresh token的字典
+    """
+    from rest_framework_simplejwt.tokens import RefreshToken
+    from datetime import timedelta
+    
+    refresh = RefreshToken.for_user(user)
+    
+    # 如果用户选择记住登录状态，延长token有效期
+    if remember_me:
+        # 延长refresh token有效期到30天
+        refresh.set_exp(lifetime=timedelta(days=30))
+        # 延长access token有效期到1天
+        refresh.access_token.set_exp(lifetime=timedelta(days=1))
+    
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'expires_in': refresh.access_token.payload.get('exp'),
+        'token_type': 'Bearer'
+    }

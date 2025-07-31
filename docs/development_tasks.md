@@ -20,9 +20,9 @@
 ### 1.2 用户认证系统
 - [x] 1.2.1 创建UserProfile扩展模型 ✅
 - [x] 1.2.2 实现用户注册API(`/api/auth/register/`) ✅
-- [ ] 1.2.3 实现用户登录API(`/api/auth/login/`)
-- [ ] 1.2.4 实现Token刷新API(`/api/auth/token/refresh/`)
-- [ ] 1.2.5 创建权限类`IsOwnerOrReadOnly`
+- [x] 1.2.3 实现用户登录API(`/api/auth/login/`) ✅
+- [x] 1.2.4 实现Token刷新API(`/api/auth/token/refresh/`) ✅
+- [x] 1.2.5 创建权限类`IsOwnerOrReadOnly` ✅
 - [ ] 1.2.6 编写认证系统单元测试
 
 ### 1.3 核心任务模型

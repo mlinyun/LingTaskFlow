@@ -5,8 +5,9 @@ LingTaskFlow 序列化器
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import UserProfile
+from .models import UserProfile, Task
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -319,3 +320,340 @@ class UserWithProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'date_joined', 'last_login', 'profile')
         read_only_fields = ('id', 'date_joined', 'last_login')
+
+
+# ========================================================================
+# 任务相关序列化器
+# ========================================================================
+
+class TaskListSerializer(serializers.ModelSerializer):
+    """任务列表序列化器（简化版，用于列表展示）"""
+    owner_username = serializers.CharField(source='owner.username', read_only=True)
+    assigned_to_username = serializers.CharField(source='assigned_to.username', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    priority_display = serializers.CharField(source='get_priority_display', read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
+    is_high_priority = serializers.BooleanField(read_only=True)
+    tags_list = serializers.ListField(read_only=True)
+    time_remaining_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Task
+        fields = (
+            'id', 'title', 'status', 'status_display', 'priority', 'priority_display',
+            'progress', 'due_date', 'owner', 'owner_username', 'assigned_to', 
+            'assigned_to_username', 'category', 'tags_list', 'is_overdue', 
+            'is_high_priority', 'created_at', 'updated_at', 'time_remaining_display'
+        )
+        read_only_fields = ('id', 'owner', 'created_at', 'updated_at')
+    
+    def get_time_remaining_display(self, obj):
+        """获取剩余时间的友好显示"""
+        remaining = obj.time_remaining
+        if remaining:
+            days = remaining.days
+            hours = remaining.seconds // 3600
+            if days > 0:
+                return f"{days}天{hours}小时"
+            elif hours > 0:
+                return f"{hours}小时"
+            else:
+                minutes = (remaining.seconds % 3600) // 60
+                return f"{minutes}分钟"
+        return "无限制"
+
+
+class TaskDetailSerializer(serializers.ModelSerializer):
+    """任务详情序列化器（完整版，用于详情展示和编辑）"""
+    owner_info = serializers.SerializerMethodField()
+    assigned_to_info = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    priority_display = serializers.CharField(source='get_priority_display', read_only=True)
+    status_color = serializers.CharField(source='get_status_color', read_only=True)
+    priority_color = serializers.CharField(source='get_priority_color', read_only=True)
+    
+    # 计算属性
+    is_overdue = serializers.BooleanField(read_only=True)
+    is_high_priority = serializers.BooleanField(read_only=True)
+    time_remaining = serializers.SerializerMethodField()
+    tags_list = serializers.ListField(read_only=True)
+    
+    # 权限检查
+    can_edit = serializers.SerializerMethodField()
+    can_delete = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Task
+        fields = (
+            'id', 'title', 'description', 'status', 'status_display', 'status_color',
+            'priority', 'priority_display', 'priority_color', 'progress',
+            'due_date', 'start_date', 'completed_at', 'estimated_hours', 'actual_hours',
+            'category', 'tags', 'tags_list', 'notes', 'attachment', 'order',
+            'owner', 'owner_info', 'assigned_to', 'assigned_to_info',
+            'is_overdue', 'is_high_priority', 'time_remaining', 'can_edit', 'can_delete',
+            'created_at', 'updated_at', 'is_deleted', 'deleted_at'
+        )
+        read_only_fields = (
+            'id', 'owner', 'completed_at', 'created_at', 'updated_at', 
+            'is_deleted', 'deleted_at'
+        )
+    
+    def get_owner_info(self, obj):
+        """获取任务所有者信息"""
+        if obj.owner:
+            return {
+                'id': obj.owner.id,
+                'username': obj.owner.username,
+                'email': obj.owner.email,
+                'full_name': f"{obj.owner.first_name} {obj.owner.last_name}".strip() or obj.owner.username
+            }
+        return None
+    
+    def get_assigned_to_info(self, obj):
+        """获取任务执行者信息"""
+        if obj.assigned_to:
+            return {
+                'id': obj.assigned_to.id,
+                'username': obj.assigned_to.username,
+                'email': obj.assigned_to.email,
+                'full_name': f"{obj.assigned_to.first_name} {obj.assigned_to.last_name}".strip() or obj.assigned_to.username
+            }
+        return None
+    
+    def get_time_remaining(self, obj):
+        """获取剩余时间（秒数）"""
+        remaining = obj.time_remaining
+        if remaining:
+            return remaining.total_seconds()
+        return None
+    
+    def get_can_edit(self, obj):
+        """检查当前用户是否可以编辑任务"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.can_edit(request.user)
+        return False
+    
+    def get_can_delete(self, obj):
+        """检查当前用户是否可以删除任务"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.can_delete(request.user)
+        return False
+
+
+class TaskCreateSerializer(serializers.ModelSerializer):
+    """任务创建序列化器"""
+    tags = serializers.CharField(
+        required=False, 
+        allow_blank=True,
+        help_text='标签，用逗号分隔'
+    )
+    
+    class Meta:
+        model = Task
+        fields = (
+            'title', 'description', 'status', 'priority', 'progress',
+            'due_date', 'start_date', 'estimated_hours', 'category', 
+            'tags', 'notes', 'attachment', 'assigned_to'
+        )
+        extra_kwargs = {
+            'title': {'required': True},
+            'status': {'default': 'PENDING'},
+            'priority': {'default': 'MEDIUM'},
+            'progress': {'default': 0, 'min_value': 0, 'max_value': 100}
+        }
+    
+    def validate_title(self, value):
+        """验证标题"""
+        if not value.strip():
+            raise serializers.ValidationError("任务标题不能为空")
+        return value.strip()
+    
+    def validate_progress(self, value):
+        """验证进度"""
+        if value < 0 or value > 100:
+            raise serializers.ValidationError("进度必须在0-100之间")
+        return value
+    
+    def validate_due_date(self, value):
+        """验证截止时间"""
+        if value and value < timezone.now():
+            raise serializers.ValidationError("截止时间不能早于当前时间")
+        return value
+    
+    def validate_start_date(self, value):
+        """验证开始时间"""
+        if value and value < timezone.now().date():
+            raise serializers.ValidationError("开始时间不能早于今天")
+        return value
+    
+    def validate(self, attrs):
+        """交叉验证"""
+        start_date = attrs.get('start_date')
+        due_date = attrs.get('due_date')
+        
+        if start_date and due_date:
+            # 如果due_date是datetime，取其date部分进行比较
+            due_date_only = due_date.date() if hasattr(due_date, 'date') else due_date
+            if start_date > due_date_only:
+                raise serializers.ValidationError("开始时间不能晚于截止时间")
+        
+        return attrs
+    
+    def create(self, validated_data):
+        """创建任务"""
+        # 自动设置任务所有者为当前用户
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['owner'] = request.user
+        
+        return super().create(validated_data)
+
+
+class TaskUpdateSerializer(serializers.ModelSerializer):
+    """任务更新序列化器"""
+    tags = serializers.CharField(
+        required=False, 
+        allow_blank=True,
+        help_text='标签，用逗号分隔'
+    )
+    
+    class Meta:
+        model = Task
+        fields = (
+            'title', 'description', 'status', 'priority', 'progress',
+            'due_date', 'start_date', 'estimated_hours', 'actual_hours',
+            'category', 'tags', 'notes', 'attachment', 'assigned_to', 'order'
+        )
+        extra_kwargs = {
+            'progress': {'min_value': 0, 'max_value': 100}
+        }
+    
+    def validate_title(self, value):
+        """验证标题"""
+        if value is not None and not value.strip():
+            raise serializers.ValidationError("任务标题不能为空")
+        return value.strip() if value else value
+    
+    def validate_progress(self, value):
+        """验证进度"""
+        if value is not None and (value < 0 or value > 100):
+            raise serializers.ValidationError("进度必须在0-100之间")
+        return value
+    
+    def validate(self, attrs):
+        """交叉验证"""
+        start_date = attrs.get('start_date')
+        due_date = attrs.get('due_date')
+        
+        # 如果没有提供新值，使用实例的现有值
+        if start_date is None and hasattr(self.instance, 'start_date'):
+            start_date = self.instance.start_date
+        if due_date is None and hasattr(self.instance, 'due_date'):
+            due_date = self.instance.due_date
+        
+        if start_date and due_date:
+            # 如果due_date是datetime，取其date部分进行比较
+            due_date_only = due_date.date() if hasattr(due_date, 'date') else due_date
+            if start_date > due_date_only:
+                raise serializers.ValidationError("开始时间不能晚于截止时间")
+        
+        return attrs
+
+
+class TaskStatusUpdateSerializer(serializers.ModelSerializer):
+    """任务状态更新序列化器（用于快速状态变更）"""
+    
+    class Meta:
+        model = Task
+        fields = ('status', 'progress')
+        extra_kwargs = {
+            'progress': {'min_value': 0, 'max_value': 100}
+        }
+    
+    def validate(self, attrs):
+        """验证状态变更"""
+        status = attrs.get('status')
+        progress = attrs.get('progress')
+        
+        # 如果状态为完成，进度应为100
+        if status == 'COMPLETED' and progress is not None and progress < 100:
+            attrs['progress'] = 100
+        
+        # 如果状态不是完成，但进度为100，可能需要提醒
+        if status != 'COMPLETED' and progress == 100:
+            # 这里可以添加警告或自动变更状态的逻辑
+            pass
+        
+        return attrs
+
+
+class TaskStatisticsSerializer(serializers.Serializer):
+    """任务统计序列化器"""
+    total_tasks = serializers.IntegerField(read_only=True)
+    completed_tasks = serializers.IntegerField(read_only=True)
+    pending_tasks = serializers.IntegerField(read_only=True)
+    in_progress_tasks = serializers.IntegerField(read_only=True)
+    cancelled_tasks = serializers.IntegerField(read_only=True)
+    on_hold_tasks = serializers.IntegerField(read_only=True)
+    overdue_tasks = serializers.IntegerField(read_only=True)
+    high_priority_tasks = serializers.IntegerField(read_only=True)
+    completion_rate = serializers.FloatField(read_only=True)
+    
+    # 按优先级分布
+    priority_distribution = serializers.DictField(read_only=True)
+    
+    # 按状态分布
+    status_distribution = serializers.DictField(read_only=True)
+    
+    # 按分类分布
+    category_distribution = serializers.DictField(read_only=True)
+
+
+class TaskBulkActionSerializer(serializers.Serializer):
+    """任务批量操作序列化器"""
+    action = serializers.ChoiceField(
+        choices=[
+            ('complete', '标记为完成'),
+            ('delete', '软删除'),
+            ('restore', '恢复'),
+            ('assign', '分配给用户'),
+            ('update_status', '更新状态'),
+            ('update_priority', '更新优先级'),
+        ],
+        help_text='要执行的批量操作'
+    )
+    task_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        min_length=1,
+        help_text='要操作的任务ID列表'
+    )
+    
+    # 可选参数，根据操作类型使用
+    assigned_to = serializers.IntegerField(required=False, help_text='分配给的用户ID')
+    status = serializers.ChoiceField(
+        choices=Task.STATUS_CHOICES,
+        required=False,
+        help_text='要更新的状态'
+    )
+    priority = serializers.ChoiceField(
+        choices=Task.PRIORITY_CHOICES,
+        required=False,
+        help_text='要更新的优先级'
+    )
+    
+    def validate(self, attrs):
+        """验证批量操作参数"""
+        action = attrs.get('action')
+        
+        if action == 'assign' and not attrs.get('assigned_to'):
+            raise serializers.ValidationError("分配操作需要指定用户ID")
+        
+        if action == 'update_status' and not attrs.get('status'):
+            raise serializers.ValidationError("状态更新操作需要指定新状态")
+        
+        if action == 'update_priority' and not attrs.get('priority'):
+            raise serializers.ValidationError("优先级更新操作需要指定新优先级")
+        
+        return attrs

@@ -87,6 +87,20 @@ class UserProfile(models.Model):
         verbose_name = '用户扩展信息'
         verbose_name_plural = '用户扩展信息'
         ordering = ['-created_at']
+        indexes = [
+            # 用户查询索引
+            models.Index(fields=['user'], name='userprof_user_idx'),
+            # 时间相关索引
+            models.Index(fields=['-created_at'], name='userprof_created_idx'),
+            models.Index(fields=['-updated_at'], name='userprof_updated_idx'),
+            # 统计相关索引
+            models.Index(fields=['task_count'], name='userprof_task_cnt_idx'),
+            models.Index(fields=['completed_task_count'], name='userprof_comp_cnt_idx'),
+            # 主题偏好索引
+            models.Index(fields=['theme_preference'], name='userprof_theme_idx'),
+            # 通知设置索引
+            models.Index(fields=['email_notifications'], name='userprof_email_idx'),
+        ]
 
     def __str__(self):
         return f"{self.user.username} 的扩展信息"
@@ -220,9 +234,26 @@ class LoginHistory(models.Model):
         verbose_name_plural = '登录历史记录'
         ordering = ['-login_time']
         indexes = [
-            models.Index(fields=['user', '-login_time']),
-            models.Index(fields=['ip_address', '-login_time']),
-            models.Index(fields=['status', '-login_time']),
+            # 现有索引（优化命名）
+            models.Index(fields=['user', '-login_time'], name='login_user_time_idx'),
+            models.Index(fields=['ip_address', '-login_time'], name='login_ip_time_idx'),
+            models.Index(fields=['status', '-login_time'], name='login_status_time_idx'),
+            
+            # 新增安全相关索引
+            models.Index(fields=['username_attempted'], name='login_username_idx'),
+            models.Index(fields=['device_fingerprint'], name='login_device_idx'),
+            models.Index(fields=['location'], name='login_location_idx'),
+            
+            # 复合查询索引
+            models.Index(fields=['user', 'status', '-login_time'], name='login_usr_stat_time_idx'),
+            models.Index(fields=['ip_address', 'status'], name='login_ip_status_idx'),
+            models.Index(fields=['status', 'failure_reason'], name='login_stat_reason_idx'),
+            
+            # 时间范围查询索引
+            models.Index(fields=['-login_time', 'status'], name='login_time_stat_idx'),
+            
+            # 会话相关索引
+            models.Index(fields=['session_duration'], name='login_session_idx'),
         ]
 
     def __str__(self):
@@ -249,28 +280,74 @@ class LoginHistory(models.Model):
         return False
 
 
+class SoftDeleteQuerySet(models.QuerySet):
+    """
+    软删除查询集
+    提供更强大的软删除查询功能
+    """
+    def active(self):
+        """返回未删除的记录"""
+        return self.filter(is_deleted=False)
+    
+    def deleted(self):
+        """返回已删除的记录"""
+        return self.filter(is_deleted=True)
+    
+    def soft_delete(self):
+        """批量软删除"""
+        return self.update(is_deleted=True, deleted_at=timezone.now())
+    
+    def restore(self):
+        """批量恢复"""
+        return self.update(is_deleted=False, deleted_at=None)
+    
+    def hard_delete(self):
+        """批量硬删除（永久删除）"""
+        return self.delete()
+    
+    def deleted_before(self, date):
+        """返回指定日期之前删除的记录"""
+        return self.filter(is_deleted=True, deleted_at__lt=date)
+    
+    def deleted_after(self, date):
+        """返回指定日期之后删除的记录"""
+        return self.filter(is_deleted=True, deleted_at__gt=date)
+    
+    def deleted_between(self, start_date, end_date):
+        """返回指定时间范围内删除的记录"""
+        return self.filter(
+            is_deleted=True,
+            deleted_at__gte=start_date,
+            deleted_at__lte=end_date
+        )
+
+
 class SoftDeleteManager(models.Manager):
     """
     软删除管理器
     用于处理软删除的查询集，默认排除已删除的记录
     """
     def get_queryset(self):
-        """返回未删除的记录"""
-        return super().get_queryset().filter(is_deleted=False)
+        """返回使用软删除查询集的未删除记录"""
+        return SoftDeleteQuerySet(self.model, using=self._db).active()
     
     def all_with_deleted(self):
         """返回包含已删除记录的所有记录"""
-        return super().get_queryset()
+        return SoftDeleteQuerySet(self.model, using=self._db)
     
     def deleted_only(self):
         """仅返回已删除的记录"""
-        return super().get_queryset().filter(is_deleted=True)
+        return SoftDeleteQuerySet(self.model, using=self._db).deleted()
+    
+    def soft_delete_queryset(self):
+        """返回软删除查询集"""
+        return SoftDeleteQuerySet(self.model, using=self._db)
 
 
 class SoftDeleteModel(models.Model):
     """
     软删除基础模型
-    提供软删除功能的抽象基类
+    提供全面软删除功能的抽象基类
     """
     is_deleted = models.BooleanField(
         default=False,
@@ -285,6 +362,16 @@ class SoftDeleteModel(models.Model):
         help_text='记录删除时间'
     )
     
+    deleted_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='%(class)s_deleted_set',
+        verbose_name='删除者',
+        help_text='执行删除操作的用户'
+    )
+    
     # 默认管理器（排除已删除的记录）
     objects = SoftDeleteManager()
     # 包含所有记录的管理器
@@ -293,21 +380,75 @@ class SoftDeleteModel(models.Model):
     class Meta:
         abstract = True
     
-    def soft_delete(self):
-        """软删除"""
+    def soft_delete(self, user=None):
+        """
+        软删除
+        
+        Args:
+            user: 执行删除操作的用户
+        """
         self.is_deleted = True
         self.deleted_at = timezone.now()
-        self.save()
+        if user:
+            self.deleted_by = user
+        self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
     
-    def restore(self):
-        """恢复删除"""
+    def restore(self, user=None):
+        """
+        恢复删除
+        
+        Args:
+            user: 执行恢复操作的用户（可用于记录日志）
+        """
         self.is_deleted = False
         self.deleted_at = None
-        self.save()
+        self.deleted_by = None
+        self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
     
     def hard_delete(self):
         """硬删除（永久删除）"""
         super().delete()
+    
+    def delete(self, using=None, keep_parents=False):
+        """
+        重写delete方法，默认执行软删除
+        要执行硬删除，请使用hard_delete()方法
+        """
+        self.soft_delete()
+    
+    @property
+    def is_permanently_deleted(self):
+        """检查是否已永久删除（硬删除）"""
+        try:
+            # 尝试访问主键，如果对象已被硬删除，会抛出异常
+            return not bool(self.pk)
+        except:
+            return True
+    
+    @property
+    def deletion_age(self):
+        """计算删除后的时间（天数）"""
+        if not self.is_deleted or not self.deleted_at:
+            return None
+        return (timezone.now() - self.deleted_at).days
+    
+    @property
+    def can_be_restored(self):
+        """检查是否可以被恢复"""
+        return self.is_deleted and self.deleted_at is not None
+    
+    def get_deletion_info(self):
+        """获取删除信息"""
+        if not self.is_deleted:
+            return None
+        
+        return {
+            'is_deleted': True,
+            'deleted_at': self.deleted_at,
+            'deleted_by': self.deleted_by,
+            'deletion_age_days': self.deletion_age,
+            'can_be_restored': self.can_be_restored
+        }
 
 
 class Task(SoftDeleteModel):
@@ -488,12 +629,47 @@ class Task(SoftDeleteModel):
         verbose_name_plural = '任务'
         ordering = ['-created_at', 'order']
         indexes = [
-            models.Index(fields=['owner', '-created_at']),
-            models.Index(fields=['assigned_to', '-created_at']),
-            models.Index(fields=['status', 'priority']),
-            models.Index(fields=['due_date']),
-            models.Index(fields=['is_deleted', '-created_at']),
-            models.Index(fields=['category']),
+            # 基础单字段索引
+            models.Index(fields=['due_date'], name='task_due_date_idx'),
+            models.Index(fields=['category'], name='task_category_idx'),
+            models.Index(fields=['status'], name='task_status_idx'),
+            models.Index(fields=['priority'], name='task_priority_idx'),
+            models.Index(fields=['order'], name='task_order_idx'),
+            
+            # 用户相关复合索引 - 针对用户任务列表查询优化
+            models.Index(fields=['owner', '-created_at'], name='task_owner_created_idx'),
+            models.Index(fields=['assigned_to', '-created_at'], name='task_assign_created_idx'),
+            models.Index(fields=['owner', 'status', '-created_at'], name='task_own_stat_crt_idx'),
+            models.Index(fields=['assigned_to', 'status', '-created_at'], name='task_asn_stat_crt_idx'),
+            
+            # 软删除相关索引 - 针对软删除查询优化
+            models.Index(fields=['is_deleted', '-created_at'], name='task_del_created_idx'),
+            models.Index(fields=['is_deleted', 'owner', '-created_at'], name='task_del_own_crt_idx'),
+            models.Index(fields=['is_deleted', 'assigned_to', '-created_at'], name='task_del_asn_crt_idx'),
+            
+            # 状态和优先级复合索引 - 针对任务筛选优化
+            models.Index(fields=['status', 'priority'], name='task_status_priority_idx'),
+            models.Index(fields=['priority', 'status', 'due_date'], name='task_pri_stat_due_idx'),
+            
+            # 时间相关复合索引 - 针对时间范围查询优化
+            models.Index(fields=['due_date', 'status'], name='task_due_status_idx'),
+            models.Index(fields=['start_date', 'due_date'], name='task_start_due_idx'),
+            models.Index(fields=['completed_at'], name='task_completed_at_idx'),
+            
+            # 分类和状态复合索引 - 针对分类筛选优化
+            models.Index(fields=['category', 'status'], name='task_cat_status_idx'),
+            models.Index(fields=['category', 'priority'], name='task_cat_priority_idx'),
+            
+            # 统计查询优化索引
+            models.Index(fields=['owner', 'status', 'is_deleted'], name='task_own_stat_del_idx'),
+            models.Index(fields=['assigned_to', 'status', 'is_deleted'], name='task_asn_stat_del_idx'),
+            
+            # 过期任务查询优化
+            models.Index(fields=['due_date', 'status', 'is_deleted'], name='task_due_stat_del_idx'),
+            
+            # 更新时间索引 - 针对最近更新查询
+            models.Index(fields=['-updated_at'], name='task_updated_idx'),
+            models.Index(fields=['owner', '-updated_at'], name='task_owner_updated_idx'),
         ]
 
     def __str__(self):
@@ -615,3 +791,205 @@ class Task(SoftDeleteModel):
             due_date__lte=soon,
             status__in=['PENDING', 'IN_PROGRESS', 'ON_HOLD']
         )
+
+    # ==================== 软删除和恢复相关方法 ====================
+    
+    def soft_delete(self, user=None):
+        """
+        软删除任务
+        
+        Args:
+            user: 执行删除操作的用户
+        """
+        # 调用父类的软删除方法
+        super().soft_delete(user)
+        
+        # 更新用户的任务统计
+        if self.owner and hasattr(self.owner, 'profile'):
+            self.owner.profile.update_task_count()
+    
+    def restore(self, user=None):
+        """
+        恢复已删除的任务
+        
+        Args:
+            user: 执行恢复操作的用户
+        """
+        # 调用父类的恢复方法
+        super().restore(user)
+        
+        # 更新用户的任务统计
+        if self.owner and hasattr(self.owner, 'profile'):
+            self.owner.profile.update_task_count()
+    
+    def can_restore(self, user):
+        """
+        检查用户是否可以恢复此任务
+        
+        Args:
+            user: 要检查权限的用户
+            
+        Returns:
+            bool: 是否可以恢复
+        """
+        if not self.is_deleted:
+            return False
+        
+        # 只有任务所有者可以恢复任务
+        return user == self.owner
+    
+    def get_trash_info(self):
+        """
+        获取回收站信息
+        
+        Returns:
+            dict: 包含回收站相关信息的字典
+        """
+        if not self.is_deleted:
+            return None
+        
+        return {
+            'task_id': str(self.id),
+            'title': self.title,
+            'deleted_at': self.deleted_at,
+            'deleted_by': self.deleted_by.username if self.deleted_by else None,
+            'deletion_age_days': self.deletion_age,
+            'can_be_restored': self.can_be_restored,
+            'owner': self.owner.username,
+            'status_when_deleted': self.status,
+            'priority': self.get_priority_display(),
+            'due_date': self.due_date
+        }
+    
+    @classmethod
+    def get_user_trash(cls, user, include_assigned=False):
+        """
+        获取用户的回收站任务
+        
+        Args:
+            user: 用户对象
+            include_assigned: 是否包含分配给用户的任务
+            
+        Returns:
+            QuerySet: 已删除的任务查询集
+        """
+        query = models.Q(owner=user)
+        if include_assigned:
+            query |= models.Q(assigned_to=user)
+        
+        return cls.all_objects.filter(query, is_deleted=True).order_by('-deleted_at')
+    
+    @classmethod
+    def cleanup_old_deleted_tasks(cls, days=30):
+        """
+        清理指定天数前删除的任务（硬删除）
+        
+        Args:
+            days: 删除多少天前的任务，默认30天
+            
+        Returns:
+            int: 清理的任务数量
+        """
+        cutoff_date = timezone.now() - timezone.timedelta(days=days)
+        old_deleted_tasks = cls.all_objects.filter(
+            is_deleted=True,
+            deleted_at__lt=cutoff_date
+        )
+        
+        count = old_deleted_tasks.count()
+        # 执行硬删除
+        old_deleted_tasks.delete()
+        
+        return count
+    
+    @classmethod
+    def restore_user_tasks(cls, user, task_ids):
+        """
+        批量恢复用户的任务
+        
+        Args:
+            user: 用户对象
+            task_ids: 要恢复的任务ID列表
+            
+        Returns:
+            dict: 恢复结果统计
+        """
+        tasks = cls.all_objects.filter(
+            id__in=task_ids,
+            owner=user,
+            is_deleted=True
+        )
+        
+        restored_count = 0
+        failed_count = 0
+        
+        for task in tasks:
+            try:
+                task.restore(user)
+                restored_count += 1
+            except Exception:
+                failed_count += 1
+        
+        return {
+            'restored': restored_count,
+            'failed': failed_count,
+            'total': len(task_ids)
+        }
+    
+    @classmethod
+    def permanent_delete_user_tasks(cls, user, task_ids):
+        """
+        批量永久删除用户的任务
+        
+        Args:
+            user: 用户对象
+            task_ids: 要永久删除的任务ID列表
+            
+        Returns:
+            dict: 删除结果统计
+        """
+        tasks = cls.all_objects.filter(
+            id__in=task_ids,
+            owner=user,
+            is_deleted=True
+        )
+        
+        deleted_count = tasks.count()
+        # 执行硬删除
+        tasks.delete()
+        
+        return {
+            'deleted': deleted_count,
+            'total': len(task_ids)
+        }
+    
+    @classmethod
+    def get_deletion_statistics(cls, user):
+        """
+        获取用户的删除统计信息
+        
+        Args:
+            user: 用户对象
+            
+        Returns:
+            dict: 删除统计信息
+        """
+        deleted_tasks = cls.all_objects.filter(owner=user, is_deleted=True)
+        
+        # 按时间范围统计
+        now = timezone.now()
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = today - timezone.timedelta(days=7)
+        month_ago = today - timezone.timedelta(days=30)
+        
+        return {
+            'total_deleted': deleted_tasks.count(),
+            'deleted_today': deleted_tasks.filter(deleted_at__gte=today).count(),
+            'deleted_this_week': deleted_tasks.filter(deleted_at__gte=week_ago).count(),
+            'deleted_this_month': deleted_tasks.filter(deleted_at__gte=month_ago).count(),
+            'oldest_deleted': deleted_tasks.order_by('deleted_at').first(),
+            'newest_deleted': deleted_tasks.order_by('-deleted_at').first(),
+            'can_be_cleaned': deleted_tasks.filter(
+                deleted_at__lt=now - timezone.timedelta(days=30)
+            ).count()
+        }

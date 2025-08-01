@@ -1,5 +1,5 @@
 <template>
-    <div class="login-page">
+    <div class="register-page">
         <!-- 背景动效 -->
         <div class="background-animation">
             <div class="floating-shapes">
@@ -12,7 +12,7 @@
         </div>
 
         <!-- 主容器 -->
-        <div class="login-container">
+        <div class="register-container">
             <!-- 左侧信息区域 -->
             <div class="info-section">
                 <div class="brand-section">
@@ -25,41 +25,45 @@
 
                 <div class="features-list">
                     <div class="feature-item">
-                        <q-icon name="auto_awesome" size="24px" color="white" />
-                        <span>AI 智能任务规划</span>
+                        <q-icon name="speed" size="24px" color="white" />
+                        <span>快速上手，零学习成本</span>
                     </div>
                     <div class="feature-item">
-                        <q-icon name="dashboard" size="24px" color="white" />
-                        <span>实时数据仪表板</span>
+                        <q-icon name="group" size="24px" color="white" />
+                        <span>团队协作，提升效率</span>
                     </div>
                     <div class="feature-item">
-                        <q-icon name="cloud_sync" size="24px" color="white" />
-                        <span>云端同步协作</span>
+                        <q-icon name="insights" size="24px" color="white" />
+                        <span>智能分析，决策支持</span>
                     </div>
                     <div class="feature-item">
-                        <q-icon name="security" size="24px" color="white" />
-                        <span>企业级安全保障</span>
+                        <q-icon name="verified" size="24px" color="white" />
+                        <span>数据安全，值得信赖</span>
                     </div>
                 </div>
             </div>
 
-            <!-- 右侧登录表单 -->
+            <!-- 右侧注册表单 -->
             <div class="form-section">
                 <div class="form-container">
                     <div class="form-header">
-                        <h2>欢迎回来</h2>
-                        <p>登录您的账户以继续使用</p>
+                        <h2>创建账户</h2>
+                        <p>加入凌云平台，开启高效工作之旅</p>
                     </div>
 
-                    <q-form @submit="handleLogin" class="login-form">
+                    <q-form @submit="handleRegister" class="register-form">
                         <div class="input-group">
                             <q-input
-                                v-model="loginForm.username"
-                                label="用户名 / 邮箱"
+                                v-model="registerForm.username"
+                                label="用户名"
                                 outlined
                                 dense
                                 color="primary"
-                                :rules="[val => !!val || '请输入用户名或邮箱']"
+                                :rules="[
+                                    val => !!val || '请输入用户名',
+                                    val => val.length >= 3 || '用户名至少3个字符',
+                                    val => val.length <= 20 || '用户名不能超过20个字符',
+                                ]"
                                 :loading="authStore.loading"
                                 class="modern-input"
                             >
@@ -71,13 +75,40 @@
 
                         <div class="input-group">
                             <q-input
-                                v-model="loginForm.password"
+                                v-model="registerForm.email"
+                                label="邮箱地址"
+                                type="email"
+                                outlined
+                                dense
+                                color="primary"
+                                :rules="[
+                                    val => !!val || '请输入邮箱',
+                                    val => isValidEmail(val) || '请输入有效的邮箱地址',
+                                ]"
+                                :loading="authStore.loading"
+                                class="modern-input"
+                            >
+                                <template v-slot:prepend>
+                                    <q-icon name="email" color="grey-6" />
+                                </template>
+                            </q-input>
+                        </div>
+
+                        <div class="input-group">
+                            <q-input
+                                v-model="registerForm.password"
                                 :type="showPassword ? 'text' : 'password'"
                                 label="密码"
                                 outlined
                                 dense
                                 color="primary"
-                                :rules="[val => !!val || '请输入密码']"
+                                :rules="[
+                                    val => !!val || '请输入密码',
+                                    val => val.length >= 8 || '密码至少8个字符',
+                                    val =>
+                                        /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(val) ||
+                                        '密码需包含大小写字母和数字',
+                                ]"
                                 :loading="authStore.loading"
                                 class="modern-input"
                             >
@@ -97,42 +128,76 @@
                             </q-input>
                         </div>
 
-                        <div class="form-options">
-                            <q-checkbox
-                                v-model="rememberMe"
-                                label="记住我"
-                                color="primary"
-                                size="sm"
-                            />
-                            <q-btn
-                                flat
+                        <div class="input-group">
+                            <q-input
+                                v-model="registerForm.password_confirm"
+                                :type="showPassword ? 'text' : 'password'"
+                                label="确认密码"
+                                outlined
                                 dense
                                 color="primary"
-                                label="忘记密码？"
-                                class="forgot-password"
-                                @click="$q.notify({ type: 'info', message: '功能开发中...' })"
-                            />
+                                :rules="[
+                                    val => !!val || '请确认密码',
+                                    val => val === registerForm.password || '两次输入的密码不一致',
+                                ]"
+                                :loading="authStore.loading"
+                                class="modern-input"
+                            >
+                                <template v-slot:prepend>
+                                    <q-icon name="lock_reset" color="grey-6" />
+                                </template>
+                            </q-input>
+                        </div>
+
+                        <div class="form-options">
+                            <q-checkbox v-model="agreeTerms" color="primary" size="sm">
+                                <span class="terms-text">
+                                    我已阅读并同意
+                                    <q-btn
+                                        flat
+                                        dense
+                                        color="primary"
+                                        label="《用户协议》"
+                                        class="terms-link"
+                                        @click="
+                                            $q.notify({ type: 'info', message: '功能开发中...' })
+                                        "
+                                    />
+                                    和
+                                    <q-btn
+                                        flat
+                                        dense
+                                        color="primary"
+                                        label="《隐私政策》"
+                                        class="terms-link"
+                                        @click="
+                                            $q.notify({ type: 'info', message: '功能开发中...' })
+                                        "
+                                    />
+                                </span>
+                            </q-checkbox>
                         </div>
 
                         <q-btn
                             type="submit"
                             color="primary"
-                            class="login-btn"
+                            class="register-btn"
                             size="lg"
                             :loading="authStore.loading"
-                            label="登录"
+                            :disable="!agreeTerms"
+                            label="创建账户"
                             no-caps
                             unelevated
                         />
 
-                        <div class="signup-link">
-                            <span>还没有账户？</span>
+                        <div class="login-link">
+                            <span>已有账户？</span>
                             <q-btn
                                 flat
                                 dense
                                 color="primary"
-                                label="立即注册"
-                                @click="goToRegister"
+                                label="立即登录"
+                                @click="goToLogin"
                                 no-caps
                             />
                         </div>
@@ -148,60 +213,65 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth';
 import { useQuasar } from 'quasar';
-import type { LoginCredentials } from 'src/types';
+import type { RegisterData } from 'src/types';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const $q = useQuasar();
 
 // 表单数据
-const loginForm = ref<LoginCredentials>({
+const registerForm = ref<RegisterData>({
     username: '',
+    email: '',
     password: '',
+    password_confirm: '',
 });
 
 const showPassword = ref(false);
-const rememberMe = ref(false);
+const agreeTerms = ref(false);
 
-// 登录处理
-const handleLogin = async () => {
+// 邮箱验证函数
+const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
+// 注册处理
+const handleRegister = async () => {
     try {
-        const credentials = {
-            ...loginForm.value,
-            remember_me: rememberMe.value,
-        };
-
-        await authStore.login(credentials);
+        await authStore.register(registerForm.value);
 
         $q.notify({
             type: 'positive',
-            message: '登录成功！',
+            message: '注册成功！请使用您的账户登录',
             position: 'top',
+            timeout: 3000,
         });
 
-        await router.push('/');
+        // 注册成功后跳转到登录页面
+        await router.push('/login');
     } catch (error) {
-        console.error('登录失败:', error);
+        console.error('注册失败:', error);
         $q.notify({
             type: 'negative',
-            message: '登录失败，请检查用户名和密码',
+            message: '注册失败，请检查输入信息',
             position: 'top',
         });
     }
 };
 
-// 跳转到注册页面
-const goToRegister = async () => {
-    await router.push('/register');
+// 跳转到登录页面
+const goToLogin = async () => {
+    await router.push('/login');
 };
 </script>
 
 <style scoped lang="scss">
-.login-page {
+.register-page {
     min-height: 100vh;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    background: linear-gradient(135deg, #00c6fb 0%, #005bea 100%);
 }
 
 .background-animation {
@@ -224,43 +294,43 @@ const goToRegister = async () => {
             animation: float 6s ease-in-out infinite;
 
             &.shape-1 {
-                width: 80px;
-                height: 80px;
-                top: 20%;
-                left: 10%;
+                width: 90px;
+                height: 90px;
+                top: 15%;
+                left: 15%;
                 animation-delay: 0s;
             }
 
             &.shape-2 {
-                width: 120px;
-                height: 120px;
-                top: 60%;
-                left: 80%;
-                animation-delay: 2s;
+                width: 110px;
+                height: 110px;
+                top: 65%;
+                left: 85%;
+                animation-delay: 1.5s;
             }
 
             &.shape-3 {
-                width: 60px;
-                height: 60px;
-                top: 80%;
-                left: 20%;
-                animation-delay: 4s;
+                width: 70px;
+                height: 70px;
+                top: 85%;
+                left: 15%;
+                animation-delay: 3s;
             }
 
             &.shape-4 {
-                width: 100px;
-                height: 100px;
-                top: 10%;
-                left: 70%;
-                animation-delay: 1s;
+                width: 95px;
+                height: 95px;
+                top: 5%;
+                left: 75%;
+                animation-delay: 4.5s;
             }
 
             &.shape-5 {
-                width: 40px;
-                height: 40px;
-                top: 40%;
-                left: 5%;
-                animation-delay: 3s;
+                width: 50px;
+                height: 50px;
+                top: 45%;
+                left: 8%;
+                animation-delay: 2s;
             }
         }
     }
@@ -269,14 +339,14 @@ const goToRegister = async () => {
 @keyframes float {
     0%,
     100% {
-        transform: translateY(0px) translateX(0px);
+        transform: translateY(0px) translateX(0px) rotate(0deg);
     }
     50% {
-        transform: translateY(-20px) translateX(10px);
+        transform: translateY(-25px) translateX(15px) rotate(180deg);
     }
 }
 
-.login-container {
+.register-container {
     display: flex;
     min-height: 100vh;
     position: relative;
@@ -305,7 +375,7 @@ const goToRegister = async () => {
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
-            background: linear-gradient(45deg, #fff, #e0e7ff);
+            background: linear-gradient(45deg, #fff, #e0f2fe);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -320,7 +390,7 @@ const goToRegister = async () => {
     }
 
     .features-list {
-        max-width: 300px;
+        max-width: 320px;
 
         .feature-item {
             display: flex;
@@ -356,7 +426,7 @@ const goToRegister = async () => {
 
 .form-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     padding: 2.5rem;
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
@@ -381,7 +451,7 @@ const goToRegister = async () => {
     }
 }
 
-.login-form {
+.register-form {
     .input-group {
         margin-bottom: 1.5rem;
 
@@ -397,8 +467,8 @@ const goToRegister = async () => {
             }
 
             &.q-field--focused .q-field__control {
-                border-color: #3b82f6;
-                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                border-color: #0ea5e9;
+                box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
             }
 
             .q-field__label {
@@ -409,32 +479,41 @@ const goToRegister = async () => {
     }
 
     .form-options {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         margin-bottom: 2rem;
 
-        .forgot-password {
+        .terms-text {
             font-size: 0.875rem;
-            padding: 0;
+            color: #6b7280;
+            line-height: 1.5;
+
+            .terms-link {
+                font-size: 0.875rem;
+                padding: 0;
+                min-height: auto;
+                text-decoration: underline;
+            }
         }
     }
 
-    .login-btn {
+    .register-btn {
         width: 100%;
         height: 48px;
         border-radius: 12px;
         font-weight: 600;
         font-size: 1rem;
         margin-bottom: 1.5rem;
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
 
-        &:hover {
-            background: linear-gradient(135deg, #2563eb, #1e40af);
+        &:hover:not(.q-btn--disable) {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+        }
+
+        &.q-btn--disable {
+            opacity: 0.5;
         }
     }
 
-    .signup-link {
+    .login-link {
         text-align: center;
         color: #6b7280;
         font-size: 0.875rem;
@@ -447,7 +526,7 @@ const goToRegister = async () => {
 
 // 响应式设计
 @media (max-width: 768px) {
-    .login-container {
+    .register-container {
         flex-direction: column;
     }
 
@@ -456,7 +535,7 @@ const goToRegister = async () => {
     }
 
     .form-section {
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        background: linear-gradient(135deg, #00c6fb 0%, #005bea 100%);
         border: none;
     }
 

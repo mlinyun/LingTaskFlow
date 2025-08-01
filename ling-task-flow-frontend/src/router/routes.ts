@@ -11,30 +11,35 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/register',
         name: 'Register',
-        component: () => import('pages/LoginPage.vue'),
+        component: () => import('pages/RegisterPage.vue'),
         meta: { requiresAuth: false },
     },
 
-    // 主应用页面（需要认证和布局）
+    // 主应用布局（需要认证）
     {
         path: '/',
         component: () => import('layouts/MainLayout.vue'),
         meta: { requiresAuth: true },
         children: [
+            // 首页 - 平台首页
             {
                 path: '',
-                redirect: '/tasks',
+                name: 'Home',
+                component: () => import('pages/IndexPage.vue'),
             },
+            // 任务管理
             {
                 path: 'tasks',
                 name: 'TaskList',
                 component: () => import('pages/TaskListPage.vue'),
             },
+            // 数据概览/仪表板
             {
                 path: 'dashboard',
                 name: 'Dashboard',
                 component: () => import('pages/DashboardPage.vue'),
             },
+            // 回收站
             {
                 path: 'trash',
                 name: 'TrashPage',

@@ -77,9 +77,10 @@ export const useAuthStore = defineStore('auth', () => {
     }) => {
         loading.value = true;
         try {
-            const authData = await apiPost<AuthData>('/auth/register/', userData, false);
+            // 注册用户，但不自动登录
+            await apiPost('/auth/register/', userData, false);
 
-            saveAuthData(authData);
+            // 注册成功，返回成功信息，但不保存认证数据
             return { success: true, message: '注册成功' };
         } catch (error: unknown) {
             console.error('Register error:', error);

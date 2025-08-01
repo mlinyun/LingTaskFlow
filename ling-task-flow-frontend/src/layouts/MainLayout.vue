@@ -121,14 +121,21 @@ const authStore = useAuthStore();
 // 导航链接配置
 const navigationLinks = [
     {
+        title: '平台首页',
+        caption: '欢迎页面和功能概览',
+        icon: 'home',
+        link: '/',
+        color: 'primary',
+    },
+    {
         title: '任务列表',
         caption: '查看和管理您的任务',
         icon: 'list',
         link: '/tasks',
-        color: 'primary',
+        color: 'secondary',
     },
     {
-        title: '仪表板',
+        title: '数据概览',
         caption: '任务统计和分析',
         icon: 'dashboard',
         link: '/dashboard',

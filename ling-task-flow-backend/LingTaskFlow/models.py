@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
 
 
@@ -92,14 +93,12 @@ class UserProfile(models.Model):
 
     def update_task_count(self):
         """更新任务统计数量"""
-        # 这个方法将在Task模型创建后实现
-        # self.task_count = self.user.tasks.filter(is_deleted=False).count()
-        # self.completed_task_count = self.user.tasks.filter(
-        #     is_deleted=False, 
-        #     status='COMPLETED'
-        # ).count()
-        # self.save(update_fields=['task_count', 'completed_task_count'])
-        pass
+        self.task_count = self.user.owned_tasks.filter(is_deleted=False).count()
+        self.completed_task_count = self.user.owned_tasks.filter(
+            is_deleted=False, 
+            status='COMPLETED'
+        ).count()
+        self.save(update_fields=['task_count', 'completed_task_count'])
 
     @property
     def completion_rate(self):
@@ -248,3 +247,371 @@ class LoginHistory(models.Model):
                 return True
         
         return False
+
+
+class SoftDeleteManager(models.Manager):
+    """
+    软删除管理器
+    用于处理软删除的查询集，默认排除已删除的记录
+    """
+    def get_queryset(self):
+        """返回未删除的记录"""
+        return super().get_queryset().filter(is_deleted=False)
+    
+    def all_with_deleted(self):
+        """返回包含已删除记录的所有记录"""
+        return super().get_queryset()
+    
+    def deleted_only(self):
+        """仅返回已删除的记录"""
+        return super().get_queryset().filter(is_deleted=True)
+
+
+class SoftDeleteModel(models.Model):
+    """
+    软删除基础模型
+    提供软删除功能的抽象基类
+    """
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name='是否删除',
+        help_text='软删除标记，True表示已删除'
+    )
+    
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='删除时间',
+        help_text='记录删除时间'
+    )
+    
+    # 默认管理器（排除已删除的记录）
+    objects = SoftDeleteManager()
+    # 包含所有记录的管理器
+    all_objects = models.Manager()
+    
+    class Meta:
+        abstract = True
+    
+    def soft_delete(self):
+        """软删除"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+    
+    def restore(self):
+        """恢复删除"""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
+    
+    def hard_delete(self):
+        """硬删除（永久删除）"""
+        super().delete()
+
+
+class Task(SoftDeleteModel):
+    """
+    任务模型
+    核心任务管理功能的数据模型，包含软删除功能
+    """
+    
+    # 任务状态选择
+    STATUS_CHOICES = [
+        ('PENDING', '待处理'),
+        ('IN_PROGRESS', '进行中'),
+        ('COMPLETED', '已完成'),
+        ('CANCELLED', '已取消'),
+        ('ON_HOLD', '暂停'),
+    ]
+    
+    # 优先级选择
+    PRIORITY_CHOICES = [
+        ('LOW', '低'),
+        ('MEDIUM', '中'),
+        ('HIGH', '高'),
+        ('URGENT', '紧急'),
+    ]
+    
+    # 基础字段
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name='任务ID'
+    )
+    
+    title = models.CharField(
+        max_length=200,
+        verbose_name='任务标题',
+        help_text='任务的简短描述'
+    )
+    
+    description = models.TextField(
+        blank=True,
+        verbose_name='任务描述',
+        help_text='任务的详细说明'
+    )
+    
+    # 关联用户
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='owned_tasks',
+        verbose_name='任务所有者'
+    )
+    
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='assigned_tasks',
+        null=True,
+        blank=True,
+        verbose_name='任务执行者',
+        help_text='分配给谁执行这个任务'
+    )
+    
+    # 任务状态和优先级
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='PENDING',
+        verbose_name='任务状态'
+    )
+    
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default='MEDIUM',
+        verbose_name='优先级'
+    )
+    
+    # 时间相关字段
+    due_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='截止时间',
+        help_text='任务需要完成的时间'
+    )
+    
+    start_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='开始时间',
+        help_text='任务计划开始的时间'
+    )
+    
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='完成时间',
+        help_text='任务实际完成的时间'
+    )
+    
+    # 进度相关
+    progress = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name='完成进度',
+        help_text='任务完成百分比 (0-100)'
+    )
+    
+    estimated_hours = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='预估工时',
+        help_text='预计完成任务需要的小时数'
+    )
+    
+    actual_hours = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='实际工时',
+        help_text='实际花费的小时数'
+    )
+    
+    # 分类和标签
+    category = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='任务分类',
+        help_text='任务所属的分类'
+    )
+    
+    tags = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='标签',
+        help_text='用逗号分隔的标签列表'
+    )
+    
+    # 附件和备注
+    attachment = models.FileField(
+        upload_to='task_attachments/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name='附件',
+        help_text='任务相关的文件附件'
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        verbose_name='备注',
+        help_text='任务的额外备注信息'
+    )
+    
+    # 系统字段
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='创建时间'
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='更新时间'
+    )
+    
+    # 排序字段
+    order = models.IntegerField(
+        default=0,
+        verbose_name='排序',
+        help_text='用于任务排序的数值'
+    )
+    
+    class Meta:
+        db_table = 'tasks'
+        verbose_name = '任务'
+        verbose_name_plural = '任务'
+        ordering = ['-created_at', 'order']
+        indexes = [
+            models.Index(fields=['owner', '-created_at']),
+            models.Index(fields=['assigned_to', '-created_at']),
+            models.Index(fields=['status', 'priority']),
+            models.Index(fields=['due_date']),
+            models.Index(fields=['is_deleted', '-created_at']),
+            models.Index(fields=['category']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.get_status_display()})"
+
+    def save(self, *args, **kwargs):
+        """
+        重写save方法，处理状态变更时的自动更新
+        """
+        # 如果状态变为已完成，自动设置完成时间和进度
+        if self.status == 'COMPLETED' and not self.completed_at:
+            self.completed_at = timezone.now()
+            self.progress = 100
+        
+        # 如果状态不是已完成，清除完成时间
+        elif self.status != 'COMPLETED' and self.completed_at:
+            self.completed_at = None
+        
+        super().save(*args, **kwargs)
+        
+        # 更新用户的任务统计
+        if self.owner and hasattr(self.owner, 'profile'):
+            self.owner.profile.update_task_count()
+
+    @property
+    def is_overdue(self):
+        """检查任务是否已过期"""
+        if not self.due_date:
+            return False
+        return self.due_date < timezone.now() and self.status not in ['COMPLETED', 'CANCELLED']
+
+    @property
+    def time_remaining(self):
+        """计算剩余时间"""
+        if not self.due_date:
+            return None
+        remaining = self.due_date - timezone.now()
+        return remaining if remaining.total_seconds() > 0 else None
+
+    @property
+    def is_high_priority(self):
+        """判断是否为高优先级任务"""
+        return self.priority in ['HIGH', 'URGENT']
+
+    @property
+    def tags_list(self):
+        """将标签字符串转换为列表"""
+        if not self.tags:
+            return []
+        return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
+
+    def add_tag(self, tag):
+        """添加标签"""
+        tags = self.tags_list
+        if tag not in tags:
+            tags.append(tag)
+            self.tags = ', '.join(tags)
+
+    def remove_tag(self, tag):
+        """移除标签"""
+        tags = self.tags_list
+        if tag in tags:
+            tags.remove(tag)
+            self.tags = ', '.join(tags)
+
+    def get_priority_color(self):
+        """获取优先级对应的颜色"""
+        colors = {
+            'LOW': '#28a745',      # 绿色
+            'MEDIUM': '#ffc107',   # 黄色
+            'HIGH': '#fd7e14',     # 橙色
+            'URGENT': '#dc3545',   # 红色
+        }
+        return colors.get(self.priority, '#6c757d')
+
+    def get_status_color(self):
+        """获取状态对应的颜色"""
+        colors = {
+            'PENDING': '#6c757d',      # 灰色
+            'IN_PROGRESS': '#007bff',  # 蓝色
+            'COMPLETED': '#28a745',    # 绿色
+            'CANCELLED': '#dc3545',    # 红色
+            'ON_HOLD': '#ffc107',      # 黄色
+        }
+        return colors.get(self.status, '#6c757d')
+
+    def can_edit(self, user):
+        """检查用户是否可以编辑此任务"""
+        return user == self.owner or user == self.assigned_to
+
+    def can_delete(self, user):
+        """检查用户是否可以删除此任务"""
+        return user == self.owner
+
+    @classmethod
+    def get_tasks_by_status(cls, user, status):
+        """根据状态获取用户任务"""
+        return cls.objects.filter(
+            models.Q(owner=user) | models.Q(assigned_to=user),
+            status=status
+        )
+
+    @classmethod
+    def get_overdue_tasks(cls, user):
+        """获取用户的过期任务"""
+        return cls.objects.filter(
+            models.Q(owner=user) | models.Q(assigned_to=user),
+            due_date__lt=timezone.now(),
+            status__in=['PENDING', 'IN_PROGRESS', 'ON_HOLD']
+        )
+
+    @classmethod
+    def get_tasks_due_soon(cls, user, days=7):
+        """获取即将到期的任务"""
+        soon = timezone.now() + timezone.timedelta(days=days)
+        return cls.objects.filter(
+            models.Q(owner=user) | models.Q(assigned_to=user),
+            due_date__gte=timezone.now(),
+            due_date__lte=soon,
+            status__in=['PENDING', 'IN_PROGRESS', 'ON_HOLD']
+        )

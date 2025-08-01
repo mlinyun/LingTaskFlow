@@ -40,11 +40,18 @@
 - [x] 2.1.1 实现任务列表API(`GET /api/tasks/`) ✅
   - 支持分页、筛选、搜索、排序
   - 支持软删除任务显示/隐藏
-- [ ] 2.1.2 实现创建任务API(`POST /api/tasks/`)
-- [ ] 2.1.3 实现更新任务API(`PATCH /api/tasks/{id}/`)
-- [ ] 2.1.4 实现软删除任务API(`DELETE /api/tasks/{id}/`)
-- [ ] 2.1.5 实现恢复任务API(`POST /api/tasks/{id}/restore/`)
-- [ ] 2.1.6 实现永久删除API(`DELETE /api/tasks/{id}/permanent/`)
+- [x] 2.1.2 实现创建任务API(`POST /api/tasks/`) ✅
+  - 支持基础任务创建
+  - 支持智能默认值设置
+  - 支持批量创建功能
+  - 支持模板创建功能
+  - 支持快速创建功能
+  - 包含数据验证和创建选项API
+- [x] 2.1.3 实现更新任务API(`PATCH /api/tasks/{id}/`) ✅
+- [x] 2.1.4 实现软删除任务API(`DELETE /api/tasks/{id}/`) ✅
+- [x] 2.1.5 实现恢复任务API(`POST /api/tasks/{id}/restore/`) ✅
+- [x] 2.1.6 实现永久删除API(`DELETE /api/tasks/{id}/permanent/`) ✅
+- [x] 2.1.7 实现任务搜索和过滤API(`GET /api/tasks/search/`) ✅
 
 ### 2.2 任务统计接口
 - [ ] 2.2.1 实现任务统计API(`GET /api/tasks/stats/`)

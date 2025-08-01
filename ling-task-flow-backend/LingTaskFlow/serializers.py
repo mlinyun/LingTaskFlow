@@ -6,6 +6,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.utils import timezone
+from django.db import models
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import UserProfile, Task
 
@@ -382,6 +383,10 @@ class TaskDetailSerializer(serializers.ModelSerializer):
     can_edit = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
     
+    # 重新定义日期字段以确保正确的序列化
+    start_date = serializers.DateTimeField(required=False, allow_null=True)
+    due_date = serializers.DateTimeField(required=False, allow_null=True)
+    
     class Meta:
         model = Task
         fields = (
@@ -504,17 +509,128 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        """创建任务"""
+        """
+        创建任务
+        
+        增强功能：
+        - 自动设置任务所有者
+        - 智能默认值设置
+        - 自动计算优先级
+        - 任务模板支持
+        """
+        from django.utils import timezone
+        
         # 自动设置任务所有者为当前用户
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             validated_data['owner'] = request.user
         
+        # 智能默认值设置
+        if not validated_data.get('created_at'):
+            validated_data['created_at'] = timezone.now()
+        
+        # 如果没有设置开始时间，默认为今天的开始时间
+        if not validated_data.get('start_date'):
+            validated_data['start_date'] = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # 智能优先级推荐
+        if not validated_data.get('priority'):
+            due_date = validated_data.get('due_date')
+            if due_date:
+                # 确保due_date是datetime或date对象
+                if hasattr(due_date, 'date'):
+                    due_date_only = due_date.date()
+                else:
+                    due_date_only = due_date
+                
+                # 计算剩余天数
+                days_until_due = due_date_only - timezone.now().date()
+                if days_until_due.days <= 1:
+                    validated_data['priority'] = 'URGENT'
+                elif days_until_due.days <= 3:
+                    validated_data['priority'] = 'HIGH'
+                elif days_until_due.days <= 7:
+                    validated_data['priority'] = 'MEDIUM'
+                else:
+                    validated_data['priority'] = 'LOW'
+            else:
+                validated_data['priority'] = 'MEDIUM'
+        
+        # 智能分类设置
+        if not validated_data.get('category'):
+            title = validated_data.get('title', '').lower()
+            if any(keyword in title for keyword in ['开发', '编程', '代码', '程序', 'bug', 'feature']):
+                validated_data['category'] = '开发'
+            elif any(keyword in title for keyword in ['测试', 'test', '验证', '检查']):
+                validated_data['category'] = '测试'
+            elif any(keyword in title for keyword in ['文档', '说明', '手册', '教程']):
+                validated_data['category'] = '文档'
+            elif any(keyword in title for keyword in ['设计', 'ui', 'ux', '界面', '原型']):
+                validated_data['category'] = '设计'
+            elif any(keyword in title for keyword in ['会议', '讨论', '沟通', '汇报']):
+                validated_data['category'] = '会议'
+            else:
+                validated_data['category'] = '其他'
+        
+        # 智能工时预估
+        if not validated_data.get('estimated_hours'):
+            priority = validated_data.get('priority', 'MEDIUM')
+            if priority == 'URGENT':
+                validated_data['estimated_hours'] = 2.0
+            elif priority == 'HIGH':
+                validated_data['estimated_hours'] = 4.0
+            elif priority == 'MEDIUM':
+                validated_data['estimated_hours'] = 6.0
+            else:
+                validated_data['estimated_hours'] = 8.0
+        
+        # 自动标签生成
+        if not validated_data.get('tags'):
+            auto_tags = []
+            
+            # 根据优先级添加标签
+            priority = validated_data.get('priority')
+            if priority in ['HIGH', 'URGENT']:
+                auto_tags.append('重要')
+            
+            # 根据截止时间添加标签
+            due_date = validated_data.get('due_date')
+            if due_date:
+                # 确保due_date是datetime或date对象
+                if hasattr(due_date, 'date'):
+                    due_date_only = due_date.date()
+                else:
+                    due_date_only = due_date
+                
+                # 计算剩余天数
+                days_until_due = due_date_only - timezone.now().date()
+                if days_until_due.days <= 1:
+                    auto_tags.append('紧急')
+                elif days_until_due.days <= 3:
+                    auto_tags.append('近期')
+            
+            # 根据分类添加标签
+            category = validated_data.get('category')
+            if category:
+                auto_tags.append(category)
+            
+            if auto_tags:
+                validated_data['tags'] = ', '.join(auto_tags)
+        
+        # 设置任务顺序（新任务排在最前面）
+        if not validated_data.get('order'):
+            owner = validated_data.get('owner')
+            if owner:
+                max_order = Task.objects.filter(owner=owner).aggregate(
+                    max_order=models.Max('order')
+                )['max_order'] or 0
+                validated_data['order'] = max_order + 1
+        
         return super().create(validated_data)
 
 
 class TaskUpdateSerializer(serializers.ModelSerializer):
-    """任务更新序列化器"""
+    """任务更新序列化器（增强版）"""
     tags = serializers.CharField(
         required=False, 
         allow_blank=True,
@@ -544,24 +660,137 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("进度必须在0-100之间")
         return value
     
+    def validate_status(self, value):
+        """验证状态转换"""
+        if value and self.instance:
+            old_status = self.instance.status
+            new_status = value
+            
+            # 定义允许的状态转换
+            allowed_transitions = {
+                'PENDING': ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
+                'IN_PROGRESS': ['COMPLETED', 'ON_HOLD', 'CANCELLED', 'PENDING'],
+                'ON_HOLD': ['PENDING', 'IN_PROGRESS', 'CANCELLED'],
+                'COMPLETED': ['IN_PROGRESS'],  # 已完成的任务可以重新打开
+                'CANCELLED': ['PENDING', 'IN_PROGRESS']  # 已取消的任务可以重新激活
+            }
+            
+            if old_status != new_status and new_status not in allowed_transitions.get(old_status, []):
+                raise serializers.ValidationError(
+                    f"不能从状态 '{old_status}' 直接转换到 '{new_status}'"
+                )
+        
+        return value
+    
     def validate(self, attrs):
-        """交叉验证"""
+        """交叉验证和业务规则检查"""
         start_date = attrs.get('start_date')
         due_date = attrs.get('due_date')
+        status = attrs.get('status')
+        progress = attrs.get('progress')
         
         # 如果没有提供新值，使用实例的现有值
         if start_date is None and hasattr(self.instance, 'start_date'):
             start_date = self.instance.start_date
         if due_date is None and hasattr(self.instance, 'due_date'):
             due_date = self.instance.due_date
+        if status is None and hasattr(self.instance, 'status'):
+            status = self.instance.status
+        if progress is None and hasattr(self.instance, 'progress'):
+            progress = self.instance.progress
         
+        # 时间验证
         if start_date and due_date:
             # 如果due_date是datetime，取其date部分进行比较
             due_date_only = due_date.date() if hasattr(due_date, 'date') else due_date
-            if start_date > due_date_only:
+            start_date_only = start_date.date() if hasattr(start_date, 'date') else start_date
+            if start_date_only > due_date_only:
                 raise serializers.ValidationError("开始时间不能晚于截止时间")
         
+        # 状态和进度一致性检查
+        if status == 'COMPLETED':
+            if progress is not None and progress < 100:
+                # 如果状态设为完成但进度不是100，自动设置为100
+                attrs['progress'] = 100
+        elif status == 'PENDING':
+            if progress is not None and progress > 0:
+                # 如果状态设为待办但有进度，可能需要调整
+                pass
+        
+        # 如果进度设为100但状态不是完成，询问是否自动完成
+        if progress == 100 and status != 'COMPLETED':
+            # 这里可以添加自动完成的逻辑或警告
+            pass
+        
         return attrs
+    
+    def update(self, instance, validated_data):
+        """增强的更新方法"""
+        from django.utils import timezone
+        
+        # 记录更新前的状态（用于历史记录）
+        old_data = {
+            'status': instance.status,
+            'progress': instance.progress,
+            'priority': instance.priority,
+            'assigned_to': instance.assigned_to,
+            'due_date': instance.due_date
+        }
+        
+        # 处理状态变更的特殊逻辑
+        new_status = validated_data.get('status')
+        if new_status and new_status != instance.status:
+            if new_status == 'COMPLETED':
+                validated_data['completed_at'] = timezone.now()
+                validated_data['progress'] = validated_data.get('progress', 100)
+            elif instance.status == 'COMPLETED' and new_status != 'COMPLETED':
+                # 如果从完成状态改为其他状态，清除完成时间
+                validated_data['completed_at'] = None
+        
+        # 处理进度变更
+        new_progress = validated_data.get('progress')
+        if new_progress is not None and new_progress == 100 and instance.status != 'COMPLETED':
+            # 如果进度设为100但状态不是完成，可以选择自动完成
+            if validated_data.get('status') != 'COMPLETED':
+                # 这里可以添加自动完成的逻辑
+                pass
+        
+        # 更新实际工时（如果提供）
+        actual_hours = validated_data.get('actual_hours')
+        if actual_hours is not None:
+            instance.actual_hours = actual_hours
+        
+        # 执行更新
+        updated_instance = super().update(instance, validated_data)
+        
+        # 记录更新历史（可以扩展为独立的历史记录模型）
+        self._log_update_history(updated_instance, old_data, validated_data)
+        
+        return updated_instance
+    
+    def _log_update_history(self, instance, old_data, new_data):
+        """记录更新历史"""
+        changes = []
+        
+        # 检查各个字段的变更
+        for field in ['status', 'progress', 'priority', 'assigned_to', 'due_date']:
+            old_value = old_data.get(field)
+            new_value = new_data.get(field, getattr(instance, field))
+            
+            if old_value != new_value:
+                changes.append({
+                    'field': field,
+                    'old_value': str(old_value) if old_value is not None else None,
+                    'new_value': str(new_value) if new_value is not None else None,
+                })
+        
+        if changes:
+            # 这里可以保存到历史记录模型或日志系统
+            import logging
+            logger = logging.getLogger('task_updates')
+            logger.info(f"任务 {instance.id} 更新记录: {changes}")
+        
+        return changes
 
 
 class TaskStatusUpdateSerializer(serializers.ModelSerializer):

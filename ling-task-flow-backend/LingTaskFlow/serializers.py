@@ -478,14 +478,16 @@ class TaskCreateSerializer(serializers.ModelSerializer):
     
     def validate_due_date(self, value):
         """验证截止时间"""
-        if value and value < timezone.now():
-            raise serializers.ValidationError("截止时间不能早于当前时间")
+        # 注释掉严格的时间验证，允许设置过期任务（用于测试或历史数据）
+        # if value and value < timezone.now():
+        #     raise serializers.ValidationError("截止时间不能早于当前时间")
         return value
     
     def validate_start_date(self, value):
         """验证开始时间"""
-        if value and value < timezone.now().date():
-            raise serializers.ValidationError("开始时间不能早于今天")
+        # 注释掉严格的时间验证，允许灵活设置开始时间
+        # if value and value < timezone.now().date():
+        #     raise serializers.ValidationError("开始时间不能早于今天")
         return value
     
     def validate(self, attrs):

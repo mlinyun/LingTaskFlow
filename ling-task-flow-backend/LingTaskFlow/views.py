@@ -2,23 +2,31 @@
 LingTaskFlow 视图
 处理用户认证和任务管理相关的API请求
 """
-from rest_framework import status, generics
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework import status, generics, viewsets, filters
+from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
+from django.db.models import Q, Count, Case, When, Value, CharField
+from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import UserProfile
+from .models import UserProfile, Task
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
     UserSerializer,
     UserProfileSerializer,
     UserWithProfileSerializer,
+    TaskListSerializer,
+    TaskDetailSerializer,
+    TaskCreateSerializer,
+    TaskUpdateSerializer,
+    TaskStatusUpdateSerializer,
     get_tokens_for_user
 )
+from .permissions import IsOwnerOrReadOnly
 from .utils import (
     rate_limit, 
     registration_rate_limit_key, 
@@ -27,6 +35,7 @@ from .utils import (
     get_enhanced_tokens_for_user,
     get_client_ip
 )
+from .filters import TaskFilter
 
 
 @api_view(['POST'])
@@ -564,3 +573,412 @@ def token_refresh_view(request):
                 'server': '服务器错误'
             }
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    """
+    任务管理ViewSet
+    
+    提供完整的任务CRUD操作以及高级查询功能
+    
+    支持的功能:
+    - 列表查询: GET /api/tasks/
+    - 详细信息: GET /api/tasks/{id}/
+    - 创建任务: POST /api/tasks/
+    - 更新任务: PATCH /api/tasks/{id}/
+    - 删除任务: DELETE /api/tasks/{id}/
+    - 软删除恢复: POST /api/tasks/{id}/restore/
+    - 永久删除: DELETE /api/tasks/{id}/permanent/
+    - 批量操作: POST /api/tasks/bulk_action/
+    - 任务统计: GET /api/tasks/stats/
+    """
+    
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = TaskFilter
+    search_fields = ['title', 'description', 'category', 'tags']
+    ordering_fields = [
+        'created_at', 'updated_at', 'due_date', 'start_date', 
+        'priority', 'status', 'progress', 'title'
+    ]
+    ordering = ['-created_at']  # 默认按创建时间倒序
+    
+    def get_queryset(self):
+        """
+        获取查询集
+        用户只能访问自己拥有或被分配的任务
+        """
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Task.objects.none()
+        
+        # 基础查询：用户拥有或被分配的任务
+        queryset = Task.objects.filter(
+            Q(owner=user) | Q(assigned_to=user)
+        ).distinct()
+        
+        # 处理软删除显示
+        include_deleted = self.request.query_params.get('include_deleted', 'false').lower()
+        if include_deleted == 'true':
+            # 只有任务所有者可以查看自己的软删除任务
+            queryset = Task.all_objects.filter(
+                Q(owner=user) | Q(assigned_to=user)
+            ).distinct()
+        
+        return queryset
+    
+    def get_serializer_class(self):
+        """根据操作类型选择合适的序列化器"""
+        if self.action == 'list':
+            return TaskListSerializer
+        elif self.action == 'create':
+            return TaskCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return TaskUpdateSerializer
+        elif self.action == 'update_status':
+            return TaskStatusUpdateSerializer
+        else:
+            return TaskDetailSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """
+        任务列表API
+        
+        支持的查询参数:
+        - search: 全文搜索
+        - status: 任务状态
+        - priority: 优先级
+        - category: 分类
+        - assigned_to: 分配给谁
+        - is_assigned: 是否已分配
+        - is_overdue: 是否逾期
+        - due_soon: 即将到期天数
+        - include_deleted: 是否包含软删除任务
+        - ordering: 排序字段
+        - page: 页码
+        - page_size: 每页数量
+        """
+        # 应用过滤器
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # 分页
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            
+            # 添加额外的统计信息
+            stats = self._get_list_stats(queryset)
+            
+            response = self.get_paginated_response(serializer.data)
+            response.data['stats'] = stats
+            return response
+        
+        serializer = self.get_serializer(queryset, many=True)
+        stats = self._get_list_stats(queryset)
+        
+        return Response({
+            'results': serializer.data,
+            'stats': stats,
+            'count': len(serializer.data)
+        })
+    
+    def _get_list_stats(self, queryset):
+        """获取任务列表统计信息"""
+        total_count = queryset.count()
+        
+        if total_count == 0:
+            return {
+                'total': 0,
+                'by_status': {},
+                'by_priority': {},
+                'overdue_count': 0,
+                'completed_count': 0
+            }
+        
+        # 状态统计
+        status_stats = queryset.values('status').annotate(
+            count=Count('id')
+        ).order_by('status')
+        
+        # 优先级统计
+        priority_stats = queryset.values('priority').annotate(
+            count=Count('id')
+        ).order_by('priority')
+        
+        # 逾期任务统计
+        from django.utils import timezone
+        overdue_count = queryset.filter(
+            due_date__lt=timezone.now(),
+            status__in=['PENDING', 'IN_PROGRESS', 'ON_HOLD']
+        ).count()
+        
+        # 已完成任务统计
+        completed_count = queryset.filter(status='COMPLETED').count()
+        
+        return {
+            'total': total_count,
+            'by_status': {item['status']: item['count'] for item in status_stats},
+            'by_priority': {item['priority']: item['count'] for item in priority_stats},
+            'overdue_count': overdue_count,
+            'completed_count': completed_count
+        }
+    
+    def create(self, request, *args, **kwargs):
+        """创建任务"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # 设置任务所有者为当前用户
+        task = serializer.save(owner=request.user)
+        
+        # 使用详细序列化器返回完整信息
+        detail_serializer = TaskDetailSerializer(task, context={'request': request})
+        
+        return Response({
+            'success': True,
+            'message': '任务创建成功',
+            'data': detail_serializer.data
+        }, status=status.HTTP_201_CREATED)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """获取任务详情"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        
+        return Response({
+            'success': True,
+            'data': serializer.data
+        })
+    
+    def update(self, request, *args, **kwargs):
+        """更新任务"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # 检查权限
+        if not instance.can_edit(request.user):
+            return Response({
+                'success': False,
+                'message': '没有权限编辑此任务',
+                'error': 'permission_denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        
+        task = serializer.save()
+        
+        # 使用详细序列化器返回更新后的信息
+        detail_serializer = TaskDetailSerializer(task, context={'request': request})
+        
+        return Response({
+            'success': True,
+            'message': '任务更新成功',
+            'data': detail_serializer.data
+        })
+    
+    def destroy(self, request, *args, **kwargs):
+        """软删除任务"""
+        instance = self.get_object()
+        
+        # 检查删除权限
+        if not instance.can_delete(request.user):
+            return Response({
+                'success': False,
+                'message': '没有权限删除此任务',
+                'error': 'permission_denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # 执行软删除
+        instance.soft_delete(user=request.user)
+        
+        return Response({
+            'success': True,
+            'message': '任务已移入回收站',
+            'data': {
+                'id': str(instance.id),
+                'deleted_at': instance.deleted_at,
+                'can_restore': instance.can_be_restored
+            }
+        }, status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """恢复软删除的任务"""
+        try:
+            # 使用all_objects管理器查找包括软删除的任务
+            task = Task.all_objects.get(pk=pk)
+        except Task.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': '任务不存在',
+                'error': 'not_found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # 检查恢复权限
+        if not task.can_restore(request.user):
+            return Response({
+                'success': False,
+                'message': '没有权限恢复此任务',
+                'error': 'permission_denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # 恢复任务
+        task.restore(user=request.user)
+        
+        # 返回恢复后的任务信息
+        serializer = TaskDetailSerializer(task, context={'request': request})
+        
+        return Response({
+            'success': True,
+            'message': '任务恢复成功',
+            'data': serializer.data
+        })
+    
+    @action(detail=True, methods=['delete'])
+    def permanent(self, request, pk=None):
+        """永久删除任务"""
+        try:
+            # 使用all_objects管理器查找包括软删除的任务
+            task = Task.all_objects.get(pk=pk)
+        except Task.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': '任务不存在',
+                'error': 'not_found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # 检查删除权限（只有所有者可以永久删除）
+        if task.owner != request.user:
+            return Response({
+                'success': False,
+                'message': '只有任务所有者可以永久删除任务',
+                'error': 'permission_denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        task_id = str(task.id)
+        task_title = task.title
+        
+        # 执行硬删除
+        task.hard_delete()
+        
+        return Response({
+            'success': True,
+            'message': f'任务 "{task_title}" 已永久删除',
+            'data': {
+                'id': task_id,
+                'title': task_title
+            }
+        }, status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """获取任务统计信息"""
+        user = request.user
+        queryset = self.get_queryset()
+        
+        # 基础统计
+        total_tasks = queryset.count()
+        
+        if total_tasks == 0:
+            return Response({
+                'success': True,
+                'data': {
+                    'total_tasks': 0,
+                    'status_distribution': {},
+                    'priority_distribution': {},
+                    'category_distribution': {},
+                    'progress_summary': {
+                        'average_progress': 0,
+                        'completed_tasks': 0,
+                        'completion_rate': 0
+                    },
+                    'time_summary': {
+                        'overdue_tasks': 0,
+                        'due_today': 0,
+                        'due_this_week': 0
+                    }
+                }
+            })
+        
+        # 状态分布
+        status_dist = queryset.values('status').annotate(
+            count=Count('id')
+        ).order_by('status')
+        
+        # 优先级分布
+        priority_dist = queryset.values('priority').annotate(
+            count=Count('id')
+        ).order_by('priority')
+        
+        # 分类分布
+        category_dist = queryset.exclude(
+            category__isnull=True
+        ).exclude(
+            category__exact=''
+        ).values('category').annotate(
+            count=Count('id')
+        ).order_by('-count')[:10]  # 前10个分类
+        
+        # 进度摘要
+        completed_tasks = queryset.filter(status='COMPLETED').count()
+        completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        
+        # 平均进度（排除已完成任务）
+        active_tasks = queryset.exclude(status__in=['COMPLETED', 'CANCELLED'])
+        avg_progress = 0
+        if active_tasks.exists():
+            from django.db.models import Avg
+            avg_progress = active_tasks.aggregate(
+                avg=Avg('progress')
+            )['avg'] or 0
+        
+        # 时间摘要
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        now = timezone.now()
+        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        week_end = now + timedelta(days=(6 - now.weekday()))
+        
+        overdue_tasks = queryset.filter(
+            due_date__lt=now,
+            status__in=['PENDING', 'IN_PROGRESS', 'ON_HOLD']
+        ).count()
+        
+        due_today = queryset.filter(
+            due_date__date=now.date(),
+            status__in=['PENDING', 'IN_PROGRESS', 'ON_HOLD']
+        ).count()
+        
+        due_this_week = queryset.filter(
+            due_date__lte=week_end,
+            due_date__gte=now,
+            status__in=['PENDING', 'IN_PROGRESS', 'ON_HOLD']
+        ).count()
+        
+        return Response({
+            'success': True,
+            'data': {
+                'total_tasks': total_tasks,
+                'status_distribution': {
+                    item['status']: item['count'] for item in status_dist
+                },
+                'priority_distribution': {
+                    item['priority']: item['count'] for item in priority_dist
+                },
+                'category_distribution': {
+                    item['category']: item['count'] for item in category_dist
+                },
+                'progress_summary': {
+                    'average_progress': round(avg_progress, 1),
+                    'completed_tasks': completed_tasks,
+                    'completion_rate': round(completion_rate, 1)
+                },
+                'time_summary': {
+                    'overdue_tasks': overdue_tasks,
+                    'due_today': due_today,
+                    'due_this_week': due_this_week
+                }
+            }
+        })

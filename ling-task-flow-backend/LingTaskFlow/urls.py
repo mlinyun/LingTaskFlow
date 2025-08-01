@@ -13,8 +13,8 @@ def health_check(request):
 # 创建DRF路由器
 router = DefaultRouter()
 
-# 这里将来会注册ViewSets
-# router.register(r'tasks', TaskViewSet)
+# 注册TaskViewSet
+router.register(r'tasks', views.TaskViewSet, basename='task')
 
 app_name = 'LingTaskFlow'
 

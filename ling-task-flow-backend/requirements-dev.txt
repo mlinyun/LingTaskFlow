@@ -1,0 +1,36 @@
+# =============================================================================
+# LingTaskFlow 开发环境专用依赖
+# =============================================================================
+# 包含开发、测试、调试工具，仅在开发环境使用
+# 使用方式: pip install -r requirements-dev.txt
+
+# 先安装核心依赖
+-r requirements-production.txt
+
+# Development and Debugging Tools
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+
+# Testing Framework
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+factory-boy==3.3.0
+
+# Code Quality Tools
+flake8==6.1.0
+black==23.11.0
+isort==5.12.0
+
+# API Documentation
+drf-yasg==1.21.7
+
+# Documentation
+Sphinx==7.2.6
+
+# Environment Tools
+python-dotenv==1.0.0
+
+# Optional Development Tools
+ipython==8.17.2  # 增强的Python shell
+ipdb==0.13.13    # 调试工具

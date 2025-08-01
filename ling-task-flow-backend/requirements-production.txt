@@ -1,0 +1,42 @@
+# =============================================================================
+# LingTaskFlow 生产环境核心依赖
+# =============================================================================
+# 仅包含运行时必需的核心依赖，用于生产环境部署
+# 使用方式: pip install -r requirements-production.txt
+
+# Core Django Framework
+Django==5.2.4
+asgiref==3.8.1
+sqlparse==0.5.0
+tzdata==2024.1
+
+# Django REST Framework and API
+djangorestframework==3.16.0
+djangorestframework-simplejwt==5.3.0
+PyJWT==2.8.0
+
+# Authentication and Security
+cryptography==41.0.8
+
+# Database Support
+psycopg2-binary==2.9.9
+
+# Filtering and Search
+django-filter==23.5
+
+# CORS Support
+django-cors-headers==4.3.1
+
+# File Upload Support
+Pillow==10.1.0
+
+# Web Server
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Environment Management
+python-decouple==3.8
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3.post1

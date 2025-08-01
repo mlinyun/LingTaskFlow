@@ -1,0 +1,117 @@
+# =============================================================================
+# LingTaskFlow 后端项目依赖列表
+# =============================================================================
+# 项目名称: LingTaskFlow - 凌云任务管理应用
+# 技术栈: Django 5.2 + Django REST Framework + JWT
+# Python版本: 3.11+
+# 更新日期: 2025年8月2日
+# =============================================================================
+
+# Core Django Framework
+Django==5.2.4
+asgiref==3.8.1
+sqlparse==0.5.0
+tzdata==2024.1
+
+# Django REST Framework and API
+djangorestframework==3.16.0
+djangorestframework-simplejwt==5.3.0
+PyJWT==2.8.0
+
+# Authentication and Security
+cryptography==41.0.8
+
+# Database Support
+# SQLite (内置于Python，生产环境可切换到PostgreSQL)
+psycopg2-binary==2.9.9  # PostgreSQL adapter (生产环境使用)
+
+# Filtering and Search
+django-filter==23.5
+
+# CORS Support for Frontend Integration
+django-cors-headers==4.3.1
+
+# File Upload and Media Handling
+Pillow==10.1.0  # 图像处理，支持用户头像上传
+
+# Caching and Performance
+redis==5.0.1  # Redis缓存支持(可选，生产环境推荐)
+
+# API Documentation (可选)
+drf-yasg==1.21.7  # Swagger/OpenAPI 文档生成
+django-extensions==3.2.3  # Django扩展工具
+
+# Development and Testing Tools
+django-debug-toolbar==4.2.0  # 开发调试工具
+
+# Data Validation and Utilities
+python-dateutil==2.8.2  # 日期处理增强
+pytz==2023.3.post1  # 时区支持
+
+# Environment Management
+python-decouple==3.8  # 环境变量管理
+python-dotenv==1.0.0  # .env文件支持
+
+# Logging and Monitoring (生产环境)
+sentry-sdk==1.38.0  # 错误监控
+
+# Task Queue (可选，异步任务处理)
+celery==5.3.4  # 异步任务队列
+django-celery-beat==2.5.0  # 定时任务
+
+# Web Server for Production
+gunicorn==21.2.0  # WSGI HTTP服务器
+whitenoise==6.6.0  # 静态文件服务
+
+# =============================================================================
+# Development Dependencies (开发环境专用)
+# 在生产环境中可以通过 pip install -r requirements.txt --no-deps 排除
+# =============================================================================
+
+# Testing Framework
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0  # 测试覆盖率
+factory-boy==3.3.0  # 测试数据工厂
+
+# Code Quality Tools
+flake8==6.1.0  # 代码风格检查
+black==23.11.0  # 代码格式化
+isort==5.12.0  # import排序
+
+# Documentation
+Sphinx==7.2.6  # 文档生成
+
+# =============================================================================
+# 版本说明
+# =============================================================================
+# Django 5.2.0: 最新稳定版本，支持Python 3.11+
+# DRF 3.14.0: 与Django 5.2兼容的最新版本
+# JWT 5.3.0: 成熟稳定的JWT认证实现
+# django-filter 23.5: 强大的查询过滤功能
+# django-cors-headers 4.3.1: 前后端分离必需的CORS支持
+
+# =============================================================================
+# 安装说明
+# =============================================================================
+# 1. 创建虚拟环境:
+#    conda create -n ling-task-flow-backend python=3.11
+#    conda activate ling-task-flow-backend
+#
+# 2. 安装依赖:
+#    pip install -r requirements.txt
+#
+# 3. 生产环境安装(仅核心依赖):
+#    pip install -r requirements.txt --production
+#
+# 4. 开发环境安装(包含开发工具):
+#    pip install -r requirements.txt
+#    pip install -r requirements-dev.txt  # 如果有单独的开发依赖文件
+
+# =============================================================================
+# 兼容性信息
+# =============================================================================
+# Python: 3.11+ (推荐3.11或3.12)
+# Django: 5.2.0 LTS
+# 数据库: SQLite 3.31+ (开发) / PostgreSQL 12+ (生产)
+# 前端兼容: Vue 3 + Quasar Framework

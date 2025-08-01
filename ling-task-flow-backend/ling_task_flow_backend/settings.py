@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_filters',
+    'drf_spectacular',  # API文档生成
+    'drf_spectacular_sidecar',  # SwaggerUI和Redoc静态文件
     
     # Local apps
     'LingTaskFlow.apps.LingtaskflowConfig',
@@ -168,15 +170,15 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'LingTaskFlow.utils.StandardPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
-    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'EXCEPTION_HANDLER': 'LingTaskFlow.exceptions.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
@@ -238,3 +240,38 @@ CSRF_TRUSTED_ORIGINS = [
 # 开发环境下允许更宽松的安全设置
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
+
+# =============================================================================
+# DRF Spectacular Configuration (API Documentation)
+# =============================================================================
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'LingTaskFlow API',
+    'DESCRIPTION': '凌云任务管理应用 - REST API 接口文档',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
+    'SCHEMA_PATH_PREFIX_TRIM': True,
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_AUTHENTICATION': [],
+    'SWAGGER_UI_DIST': 'SIDECAR',  # 使用本地静态文件
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': False,
+    'DISABLE_ERRORS_AND_WARNINGS': False,
+    'DEFAULT_GENERATOR_CLASS': 'drf_spectacular.generators.SchemaGenerator',
+    'PREPROCESSING_HOOKS': [],
+    'POSTPROCESSING_HOOKS': [],
+    'ENUM_NAME_OVERRIDES': {},
+    'ENUM_GENERATE_CHOICE_DESCRIPTION': True,
+    'SCHEMA_COERCE_PATH_PK': True,
+    'SCHEMA_COERCE_METHOD_NAMES': {
+        'retrieve': 'get',
+        'destroy': 'delete',
+        'create': 'post',
+        'update': 'put',
+        'partial_update': 'patch',
+        'list': 'list',
+    },
+}

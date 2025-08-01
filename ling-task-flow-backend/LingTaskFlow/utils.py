@@ -233,3 +233,197 @@ def get_enhanced_tokens_for_user(user, remember_me=False):
         'expires_in': refresh.access_token.payload.get('exp'),
         'token_type': 'Bearer'
     }
+
+
+# =============================================================================
+# API 响应格式标准化
+# =============================================================================
+
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from typing import Any, Dict, Optional
+from datetime import datetime
+
+
+class StandardAPIResponse:
+    """
+    标准化API响应格式类
+    
+    统一的响应格式：
+    {
+        "success": True/False,
+        "message": "响应消息",
+        "data": {...},  # 成功时的数据
+        "error": {...}, # 失败时的错误信息
+        "meta": {...},  # 元数据，如分页信息
+        "timestamp": "2025-08-02T12:00:00Z"
+    }
+    """
+    
+    @staticmethod
+    def success(
+        data: Any = None, 
+        message: str = "操作成功", 
+        meta: Optional[Dict] = None,
+        status_code: int = status.HTTP_200_OK
+    ) -> Response:
+        """
+        创建成功响应
+        
+        Args:
+            data: 响应数据
+            message: 成功消息
+            meta: 元数据（如分页信息）
+            status_code: HTTP状态码
+            
+        Returns:
+            Response: DRF Response对象
+        """
+        response_data = {
+            "success": True,
+            "message": message,
+            "data": data,
+            "error": None,
+            "meta": meta or {},
+            "timestamp": datetime.now().isoformat()
+        }
+        return Response(response_data, status=status_code)
+    
+    @staticmethod
+    def error(
+        message: str = "操作失败",
+        error_details: Optional[Dict] = None,
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+        error_code: Optional[str] = None
+    ) -> Response:
+        """
+        创建错误响应
+        
+        Args:
+            message: 错误消息
+            error_details: 详细错误信息
+            status_code: HTTP状态码
+            error_code: 业务错误码
+            
+        Returns:
+            Response: DRF Response对象
+        """
+        error_data = {
+            "code": error_code,
+            "details": error_details or {}
+        }
+        
+        response_data = {
+            "success": False,
+            "message": message,
+            "data": None,
+            "error": error_data,
+            "meta": {},
+            "timestamp": datetime.now().isoformat()
+        }
+        return Response(response_data, status=status_code)
+    
+    @staticmethod
+    def paginated_success(
+        data: Any,
+        paginator: PageNumberPagination,
+        message: str = "获取数据成功"
+    ) -> Response:
+        """
+        创建分页成功响应
+        
+        Args:
+            data: 序列化后的数据
+            paginator: 分页器对象
+            message: 成功消息
+            
+        Returns:
+            Response: DRF Response对象
+        """
+        meta = {
+            "pagination": {
+                "page": paginator.page.number,
+                "page_size": paginator.get_page_size(paginator.request),
+                "total_pages": paginator.page.paginator.num_pages,
+                "total_count": paginator.page.paginator.count,
+                "has_next": paginator.page.has_next(),
+                "has_previous": paginator.page.has_previous(),
+                "next_page": paginator.page.next_page_number() if paginator.page.has_next() else None,
+                "previous_page": paginator.page.previous_page_number() if paginator.page.has_previous() else None,
+            }
+        }
+        
+        return StandardAPIResponse.success(
+            data=data,
+            message=message,
+            meta=meta
+        )
+
+
+class StandardPagination(PageNumberPagination):
+    """
+    标准化分页类
+    """
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    page_query_param = 'page'
+    
+    def get_paginated_response(self, data):
+        """
+        返回标准化的分页响应
+        """
+        return StandardAPIResponse.paginated_success(
+            data=data,
+            paginator=self
+        )
+
+
+def format_validation_errors(errors: Dict) -> Dict:
+    """
+    格式化序列化器验证错误
+    
+    Args:
+        errors: 序列化器错误字典
+        
+    Returns:
+        Dict: 格式化后的错误信息
+    """
+    formatted_errors = {}
+    
+    for field, field_errors in errors.items():
+        if isinstance(field_errors, list):
+            formatted_errors[field] = [str(error) for error in field_errors]
+        else:
+            formatted_errors[field] = str(field_errors)
+    
+    return formatted_errors
+
+
+def get_error_message_from_exception(exc) -> str:
+    """
+    从异常对象中获取错误消息
+    
+    Args:
+        exc: 异常对象
+        
+    Returns:
+        str: 错误消息
+    """
+    if hasattr(exc, 'detail'):
+        if isinstance(exc.detail, dict):
+            # 处理字段验证错误
+            messages = []
+            for field, errors in exc.detail.items():
+                if isinstance(errors, list):
+                    for error in errors:
+                        messages.append(f"{field}: {str(error)}")
+                else:
+                    messages.append(f"{field}: {str(errors)}")
+            return "; ".join(messages)
+        elif isinstance(exc.detail, list):
+            return "; ".join([str(error) for error in exc.detail])
+        else:
+            return str(exc.detail)
+    
+    return str(exc)

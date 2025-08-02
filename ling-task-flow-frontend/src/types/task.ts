@@ -3,30 +3,31 @@
  */
 
 export interface Task {
-    id: number;
+    id: string; // 后端使用UUID，应该是字符串
     title: string;
     description?: string;
     status: TaskStatus;
     priority: TaskPriority;
-    tags: string[];
+    tags: string; // 逗号分隔的标签列表
+    tags_list?: string[]; // 后端提供的标签数组（只读）
     due_date?: string;
     completed_at?: string;
     is_deleted: boolean;
     deleted_at?: string;
     created_at: string;
     updated_at: string;
-    user: number;
+    owner: number; // 修正字段名从user改为owner
 }
 
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ON_HOLD';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export interface TaskCreateData {
     title: string;
     description?: string;
     status?: TaskStatus;
     priority?: TaskPriority;
-    tags?: string[];
+    tags?: string; // 改为字符串，逗号分隔的标签列表
     due_date?: string;
 }
 
@@ -35,7 +36,7 @@ export interface TaskUpdateData {
     description?: string;
     status?: TaskStatus;
     priority?: TaskPriority;
-    tags?: string[];
+    tags?: string; // 改为字符串，逗号分隔的标签列表
     due_date?: string;
 }
 

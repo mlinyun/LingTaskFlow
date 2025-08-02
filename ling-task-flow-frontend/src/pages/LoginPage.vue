@@ -171,20 +171,28 @@ const handleLogin = async () => {
             remember_me: rememberMe.value,
         };
 
-        await authStore.login(credentials);
+        const result = await authStore.login(credentials);
 
-        $q.notify({
-            type: 'positive',
-            message: '登录成功！',
-            position: 'top',
-        });
+        if (result.success) {
+            $q.notify({
+                type: 'positive',
+                message: result.message || '登录成功！',
+                position: 'top',
+            });
 
-        await router.push('/');
+            await router.push('/tasks');
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: result.message || '登录失败',
+                position: 'top',
+            });
+        }
     } catch (error) {
         console.error('登录失败:', error);
         $q.notify({
             type: 'negative',
-            message: '登录失败，请检查用户名和密码',
+            message: '登录失败，请检查网络连接',
             position: 'top',
         });
     }
@@ -383,7 +391,7 @@ const goToRegister = async () => {
 
 .login-form {
     .input-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.25rem;
 
         :deep(.modern-input) {
             .q-field__control {

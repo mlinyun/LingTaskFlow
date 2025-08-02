@@ -11,7 +11,7 @@ export const useTaskStore = defineStore('task', () => {
     const pageSize = ref(20);
     const loading = ref(false);
     const searchParams = ref<TaskSearchParams>({});
-    const selectedTasks = ref<number[]>([]);
+    const selectedTasks = ref<string[]>([]);
     const taskStats = ref<TaskStats | null>(null);
 
     // 计算属性
@@ -108,7 +108,7 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 获取单个任务详情
      */
-    const fetchTaskById = async (id: number): Promise<Task> => {
+    const fetchTaskById = async (id: string): Promise<Task> => {
         try {
             const response = await api.get(`/tasks/${id}/`);
 
@@ -152,7 +152,7 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 更新任务
      */
-    const updateTask = async (id: number, taskData: TaskUpdateData): Promise<Task> => {
+    const updateTask = async (id: string, taskData: TaskUpdateData): Promise<Task> => {
         try {
             const response = await api.patch(`/tasks/${id}/`, taskData);
 
@@ -175,7 +175,7 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 软删除任务
      */
-    const deleteTask = async (id: number): Promise<void> => {
+    const deleteTask = async (id: string): Promise<void> => {
         try {
             await api.delete(`/tasks/${id}/`);
 
@@ -194,7 +194,7 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 恢复已删除的任务
      */
-    const restoreTask = async (id: number): Promise<Task> => {
+    const restoreTask = async (id: string): Promise<Task> => {
         try {
             const response = await api.post(`/tasks/${id}/restore/`);
 
@@ -217,7 +217,7 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 永久删除任务
      */
-    const permanentDeleteTask = async (id: number): Promise<void> => {
+    const permanentDeleteTask = async (id: string): Promise<void> => {
         try {
             await api.delete(`/tasks/${id}/permanent/`);
 
@@ -237,7 +237,7 @@ export const useTaskStore = defineStore('task', () => {
      * 批量操作任务
      */
     const batchUpdateTasks = async (
-        taskIds: number[],
+        taskIds: string[],
         updateData: Partial<TaskUpdateData>,
     ): Promise<void> => {
         try {
@@ -249,7 +249,7 @@ export const useTaskStore = defineStore('task', () => {
         }
     };
 
-    const batchDeleteTasks = async (taskIds: number[]): Promise<void> => {
+    const batchDeleteTasks = async (taskIds: string[]): Promise<void> => {
         try {
             const promises = taskIds.map(id => deleteTask(id));
             await Promise.all(promises);
@@ -329,7 +329,7 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 选择/取消选择任务
      */
-    const toggleTaskSelection = (taskId: number) => {
+    const toggleTaskSelection = (taskId: string) => {
         const index = selectedTasks.value.indexOf(taskId);
         if (index === -1) {
             selectedTasks.value.push(taskId);

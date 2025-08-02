@@ -3,13 +3,14 @@
         class="task-card"
         :class="{
             'task-card--selected': selected,
-            'task-card--completed': task.status === 'completed',
+            'task-card--completed': task.status === 'COMPLETED',
+            [`priority-${task.priority.toLowerCase()}`]: true,
         }"
         flat
         bordered
     >
         <!-- 任务头部 -->
-        <q-card-section class="task-header">
+        <div class="task-header">
             <div class="task-header-content">
                 <q-checkbox
                     :model-value="selected"
@@ -17,53 +18,64 @@
                     class="task-checkbox"
                 />
 
-                <div class="task-priority">
-                    <q-chip
-                        :color="getPriorityColor(task.priority)"
-                        text-color="white"
-                        size="sm"
-                        :icon="getPriorityIcon(task.priority)"
-                    >
-                        {{ getPriorityLabel(task.priority) }}
-                    </q-chip>
-                </div>
+                <!-- 只读优先级显示 -->
+                <q-chip
+                    :color="getPriorityColor(task.priority)"
+                    :icon="getPriorityIcon(task.priority)"
+                    text-color="white"
+                    size="sm"
+                    class="priority-readonly"
+                    dense
+                >
+                    {{ getPriorityLabel(task.priority) }}
+                </q-chip>
 
+                <!-- 任务操作菜单 -->
                 <div class="task-actions">
-                    <q-btn flat dense round icon="more_vert" color="grey-6" size="sm">
-                        <q-menu anchor="bottom right" self="top right">
-                            <q-list dense>
-                                <q-item clickable v-close-popup @click="$emit('edit', task)">
-                                    <q-item-section avatar>
-                                        <q-icon name="edit" size="xs" />
-                                    </q-item-section>
-                                    <q-item-section>编辑</q-item-section>
-                                </q-item>
-
-                                <q-item clickable v-close-popup @click="$emit('duplicate', task)">
-                                    <q-item-section avatar>
-                                        <q-icon name="content_copy" size="xs" />
-                                    </q-item-section>
-                                    <q-item-section>复制</q-item-section>
-                                </q-item>
-
-                                <q-separator />
-
-                                <q-item clickable v-close-popup @click="$emit('delete', task)">
-                                    <q-item-section avatar>
-                                        <q-icon name="delete" size="xs" color="negative" />
-                                    </q-item-section>
-                                    <q-item-section class="text-negative">删除</q-item-section>
-                                </q-item>
-                            </q-list>
-                        </q-menu>
-                    </q-btn>
+                    <q-btn-dropdown
+                        flat
+                        dense
+                        round
+                        icon="more_vert"
+                        size="sm"
+                        no-caps
+                        class="text-grey-6"
+                    >
+                        <q-list dense>
+                            <q-item clickable v-close-popup @click="emit('edit', task)">
+                                <q-item-section avatar>
+                                    <q-icon name="edit" size="xs" />
+                                </q-item-section>
+                                <q-item-section>编辑</q-item-section>
+                            </q-item>
+                            <q-item clickable v-close-popup @click="emit('view', task)">
+                                <q-item-section avatar>
+                                    <q-icon name="visibility" size="xs" />
+                                </q-item-section>
+                                <q-item-section>查看</q-item-section>
+                            </q-item>
+                            <q-item clickable v-close-popup @click="emit('duplicate', task)">
+                                <q-item-section avatar>
+                                    <q-icon name="content_copy" size="xs" />
+                                </q-item-section>
+                                <q-item-section>复制</q-item-section>
+                            </q-item>
+                            <q-separator />
+                            <q-item clickable v-close-popup @click="emit('delete', task)">
+                                <q-item-section avatar>
+                                    <q-icon name="delete" size="xs" color="negative" />
+                                </q-item-section>
+                                <q-item-section class="text-negative">删除</q-item-section>
+                            </q-item>
+                        </q-list>
+                    </q-btn-dropdown>
                 </div>
             </div>
-        </q-card-section>
+        </div>
 
         <!-- 任务内容 -->
-        <q-card-section class="task-content">
-            <div class="task-title" @click="$emit('view', task)">
+        <div class="task-content">
+            <div class="task-title" @click="emit('view', task)">
                 {{ task.title }}
             </div>
 
@@ -72,34 +84,25 @@
             </div>
 
             <!-- 任务标签 -->
-            <div v-if="task.tags && task.tags.length > 0" class="task-tags">
+            <div v-if="getTaskTags(task.tags).length > 0" class="task-tags">
                 <q-chip
-                    v-for="tag in task.tags"
+                    v-for="tag in getTaskTags(task.tags)"
                     :key="tag"
                     size="sm"
-                    outline
-                    color="blue-grey-6"
+                    color="grey-3"
+                    text-color="grey-8"
                     class="task-tag"
+                    dense
                 >
                     {{ tag }}
                 </q-chip>
             </div>
-        </q-card-section>
+        </div>
 
-        <!-- 任务底部信息 -->
-        <q-card-section class="task-footer">
+        <!-- 任务元信息 -->
+        <div class="task-footer">
             <div class="task-meta">
-                <!-- 状态 -->
-                <q-chip
-                    :color="getStatusColor(task.status)"
-                    text-color="white"
-                    size="sm"
-                    :icon="getStatusIcon(task.status)"
-                >
-                    {{ getStatusLabel(task.status) }}
-                </q-chip>
-
-                <!-- 到期时间 -->
+                <!-- 截止日期 -->
                 <div
                     v-if="task.due_date"
                     class="task-due-date"
@@ -108,48 +111,95 @@
                     <q-icon :name="getDueDateIcon(task.due_date)" size="xs" />
                     <span>{{ formatDueDate(task.due_date) }}</span>
                 </div>
+
+                <!-- 任务状态 -->
+                <q-chip
+                    :color="getStatusColor(task.status)"
+                    :icon="getStatusIcon(task.status)"
+                    text-color="white"
+                    size="sm"
+                    dense
+                >
+                    {{ getStatusLabel(task.status) }}
+                </q-chip>
+
+                <!-- 负责人 -->
+                <div class="task-assignee">
+                    <q-avatar size="24px" color="primary" text-color="white">
+                        {{ task.owner ? task.owner.toString().charAt(0).toUpperCase() : 'U' }}
+                    </q-avatar>
+                </div>
             </div>
 
+            <!-- 时间戳 -->
             <div class="task-timestamps">
-                <span class="timestamp" :title="`创建时间: ${formatDateTime(task.created_at)}`">
-                    {{ formatRelativeTime(task.created_at) }}
+                <span class="timestamp" :title="formatDateTime(task.created_at)">
+                    创建于 {{ formatRelativeTime(task.created_at) }}
                 </span>
                 <span
                     v-if="task.updated_at !== task.created_at"
                     class="timestamp"
-                    :title="`更新时间: ${formatDateTime(task.updated_at)}`"
+                    :title="formatDateTime(task.updated_at)"
                 >
-                    · {{ formatRelativeTime(task.updated_at) }}
+                    • 更新于 {{ formatRelativeTime(task.updated_at) }}
                 </span>
             </div>
-        </q-card-section>
+        </div>
 
-        <!-- 快速状态切换按钮 -->
-        <q-card-actions v-if="task.status !== 'completed'" class="task-quick-actions">
-            <q-btn
-                flat
-                dense
-                :color="task.status === 'in_progress' ? 'orange' : 'blue'"
-                :icon="task.status === 'in_progress' ? 'pause' : 'play_arrow'"
-                :label="task.status === 'in_progress' ? '暂停' : '开始'"
-                size="sm"
-                @click="toggleStatus"
-            />
+        <!-- 任务快速操作 -->
+        <div
+            v-if="getPrimaryAction(task.status) || getSecondaryActions(task.status).length > 0"
+            class="task-quick-actions"
+            :class="{ loading: statusLoading }"
+        >
+            <div class="status-flow-buttons">
+                <!-- 主要操作按钮 -->
+                <q-btn
+                    v-if="getPrimaryAction(task.status)"
+                    :color="getPrimaryAction(task.status)?.color"
+                    :icon="getPrimaryAction(task.status)?.icon"
+                    :label="getPrimaryAction(task.status)?.label"
+                    :loading="statusLoading"
+                    class="primary-action-btn"
+                    unelevated
+                    no-caps
+                    @click="handlePrimaryAction"
+                >
+                    <q-tooltip>{{ getPrimaryAction(task.status)?.tooltip }}</q-tooltip>
+                </q-btn>
 
-            <q-btn
-                flat
-                dense
-                color="positive"
-                icon="check"
-                label="完成"
-                size="sm"
-                @click="markCompleted"
-            />
-        </q-card-actions>
+                <!-- 次要操作按钮 -->
+                <div class="secondary-actions">
+                    <q-btn
+                        v-for="action in getSecondaryActions(task.status)"
+                        :key="action.status"
+                        :icon="action.icon"
+                        :color="action.color"
+                        flat
+                        round
+                        size="sm"
+                        class="secondary-action-btn"
+                        @click="handleStatusChange(action.status)"
+                    >
+                        <q-tooltip>{{ action.tooltip }}</q-tooltip>
+                    </q-btn>
+                </div>
+            </div>
+
+            <!-- 状态进度指示器 -->
+            <div class="status-flow-indicator">
+                <div
+                    class="status-progress"
+                    :class="`bg-${getStatusColor(task.status)}`"
+                    :style="{ width: `${getStatusProgress(task.status) * 100}%` }"
+                ></div>
+            </div>
+        </div>
     </q-card>
 </template>
 
 <script setup lang="ts">
+import { ref, withDefaults } from 'vue';
 import type { Task, TaskStatus, TaskPriority } from '../types';
 
 interface Props {
@@ -158,12 +208,12 @@ interface Props {
 }
 
 interface Emits {
-    (e: 'toggle-selection', taskId: number): void;
+    (e: 'toggle-selection', taskId: string): void;
     (e: 'edit', task: Task): void;
     (e: 'delete', task: Task): void;
     (e: 'duplicate', task: Task): void;
     (e: 'view', task: Task): void;
-    (e: 'status-change', taskId: number, status: TaskStatus): void;
+    (e: 'status-change', taskId: string, status: TaskStatus): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -172,63 +222,207 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
+// 状态管理
+const statusLoading = ref(false);
+
+// 状态流转配置
+interface StatusAction {
+    status: TaskStatus;
+    label: string;
+    icon: string;
+    color: string;
+    tooltip: string;
+}
+
+// 获取主要操作按钮
+const getPrimaryAction = (status: TaskStatus): StatusAction | null => {
+    const actions: Record<TaskStatus, StatusAction | null> = {
+        PENDING: {
+            status: 'IN_PROGRESS',
+            label: '开始',
+            icon: 'play_arrow',
+            color: 'blue',
+            tooltip: '开始处理这个任务',
+        },
+        IN_PROGRESS: {
+            status: 'COMPLETED',
+            label: '完成',
+            icon: 'check',
+            color: 'positive',
+            tooltip: '标记任务为已完成',
+        },
+        COMPLETED: null,
+        CANCELLED: {
+            status: 'PENDING',
+            label: '重新开始',
+            icon: 'refresh',
+            color: 'blue',
+            tooltip: '重新激活这个任务',
+        },
+        ON_HOLD: {
+            status: 'IN_PROGRESS',
+            label: '继续',
+            icon: 'play_arrow',
+            color: 'blue',
+            tooltip: '继续处理这个任务',
+        },
+    };
+    return actions[status];
+};
+
+// 获取次要操作按钮
+const getSecondaryActions = (status: TaskStatus): StatusAction[] => {
+    const allActions: StatusAction[] = [
+        {
+            status: 'PENDING',
+            label: '待处理',
+            icon: 'schedule',
+            color: 'grey',
+            tooltip: '标记为待处理',
+        },
+        {
+            status: 'IN_PROGRESS',
+            label: '进行中',
+            icon: 'play_circle',
+            color: 'blue',
+            tooltip: '标记为进行中',
+        },
+        {
+            status: 'ON_HOLD',
+            label: '暂停',
+            icon: 'pause',
+            color: 'orange',
+            tooltip: '暂停这个任务',
+        },
+        {
+            status: 'CANCELLED',
+            label: '取消',
+            icon: 'cancel',
+            color: 'negative',
+            tooltip: '取消这个任务',
+        },
+    ];
+
+    // 根据当前状态过滤可用操作
+    return allActions
+        .filter(action => {
+            if (action.status === status) return false;
+
+            // 业务规则：已完成的任务只能取消或重新开始
+            if (status === 'COMPLETED') {
+                return action.status === 'CANCELLED';
+            }
+
+            // 已取消的任务不显示次要操作
+            if (status === 'CANCELLED') {
+                return false;
+            }
+
+            return true;
+        })
+        .slice(0, 2); // 最多显示2个次要操作
+};
+
+// 获取状态进度值
+const getStatusProgress = (status: TaskStatus): number => {
+    const progressMap: Record<TaskStatus, number> = {
+        PENDING: 0,
+        IN_PROGRESS: 0.5,
+        ON_HOLD: 0.3,
+        COMPLETED: 1,
+        CANCELLED: 0,
+    };
+    return progressMap[status];
+};
+
+// 处理主要操作
+const handlePrimaryAction = async () => {
+    const action = getPrimaryAction(props.task.status);
+    if (action) {
+        await handleStatusChange(action.status);
+    }
+};
+
+// 处理状态变更
+const handleStatusChange = async (newStatus: TaskStatus) => {
+    statusLoading.value = true;
+    try {
+        emit('status-change', props.task.id, newStatus);
+        // 模拟API调用延迟
+        await new Promise(resolve => setTimeout(resolve, 300));
+    } finally {
+        statusLoading.value = false;
+    }
+};
+
 // 辅助方法
+const getTaskTags = (tagsString: string): string[] => {
+    if (!tagsString || typeof tagsString !== 'string') return [];
+    return tagsString
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+};
+
 const getStatusColor = (status: TaskStatus): string => {
     const colors = {
-        pending: 'orange',
-        in_progress: 'blue',
-        completed: 'green',
-        cancelled: 'grey',
+        PENDING: 'orange',
+        IN_PROGRESS: 'blue',
+        COMPLETED: 'green',
+        CANCELLED: 'grey',
+        ON_HOLD: 'purple',
     };
     return colors[status];
 };
 
 const getStatusLabel = (status: TaskStatus): string => {
     const labels = {
-        pending: '待处理',
-        in_progress: '进行中',
-        completed: '已完成',
-        cancelled: '已取消',
+        PENDING: '待处理',
+        IN_PROGRESS: '进行中',
+        COMPLETED: '已完成',
+        CANCELLED: '已取消',
+        ON_HOLD: '暂停',
     };
     return labels[status];
 };
 
 const getStatusIcon = (status: TaskStatus): string => {
     const icons = {
-        pending: 'schedule',
-        in_progress: 'play_arrow',
-        completed: 'check_circle',
-        cancelled: 'cancel',
+        PENDING: 'schedule',
+        IN_PROGRESS: 'play_arrow',
+        COMPLETED: 'check_circle',
+        CANCELLED: 'cancel',
+        ON_HOLD: 'pause',
     };
     return icons[status];
 };
 
 const getPriorityColor = (priority: TaskPriority): string => {
     const colors = {
-        low: 'green',
-        medium: 'orange',
-        high: 'red',
-        urgent: 'purple',
+        LOW: 'green',
+        MEDIUM: 'orange',
+        HIGH: 'red',
+        URGENT: 'purple',
     };
     return colors[priority];
 };
 
 const getPriorityLabel = (priority: TaskPriority): string => {
     const labels = {
-        low: '低',
-        medium: '中',
-        high: '高',
-        urgent: '紧急',
+        LOW: '低',
+        MEDIUM: '中',
+        HIGH: '高',
+        URGENT: '紧急',
     };
     return labels[priority];
 };
 
 const getPriorityIcon = (priority: TaskPriority): string => {
     const icons = {
-        low: 'arrow_downward',
-        medium: 'remove',
-        high: 'arrow_upward',
-        urgent: 'priority_high',
+        LOW: 'arrow_downward',
+        MEDIUM: 'remove',
+        HIGH: 'arrow_upward',
+        URGENT: 'priority_high',
     };
     return icons[priority];
 };
@@ -287,26 +481,58 @@ const formatRelativeTime = (dateStr: string): string => {
 
     return date.toLocaleDateString('zh-CN');
 };
-
-// 方法
-const toggleStatus = () => {
-    const newStatus: TaskStatus = props.task.status === 'in_progress' ? 'pending' : 'in_progress';
-    emit('status-change', props.task.id, newStatus);
-};
-
-const markCompleted = () => {
-    emit('status-change', props.task.id, 'completed');
-};
 </script>
 
 <style scoped lang="scss">
 .task-card {
     transition: all 0.2s ease;
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+
+    // 优先级顶部边框指示器
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+
+    &.priority-low::before {
+        background: linear-gradient(90deg, #4caf50, #66bb6a);
+    }
+
+    &.priority-medium::before {
+        background: linear-gradient(90deg, #2196f3, #42a5f5);
+    }
+
+    &.priority-high::before {
+        background: linear-gradient(90deg, #ff9800, #ffb74d);
+    }
+
+    &.priority-urgent::before {
+        background: linear-gradient(90deg, #f44336, #ef5350);
+        height: 6px;
+        box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+        animation: urgentPulse 2s infinite;
+    }
 
     &:hover {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transform: translateY(-1px);
+
+        &.priority-urgent {
+            box-shadow: 0 4px 16px rgba(244, 67, 54, 0.2);
+            border-color: rgba(244, 67, 54, 0.2);
+        }
+
+        &.priority-high {
+            border-color: rgba(255, 152, 0, 0.2);
+        }
     }
 
     &--selected {
@@ -341,6 +567,7 @@ const markCompleted = () => {
 
             .task-actions {
                 flex-shrink: 0;
+                margin-left: auto;
             }
         }
     }
@@ -440,11 +667,143 @@ const markCompleted = () => {
     }
 
     .task-quick-actions {
-        padding: 0.5rem 1rem;
-        border-top: 1px solid #f3f4f6;
-        background: #fafafa;
-        display: flex;
-        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+        position: relative;
+
+        .status-flow-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+
+            .primary-action-btn {
+                font-weight: 600;
+                border-radius: 8px;
+                padding: 0.5rem 1rem;
+                transition: all 0.2s ease;
+                text-transform: none;
+                letter-spacing: 0.5px;
+
+                &:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+
+                &.bg-primary {
+                    background: linear-gradient(135deg, #1976d2, #42a5f5);
+
+                    &:hover {
+                        background: linear-gradient(135deg, #1565c0, #1e88e5);
+                    }
+                }
+
+                &.bg-positive {
+                    background: linear-gradient(135deg, #2e7d32, #66bb6a);
+
+                    &:hover {
+                        background: linear-gradient(135deg, #1b5e20, #4caf50);
+                    }
+                }
+
+                &.bg-warning {
+                    background: linear-gradient(135deg, #f57c00, #ffb74d);
+
+                    &:hover {
+                        background: linear-gradient(135deg, #ef6c00, #ff9800);
+                    }
+                }
+            }
+
+            .secondary-actions {
+                display: flex;
+                gap: 0.25rem;
+                margin-left: auto;
+
+                .secondary-action-btn {
+                    border-radius: 50%;
+                    width: 36px;
+                    height: 36px;
+                    min-width: 36px;
+                    transition: all 0.2s ease;
+                    border: 1px solid rgba(0, 0, 0, 0.08);
+
+                    &:hover {
+                        transform: scale(1.1);
+                        background: rgba(0, 0, 0, 0.05);
+                        border-color: rgba(0, 0, 0, 0.12);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .q-icon {
+                        font-size: 18px;
+                    }
+                }
+            }
+        }
+
+        .status-flow-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.05);
+
+            .status-progress {
+                height: 100%;
+                transition: all 0.3s ease;
+                border-radius: 0 0 12px 12px;
+
+                &.bg-grey-4 {
+                    background: linear-gradient(90deg, #e0e0e0, #f5f5f5);
+                }
+
+                &.bg-orange {
+                    background: linear-gradient(90deg, #ff9800, #ffb74d);
+                }
+
+                &.bg-green {
+                    background: linear-gradient(90deg, #4caf50, #66bb6a);
+                }
+            }
+        }
+
+        // 加载状态样式
+        &.loading {
+            .primary-action-btn {
+                opacity: 0.7;
+                cursor: not-allowed;
+
+                &:hover {
+                    transform: none;
+                    box-shadow: none;
+                }
+            }
+
+            .secondary-action-btn {
+                opacity: 0.6;
+                cursor: not-allowed;
+
+                &:hover {
+                    transform: none;
+                    background: transparent;
+                    box-shadow: none;
+                }
+            }
+        }
+    }
+
+    .task-priority {
+        .priority-readonly {
+            cursor: default;
+
+            &:hover {
+                transform: none;
+                box-shadow: none;
+            }
+        }
     }
 }
 
@@ -471,9 +830,29 @@ const markCompleted = () => {
         }
 
         .task-quick-actions {
-            flex-direction: column;
-            gap: 0.25rem;
+            .status-flow-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+
+                .secondary-actions {
+                    margin-left: 0;
+                    justify-content: center;
+                }
+            }
         }
+    }
+}
+
+// 紧急任务脉动动画
+@keyframes urgentPulse {
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 16px rgba(244, 67, 54, 0.6);
     }
 }
 </style>

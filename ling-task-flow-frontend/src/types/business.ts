@@ -5,19 +5,19 @@
 
 // 任务优先级枚举
 export enum TaskPriority {
-    LOW = 'low',
-    MEDIUM = 'medium',
-    HIGH = 'high',
-    URGENT = 'urgent',
+    LOW = 'LOW',
+    MEDIUM = 'MEDIUM',
+    HIGH = 'HIGH',
+    URGENT = 'URGENT',
 }
 
 // 任务状态枚举
 export enum TaskStatus {
-    TODO = 'todo',
-    IN_PROGRESS = 'in_progress',
-    REVIEW = 'review',
-    COMPLETED = 'completed',
-    CANCELLED = 'cancelled',
+    PENDING = 'PENDING',
+    IN_PROGRESS = 'IN_PROGRESS',
+    COMPLETED = 'COMPLETED',
+    CANCELLED = 'CANCELLED',
+    ON_HOLD = 'ON_HOLD',
 }
 
 // 项目状态枚举
@@ -25,7 +25,7 @@ export enum ProjectStatus {
     PLANNING = 'planning',
     ACTIVE = 'active',
     ON_HOLD = 'on_hold',
-    COMPLETED = 'completed',
+    COMPLETED = 'COMPLETED',
     ARCHIVED = 'archived',
 }
 

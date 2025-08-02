@@ -14,7 +14,7 @@
                         label="新建任务"
                         unelevated
                         rounded
-                        @click="showCreateDialog = true"
+                        @click="openCreateDialog"
                     />
                 </div>
             </div>
@@ -127,7 +127,37 @@
                     map-options
                     style="min-width: 120px"
                     @update:model-value="handleFilterChange"
-                />
+                >
+                    <template v-slot:prepend>
+                        <q-icon name="priority_high" color="grey-6" />
+                    </template>
+                    <template v-slot:option="{ itemProps, opt }">
+                        <q-item v-bind="itemProps">
+                            <q-item-section avatar>
+                                <q-icon
+                                    :name="getPriorityIcon(opt.value)"
+                                    :color="getPriorityColor(opt.value)"
+                                    size="sm"
+                                />
+                            </q-item-section>
+                            <q-item-section>
+                                <q-item-label :class="`text-${getPriorityColor(opt.value)}`">
+                                    {{ opt.label }}
+                                </q-item-label>
+                            </q-item-section>
+                        </q-item>
+                    </template>
+                    <template v-slot:selected-item v-if="priorityFilter">
+                        <q-chip
+                            :color="getPriorityColor(priorityFilter)"
+                            text-color="white"
+                            size="sm"
+                            :icon="getPriorityIcon(priorityFilter)"
+                        >
+                            {{ getPriorityLabel(priorityFilter) }}
+                        </q-chip>
+                    </template>
+                </q-select>
 
                 <!-- 排序选择 -->
                 <q-select
@@ -230,7 +260,7 @@
                                 label="创建任务"
                                 unelevated
                                 rounded
-                                @click="showCreateDialog = true"
+                                @click="openCreateDialog"
                             />
                         </div>
                     </div>
@@ -268,28 +298,8 @@
             />
         </div>
 
-        <!-- 临时创建任务对话框 -->
-        <q-dialog v-model="showCreateDialog">
-            <q-card style="min-width: 400px">
-                <q-card-section>
-                    <div class="text-h6">创建新任务</div>
-                </q-card-section>
-                <q-card-section>
-                    <q-input v-model="newTaskTitle" label="任务标题" outlined />
-                    <q-input
-                        v-model="newTaskDescription"
-                        label="任务描述"
-                        type="textarea"
-                        outlined
-                        class="q-mt-md"
-                    />
-                </q-card-section>
-                <q-card-actions align="right">
-                    <q-btn flat label="取消" v-close-popup />
-                    <q-btn color="primary" label="创建" @click="createTask" />
-                </q-card-actions>
-            </q-card>
-        </q-dialog>
+        <!-- 任务创建/编辑对话框 -->
+        <TaskDialog v-model="showTaskDialog" :task="selectedTask" @saved="onTaskSaved" />
     </q-page>
 </template>
 
@@ -298,6 +308,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useTaskStore } from 'stores/task';
 import TaskCard from 'components/TaskCard.vue';
+import TaskDialog from 'components/TaskDialog.vue';
 import type { Task, TaskStatus, TaskPriority, TaskSearchParams } from '../types';
 
 const $q = useQuasar();
@@ -309,23 +320,23 @@ const statusFilter = ref<TaskStatus | null>(null);
 const priorityFilter = ref<TaskPriority | null>(null);
 const sortBy = ref('created_at');
 const viewMode = ref<'list' | 'grid'>('list');
-const showCreateDialog = ref(false);
-const newTaskTitle = ref('');
-const newTaskDescription = ref('');
+const showTaskDialog = ref(false);
+const selectedTask = ref<Task | null>(null);
 
 // 筛选选项
 const statusOptions = [
-    { label: '待处理', value: 'pending' },
-    { label: '进行中', value: 'in_progress' },
-    { label: '已完成', value: 'completed' },
-    { label: '已取消', value: 'cancelled' },
+    { label: '待处理', value: 'PENDING' },
+    { label: '进行中', value: 'IN_PROGRESS' },
+    { label: '已完成', value: 'COMPLETED' },
+    { label: '已取消', value: 'CANCELLED' },
+    { label: '暂停', value: 'ON_HOLD' },
 ];
 
 const priorityOptions = [
-    { label: '低', value: 'low' },
-    { label: '中', value: 'medium' },
-    { label: '高', value: 'high' },
-    { label: '紧急', value: 'urgent' },
+    { label: '低', value: 'LOW' },
+    { label: '中', value: 'MEDIUM' },
+    { label: '高', value: 'HIGH' },
+    { label: '紧急', value: 'URGENT' },
 ];
 
 const sortOptions = [
@@ -360,15 +371,15 @@ const indeterminate = computed(() => {
 
 // 统计方法
 const getPendingTasksCount = () => {
-    return taskStore.tasks.filter((task: Task) => task.status === 'pending').length;
+    return taskStore.tasks.filter((task: Task) => task.status === 'PENDING').length;
 };
 
 const getInProgressTasksCount = () => {
-    return taskStore.tasks.filter((task: Task) => task.status === 'in_progress').length;
+    return taskStore.tasks.filter((task: Task) => task.status === 'IN_PROGRESS').length;
 };
 
 const getCompletedTasksCount = () => {
-    return taskStore.tasks.filter((task: Task) => task.status === 'completed').length;
+    return taskStore.tasks.filter((task: Task) => task.status === 'COMPLETED').length;
 };
 
 // 方法
@@ -434,12 +445,8 @@ const handlePageChange = (page: number) => {
     void loadTasks();
 };
 
-const handleEditTask = () => {
-    $q.notify({
-        type: 'info',
-        message: '编辑功能正在开发中...',
-        position: 'top',
-    });
+const handleEditTask = (task: Task) => {
+    openEditDialog(task);
 };
 
 const handleDuplicateTask = (task: Task) => {
@@ -458,7 +465,7 @@ const handleViewTask = (task: Task) => {
     });
 };
 
-const handleStatusChange = async (taskId: number, status: TaskStatus) => {
+const handleStatusChange = async (taskId: string, status: TaskStatus) => {
     try {
         await taskStore.updateTask(taskId, { status });
         $q.notify({
@@ -503,7 +510,7 @@ const handleDeleteTask = (task: Task) => {
 
 const batchMarkComplete = async () => {
     try {
-        await taskStore.batchUpdateTasks(taskStore.selectedTasks, { status: 'completed' });
+        await taskStore.batchUpdateTasks(taskStore.selectedTasks, { status: 'COMPLETED' });
         taskStore.clearSelection();
         $q.notify({
             type: 'positive',
@@ -546,40 +553,52 @@ const batchDelete = () => {
     });
 };
 
-const createTask = async () => {
-    if (!newTaskTitle.value.trim()) {
-        $q.notify({
-            type: 'negative',
-            message: '请输入任务标题',
-            position: 'top',
-        });
-        return;
-    }
+// 对话框操作
+const openCreateDialog = () => {
+    selectedTask.value = null;
+    showTaskDialog.value = true;
+};
 
-    try {
-        const taskData = {
-            title: newTaskTitle.value,
-            ...(newTaskDescription.value && { description: newTaskDescription.value }),
-        };
+const openEditDialog = (task: Task) => {
+    selectedTask.value = task;
+    showTaskDialog.value = true;
+};
 
-        await taskStore.createTask(taskData);
+const onTaskSaved = (task: Task) => {
+    // 任务已保存，对话框会自动关闭
+    // TaskStore 已经处理了数据更新
+    console.log('任务已保存:', task.title);
+};
 
-        newTaskTitle.value = '';
-        newTaskDescription.value = '';
-        showCreateDialog.value = false;
+// 优先级工具函数
+const getPriorityColor = (priority: TaskPriority): string => {
+    const colors: Record<TaskPriority, string> = {
+        LOW: 'green',
+        MEDIUM: 'blue',
+        HIGH: 'orange',
+        URGENT: 'red',
+    };
+    return colors[priority] || 'blue';
+};
 
-        $q.notify({
-            type: 'positive',
-            message: '任务创建成功',
-            position: 'top',
-        });
-    } catch {
-        $q.notify({
-            type: 'negative',
-            message: '创建任务失败',
-            position: 'top',
-        });
-    }
+const getPriorityLabel = (priority: TaskPriority): string => {
+    const labels: Record<TaskPriority, string> = {
+        LOW: '低',
+        MEDIUM: '中',
+        HIGH: '高',
+        URGENT: '紧急',
+    };
+    return labels[priority] || '中';
+};
+
+const getPriorityIcon = (priority: TaskPriority): string => {
+    const icons: Record<TaskPriority, string> = {
+        LOW: 'keyboard_arrow_down',
+        MEDIUM: 'remove',
+        HIGH: 'keyboard_arrow_up',
+        URGENT: 'priority_high',
+    };
+    return icons[priority] || 'remove';
 };
 
 // 组件挂载时加载数据

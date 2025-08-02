@@ -453,7 +453,7 @@ const goToLogin = async () => {
 
 .register-form {
     .input-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.25rem;
 
         :deep(.modern-input) {
             .q-field__control {

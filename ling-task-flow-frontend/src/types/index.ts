@@ -27,6 +27,7 @@ export type {
     AuthData,
     LoginCredentials,
     RegisterData,
+    RegisterResponse,
     AuthResponse,
     SecurityInfo,
     LoginResponse,
@@ -55,15 +56,25 @@ export type {
 
 export { NotificationType } from './ui';
 
-// 业务相关类型
+// 任务管理相关类型（来自 task.ts）
+export type {
+    Task,
+    TaskStatus,
+    TaskPriority,
+    TaskCreateData,
+    TaskUpdateData,
+    TaskSearchParams,
+    TaskStats,
+    TaskActivity,
+} from './task';
+
+// 业务相关类型（排除Task，使用task.ts中的定义）
 export type {
     Tag,
     Project,
-    Task,
     TaskFormData,
     ProjectFormData,
     TagFormData,
-    TaskStats,
     ProjectStats,
     TimeEntry,
     TimeEntryFormData,
@@ -73,7 +84,13 @@ export type {
     ProjectFilter,
 } from './business';
 
-export { TaskPriority, TaskStatus, ProjectStatus, TagColor } from './business';
+// 重命名业务类型中的冲突枚举，避免与 task.ts 中的类型冲突
+export {
+    TaskPriority as BusinessTaskPriority,
+    TaskStatus as BusinessTaskStatus,
+    ProjectStatus,
+    TagColor,
+} from './business';
 
 // 常用类型别名（便于使用）
 import type { StandardAPIResponse } from './api';

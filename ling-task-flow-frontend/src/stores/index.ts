@@ -33,4 +33,4 @@ export default defineStore((/* { ssrContext } */) => {
 
 // 导出stores
 export * from './auth';
-export * from './example-store';
+export * from './task';

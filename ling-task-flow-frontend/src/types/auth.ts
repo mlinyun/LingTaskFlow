@@ -55,6 +55,18 @@ export interface RegisterData {
     email: string;
     password: string;
     password_confirm: string;
+    first_name?: string;
+    last_name?: string;
+}
+
+// 注册响应
+export interface RegisterResponse {
+    message: string;
+    user: {
+        id: number;
+        username: string;
+        email: string;
+    };
 }
 
 // 认证操作响应

@@ -358,8 +358,8 @@ const loadTaskData = (task: Task) => {
         priority: task.priority,
         status: task.status,
         due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '',
-        // 优先使用tags_list（如果存在），否则解析tags字符串
-        tags: task.tags_list || (task.tags ? task.tags.split(',').filter(tag => tag.trim()) : []),
+        // 解析tags字符串为数组
+        tags: task.tags ? task.tags.split(',').filter(tag => tag.trim()) : [],
     };
 
     console.log('formData after loading:', formData.value);

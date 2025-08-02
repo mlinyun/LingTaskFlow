@@ -335,15 +335,14 @@ class TaskListSerializer(serializers.ModelSerializer):
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     is_overdue = serializers.BooleanField(read_only=True)
     is_high_priority = serializers.BooleanField(read_only=True)
-    tags_list = serializers.ListField(read_only=True)
     time_remaining_display = serializers.SerializerMethodField()
     
     class Meta:
         model = Task
         fields = (
-            'id', 'title', 'status', 'status_display', 'priority', 'priority_display',
+            'id', 'title', 'description', 'status', 'status_display', 'priority', 'priority_display',
             'progress', 'due_date', 'owner', 'owner_username', 'assigned_to', 
-            'assigned_to_username', 'category', 'tags_list', 'is_overdue', 
+            'assigned_to_username', 'category', 'tags', 'is_overdue', 
             'is_high_priority', 'created_at', 'updated_at', 'time_remaining_display'
         )
         read_only_fields = ('id', 'owner', 'created_at', 'updated_at')
@@ -377,7 +376,6 @@ class TaskDetailSerializer(serializers.ModelSerializer):
     is_overdue = serializers.BooleanField(read_only=True)
     is_high_priority = serializers.BooleanField(read_only=True)
     time_remaining = serializers.SerializerMethodField()
-    tags_list = serializers.ListField(read_only=True)
     
     # 权限检查
     can_edit = serializers.SerializerMethodField()
@@ -393,7 +391,7 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'status', 'status_display', 'status_color',
             'priority', 'priority_display', 'priority_color', 'progress',
             'due_date', 'start_date', 'completed_at', 'estimated_hours', 'actual_hours',
-            'category', 'tags', 'tags_list', 'notes', 'attachment', 'order',
+            'category', 'tags', 'notes', 'attachment', 'order',
             'owner', 'owner_info', 'assigned_to', 'assigned_to_info',
             'is_overdue', 'is_high_priority', 'time_remaining', 'can_edit', 'can_delete',
             'created_at', 'updated_at', 'is_deleted', 'deleted_at'

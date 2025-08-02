@@ -300,6 +300,16 @@
 
         <!-- 任务创建/编辑对话框 -->
         <TaskDialog v-model="showTaskDialog" :task="selectedTask" @saved="onTaskSaved" />
+
+        <!-- 任务查看对话框 -->
+        <TaskViewDialog
+            v-model="showViewDialog"
+            :task="viewingTask"
+            @edit="handleEditFromView"
+            @duplicate="handleDuplicateTask"
+            @delete="handleDeleteFromView"
+            @status-change="handleStatusChange"
+        />
     </q-page>
 </template>
 
@@ -309,6 +319,7 @@ import { useQuasar } from 'quasar';
 import { useTaskStore } from 'stores/task';
 import TaskCard from 'components/TaskCard.vue';
 import TaskDialog from 'components/TaskDialog.vue';
+import TaskViewDialog from 'components/TaskViewDialog.vue';
 import type { Task, TaskStatus, TaskPriority, TaskSearchParams } from '../types';
 
 const $q = useQuasar();
@@ -322,6 +333,8 @@ const sortBy = ref('created_at');
 const viewMode = ref<'list' | 'grid'>('list');
 const showTaskDialog = ref(false);
 const selectedTask = ref<Task | null>(null);
+const showViewDialog = ref(false);
+const viewingTask = ref<Task | null>(null);
 
 // 筛选选项
 const statusOptions = [
@@ -458,11 +471,20 @@ const handleDuplicateTask = (task: Task) => {
 };
 
 const handleViewTask = (task: Task) => {
-    $q.notify({
-        type: 'info',
-        message: `查看任务"${task.title}"功能正在开发中...`,
-        position: 'top',
-    });
+    viewingTask.value = task;
+    showViewDialog.value = true;
+};
+
+const handleEditFromView = (task: Task) => {
+    // 关闭查看对话框，打开编辑对话框
+    showViewDialog.value = false;
+    openEditDialog(task);
+};
+
+const handleDeleteFromView = (task: Task) => {
+    // 关闭查看对话框，执行删除操作
+    showViewDialog.value = false;
+    handleDeleteTask(task);
 };
 
 const handleStatusChange = async (taskId: string, status: TaskStatus) => {

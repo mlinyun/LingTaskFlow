@@ -2,7 +2,7 @@
     <q-card
         class="task-card"
         :class="{
-            'task-card--selected': selected,
+            'task-card--selected': props.selected || false,
             'task-card--completed': task.status === 'COMPLETED',
             [`priority-${task.priority.toLowerCase()}`]: true,
         }"
@@ -13,7 +13,7 @@
         <div class="task-header">
             <div class="task-header-content">
                 <q-checkbox
-                    :model-value="selected"
+                    :model-value="props.selected || false"
                     @update:model-value="$emit('toggle-selection', task.id)"
                     class="task-checkbox"
                 />
@@ -199,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, withDefaults } from 'vue';
+import { ref } from 'vue';
 import type { Task, TaskStatus, TaskPriority } from '../types';
 
 interface Props {
@@ -216,9 +216,7 @@ interface Emits {
     (e: 'status-change', taskId: string, status: TaskStatus): void;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    selected: false,
-});
+const props = defineProps<Props>();
 
 const emit = defineEmits<Emits>();
 

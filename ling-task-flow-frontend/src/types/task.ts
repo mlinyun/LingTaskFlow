@@ -9,7 +9,6 @@ export interface Task {
     status: TaskStatus;
     priority: TaskPriority;
     tags: string; // 逗号分隔的标签列表
-    tags_list?: string[]; // 后端提供的标签数组（只读）
     due_date?: string;
     completed_at?: string;
     is_deleted: boolean;

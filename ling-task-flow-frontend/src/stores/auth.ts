@@ -46,11 +46,11 @@ export const useAuthStore = defineStore('auth', () => {
     const login = async (credentials: { username: string; password: string }) => {
         loading.value = true;
         try {
-            // 使用我们的API工具函数，它会自动处理标准化响应格式
-            const authData = await apiPost<AuthData>('/auth/login/', credentials, true, true);
+            // 使用我们的API工具函数，但不自动显示成功提示
+            const authData = await apiPost<AuthData>('/auth/login/', credentials, true, false);
 
             saveAuthData(authData);
-            return { success: true, message: '登录成功' };
+            return { success: true, message: '登录成功，欢迎回来！' };
         } catch (error: unknown) {
             console.error('Login error:', error);
             let errorMessage = '登录失败，请检查输入信息';
@@ -78,7 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         try {
             // 注册用户，但不自动登录
-            await apiPost('/auth/register/', userData, false);
+            await apiPost('/auth/register/', userData, true, false);
 
             // 注册成功，返回成功信息，但不保存认证数据
             return { success: true, message: '注册成功' };

@@ -14,7 +14,7 @@
 #### 使用 Conda (推荐)
 ```bash
 # 创建环境
-conda create -n ling-task-flow-backend python=3.11
+conda create -n ling-task-flow-backend python=3.12
 
 # 激活环境
 conda activate ling-task-flow-backend

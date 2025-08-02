@@ -1,6 +1,6 @@
 <template>
     <q-dialog v-model="isOpen" :maximized="false" position="standard">
-        <q-card class="task-view-dialog" style="width: 900px; max-width: 90vw; max-height: 80vh;">
+        <q-card class="task-view-dialog" style="width: 900px; max-width: 90vw; max-height: 80vh">
             <!-- 对话框头部 -->
             <q-card-section class="dialog-header">
                 <div class="header-content">
@@ -131,7 +131,10 @@
                                 标签
                             </h5>
                             <div class="section-content">
-                                <div v-if="getTaskTags(task.tags).length > 0" class="tags-container">
+                                <div
+                                    v-if="getTaskTags(task.tags).length > 0"
+                                    class="tags-container"
+                                >
                                     <q-chip
                                         v-for="tag in getTaskTags(task.tags)"
                                         :key="tag"
@@ -161,13 +164,17 @@
                                     <div class="time-item">
                                         <q-icon name="add" size="16px" color="green" />
                                         <span class="time-label">创建时间：</span>
-                                        <span class="time-value">{{ formatDateTime(task.created_at) }}</span>
+                                        <span class="time-value">{{
+                                            formatDateTime(task.created_at)
+                                        }}</span>
                                     </div>
 
                                     <div class="time-item">
                                         <q-icon name="update" size="16px" color="blue" />
                                         <span class="time-label">更新时间：</span>
-                                        <span class="time-value">{{ formatDateTime(task.updated_at) }}</span>
+                                        <span class="time-value">{{
+                                            formatDateTime(task.updated_at)
+                                        }}</span>
                                     </div>
 
                                     <div v-if="task.due_date" class="time-item">
@@ -182,7 +189,9 @@
                                             :class="getDueDateClass(task.due_date)"
                                         >
                                             {{ formatDateTime(task.due_date) }}
-                                            <span class="due-status">{{ getDueDateStatus(task.due_date) }}</span>
+                                            <span class="due-status">{{
+                                                getDueDateStatus(task.due_date)
+                                            }}</span>
                                         </span>
                                     </div>
 
@@ -232,7 +241,11 @@
                                     <span class="info-label">负责人：</span>
                                     <div class="assignee-info">
                                         <q-avatar size="24px" color="primary" text-color="white">
-                                            {{ task.owner ? task.owner.toString().charAt(0).toUpperCase() : 'U' }}
+                                            {{
+                                                task.owner
+                                                    ? task.owner.toString().charAt(0).toUpperCase()
+                                                    : 'U'
+                                            }}
                                         </q-avatar>
                                         <span class="assignee-name">用户 {{ task.owner }}</span>
                                     </div>
@@ -249,13 +262,17 @@
                             <div class="stats-grid">
                                 <div class="stat-item">
                                     <q-icon name="visibility" size="16px" color="grey-6" />
-                                    <span class="stat-value">{{ formatRelativeTime(task.created_at) }}</span>
+                                    <span class="stat-value">{{
+                                        formatRelativeTime(task.created_at)
+                                    }}</span>
                                     <span class="stat-label">创建于</span>
                                 </div>
 
                                 <div class="stat-item">
                                     <q-icon name="update" size="16px" color="grey-6" />
-                                    <span class="stat-value">{{ formatRelativeTime(task.updated_at) }}</span>
+                                    <span class="stat-value">{{
+                                        formatRelativeTime(task.updated_at)
+                                    }}</span>
                                     <span class="stat-label">最后更新</span>
                                 </div>
 
@@ -289,7 +306,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, withDefaults } from 'vue';
+import { computed } from 'vue';
 import { useQuasar } from 'quasar';
 import type { Task, TaskStatus, TaskPriority } from '../types';
 
@@ -345,12 +362,12 @@ const deleteTask = () => {
             cancel: {
                 label: '取消',
                 flat: true,
-                color: 'grey'
+                color: 'grey',
             },
             ok: {
                 label: '删除',
                 color: 'negative',
-                icon: 'delete'
+                icon: 'delete',
             },
             persistent: true,
         }).onOk(() => {
@@ -365,68 +382,71 @@ const deleteTask = () => {
 // 工具函数
 const getTaskTags = (tagsString: string): string[] => {
     if (!tagsString || typeof tagsString !== 'string') return [];
-    return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    return tagsString
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
 };
 
 const getStatusColor = (status: TaskStatus): string => {
     const colors: Record<TaskStatus, string> = {
-        'PENDING': 'orange',
-        'IN_PROGRESS': 'blue',
-        'COMPLETED': 'positive',
-        'CANCELLED': 'negative',
-        'ON_HOLD': 'purple',
+        PENDING: 'orange',
+        IN_PROGRESS: 'blue',
+        COMPLETED: 'positive',
+        CANCELLED: 'negative',
+        ON_HOLD: 'purple',
     };
     return colors[status];
 };
 
 const getStatusLabel = (status: TaskStatus): string => {
     const labels: Record<TaskStatus, string> = {
-        'PENDING': '待处理',
-        'IN_PROGRESS': '进行中',
-        'COMPLETED': '已完成',
-        'CANCELLED': '已取消',
-        'ON_HOLD': '暂停',
+        PENDING: '待处理',
+        IN_PROGRESS: '进行中',
+        COMPLETED: '已完成',
+        CANCELLED: '已取消',
+        ON_HOLD: '暂停',
     };
     return labels[status];
 };
 
 const getStatusIcon = (status: TaskStatus): string => {
     const icons: Record<TaskStatus, string> = {
-        'PENDING': 'schedule',
-        'IN_PROGRESS': 'play_arrow',
-        'COMPLETED': 'check_circle',
-        'CANCELLED': 'cancel',
-        'ON_HOLD': 'pause',
+        PENDING: 'schedule',
+        IN_PROGRESS: 'play_arrow',
+        COMPLETED: 'check_circle',
+        CANCELLED: 'cancel',
+        ON_HOLD: 'pause',
     };
     return icons[status];
 };
 
 const getPriorityColor = (priority: TaskPriority): string => {
     const colors: Record<TaskPriority, string> = {
-        'LOW': 'green',
-        'MEDIUM': 'blue',
-        'HIGH': 'orange',
-        'URGENT': 'red',
+        LOW: 'green',
+        MEDIUM: 'blue',
+        HIGH: 'orange',
+        URGENT: 'red',
     };
     return colors[priority];
 };
 
 const getPriorityLabel = (priority: TaskPriority): string => {
     const labels: Record<TaskPriority, string> = {
-        'LOW': '低优先级',
-        'MEDIUM': '中优先级',
-        'HIGH': '高优先级',
-        'URGENT': '紧急',
+        LOW: '低优先级',
+        MEDIUM: '中优先级',
+        HIGH: '高优先级',
+        URGENT: '紧急',
     };
     return labels[priority];
 };
 
 const getPriorityIcon = (priority: TaskPriority): string => {
     const icons: Record<TaskPriority, string> = {
-        'LOW': 'arrow_downward',
-        'MEDIUM': 'remove',
-        'HIGH': 'arrow_upward',
-        'URGENT': 'priority_high',
+        LOW: 'arrow_downward',
+        MEDIUM: 'remove',
+        HIGH: 'arrow_upward',
+        URGENT: 'priority_high',
     };
     return icons[priority];
 };

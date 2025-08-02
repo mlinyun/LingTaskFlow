@@ -1,7 +1,14 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from 'boot/axios';
-import type { Task, TaskCreateData, TaskUpdateData, TaskSearchParams, TaskStats, TrashStats } from '../types';
+import type {
+    Task,
+    TaskCreateData,
+    TaskUpdateData,
+    TaskSearchParams,
+    TaskStats,
+    TrashStats,
+} from '../types';
 
 export const useTaskStore = defineStore('task', () => {
     // 状态定义
@@ -265,7 +272,7 @@ export const useTaskStore = defineStore('task', () => {
     const batchRestoreTasks = async (taskIds: string[]): Promise<void> => {
         try {
             const response = await api.post('/tasks/bulk_restore/', {
-                task_ids: taskIds
+                task_ids: taskIds,
             });
 
             // 根据响应更新本地状态
@@ -274,7 +281,6 @@ export const useTaskStore = defineStore('task', () => {
                 // 重新获取任务列表以更新状态
                 await fetchTasks();
             }
-
         } catch (error) {
             console.error('批量恢复任务失败:', error);
             throw error;
@@ -314,7 +320,9 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 获取回收站任务
      */
-    const fetchTrashTasks = async (page = 1): Promise<{
+    const fetchTrashTasks = async (
+        page = 1,
+    ): Promise<{
         tasks: Task[];
         total: number;
         trashStats: TrashStats;
@@ -324,8 +332,8 @@ export const useTaskStore = defineStore('task', () => {
             const response = await api.get('/tasks/trash/', {
                 params: {
                     page,
-                    page_size: pageSize.value
-                }
+                    page_size: pageSize.value,
+                },
             });
 
             const responseData = response.data;
@@ -336,7 +344,7 @@ export const useTaskStore = defineStore('task', () => {
             let total = 0;
             let trashStats: TrashStats = {
                 total_deleted_tasks: 0,
-                can_be_restored: 0
+                can_be_restored: 0,
             };
 
             // 解析任务数据
@@ -369,7 +377,7 @@ export const useTaskStore = defineStore('task', () => {
                 // 如果没有统计数据，使用任务数量计算
                 trashStats = {
                     total_deleted_tasks: tasks.length,
-                    can_be_restored: tasks.length
+                    can_be_restored: tasks.length,
                 };
 
                 // 如果有任务，找出最早删除的时间
@@ -377,7 +385,9 @@ export const useTaskStore = defineStore('task', () => {
                     const oldestTask = tasks.reduce((oldest, task) => {
                         if (!task.deleted_at) return oldest;
                         if (!oldest.deleted_at) return task;
-                        return new Date(task.deleted_at) < new Date(oldest.deleted_at) ? task : oldest;
+                        return new Date(task.deleted_at) < new Date(oldest.deleted_at)
+                            ? task
+                            : oldest;
                     });
                     if (oldestTask.deleted_at) {
                         trashStats.oldest_deleted = oldestTask.deleted_at;
@@ -388,7 +398,7 @@ export const useTaskStore = defineStore('task', () => {
             return {
                 tasks,
                 total,
-                trashStats
+                trashStats,
             };
         } catch (error) {
             console.error('获取回收站任务失败:', error);
@@ -404,7 +414,7 @@ export const useTaskStore = defineStore('task', () => {
     const emptyTrash = async (confirm = false): Promise<void> => {
         try {
             await api.post('/tasks/empty_trash/', {
-                confirm
+                confirm,
             });
         } catch (error) {
             console.error('清空回收站失败:', error);

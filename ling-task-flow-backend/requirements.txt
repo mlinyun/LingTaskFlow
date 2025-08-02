@@ -19,7 +19,7 @@ djangorestframework-simplejwt==5.3.0
 PyJWT==2.8.0
 
 # Authentication and Security
-cryptography==41.0.8
+cryptography==45.0.5
 
 # Database Support
 # SQLite (内置于Python，生产环境可切换到PostgreSQL)
@@ -58,7 +58,7 @@ sentry-sdk==1.38.0  # 错误监控
 
 # Task Queue (可选，异步任务处理)
 celery==5.3.4  # 异步任务队列
-django-celery-beat==2.5.0  # 定时任务
+django-celery-beat==2.8.1  # 定时任务
 
 # Web Server for Production
 gunicorn==21.2.0  # WSGI HTTP服务器
@@ -96,7 +96,7 @@ Sphinx==7.2.6  # 文档生成
 # 安装说明
 # =============================================================================
 # 1. 创建虚拟环境:
-#    conda create -n ling-task-flow-backend python=3.11
+#    conda create -n ling-task-flow-backend python=3.1
 #    conda activate ling-task-flow-backend
 #
 # 2. 安装依赖:

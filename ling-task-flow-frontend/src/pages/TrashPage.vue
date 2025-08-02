@@ -43,7 +43,9 @@
                     <div class="col-12 col-md-4">
                         <q-card flat bordered>
                             <q-card-section class="text-center">
-                                <div class="text-h5 text-negative">{{ trashStats.total_deleted_tasks }}</div>
+                                <div class="text-h5 text-negative">
+                                    {{ trashStats.total_deleted_tasks }}
+                                </div>
                                 <div class="text-caption text-grey-7">回收站任务总数</div>
                             </q-card-section>
                         </q-card>
@@ -51,7 +53,9 @@
                     <div class="col-12 col-md-4">
                         <q-card flat bordered>
                             <q-card-section class="text-center">
-                                <div class="text-h5 text-positive">{{ trashStats.can_be_restored }}</div>
+                                <div class="text-h5 text-positive">
+                                    {{ trashStats.can_be_restored }}
+                                </div>
                                 <div class="text-caption text-grey-7">可恢复任务</div>
                             </q-card-section>
                         </q-card>
@@ -89,9 +93,7 @@
                     <!-- 批量操作工具栏 -->
                     <q-card-section v-if="selectedTasks.length > 0" class="bg-grey-1 border-bottom">
                         <div class="flex items-center justify-between">
-                            <div class="text-body2">
-                                已选择 {{ selectedTasks.length }} 个任务
-                            </div>
+                            <div class="text-body2">已选择 {{ selectedTasks.length }} 个任务</div>
                             <div class="flex q-gutter-sm">
                                 <q-btn
                                     outline
@@ -177,11 +179,7 @@
                                             :label="getStatusLabel(task.status)"
                                             outline
                                         />
-                                        <q-badge
-                                            v-if="task.tags"
-                                            color="grey-5"
-                                            outline
-                                        >
+                                        <q-badge v-if="task.tags" color="grey-5" outline>
                                             <q-icon name="label" size="xs" class="q-mr-xs" />
                                             {{ task.tags }}
                                         </q-badge>
@@ -194,9 +192,7 @@
                                         <div class="text-warning" v-if="task.deleted_at">
                                             {{ getRemainingDays(task.deleted_at) }}天后永久删除
                                         </div>
-                                        <div class="text-info" v-else>
-                                            刚刚删除
-                                        </div>
+                                        <div class="text-info" v-else>刚刚删除</div>
                                     </div>
                                 </q-item-section>
 
@@ -277,18 +273,19 @@ const batchDeleting = ref(false);
 const totalPages = computed(() => Math.ceil(totalTasks.value / pageSize.value));
 
 const allSelected = computed({
-    get: () => selectedTasks.value.length === trashTasks.value.length && trashTasks.value.length > 0,
+    get: () =>
+        selectedTasks.value.length === trashTasks.value.length && trashTasks.value.length > 0,
     set: (value: boolean) => {
         if (value) {
             selectedTasks.value = trashTasks.value.map(task => task.id);
         } else {
             selectedTasks.value = [];
         }
-    }
+    },
 });
 
-const someSelected = computed(() =>
-    selectedTasks.value.length > 0 && selectedTasks.value.length < trashTasks.value.length
+const someSelected = computed(
+    () => selectedTasks.value.length > 0 && selectedTasks.value.length < trashTasks.value.length,
 );
 
 const daysFromOldest = computed(() => {
@@ -312,7 +309,7 @@ const fetchTrashTasks = async (page = 1) => {
         $q.notify({
             type: 'negative',
             message: '获取回收站任务失败',
-            position: 'top'
+            position: 'top',
         });
     } finally {
         loading.value = false;
@@ -350,7 +347,7 @@ const restoreTask = async (task: Task) => {
         $q.notify({
             type: 'positive',
             message: `任务"${task.title}"已恢复`,
-            position: 'top'
+            position: 'top',
         });
         await fetchTrashTasks(currentPage.value);
     } catch (error) {
@@ -358,7 +355,7 @@ const restoreTask = async (task: Task) => {
         $q.notify({
             type: 'negative',
             message: '恢复任务失败',
-            position: 'top'
+            position: 'top',
         });
     }
 };
@@ -370,14 +367,14 @@ const permanentDeleteTask = (task: Task) => {
         cancel: {
             label: '取消',
             flat: true,
-            color: 'grey-7'
+            color: 'grey-7',
         },
         ok: {
             label: '永久删除',
             color: 'negative',
-            icon: 'delete_forever'
+            icon: 'delete_forever',
         },
-        persistent: true
+        persistent: true,
     }).onOk(() => {
         void (async () => {
             try {
@@ -385,7 +382,7 @@ const permanentDeleteTask = (task: Task) => {
                 $q.notify({
                     type: 'positive',
                     message: `任务"${task.title}"已永久删除`,
-                    position: 'top'
+                    position: 'top',
                 });
                 await fetchTrashTasks(currentPage.value);
             } catch (error) {
@@ -393,7 +390,7 @@ const permanentDeleteTask = (task: Task) => {
                 $q.notify({
                     type: 'negative',
                     message: '永久删除任务失败',
-                    position: 'top'
+                    position: 'top',
                 });
             }
         })();
@@ -410,7 +407,7 @@ const batchRestore = async () => {
         $q.notify({
             type: 'positive',
             message: `已恢复 ${taskCount} 个任务`,
-            position: 'top'
+            position: 'top',
         });
         await fetchTrashTasks(currentPage.value);
     } catch (error) {
@@ -418,7 +415,7 @@ const batchRestore = async () => {
         $q.notify({
             type: 'negative',
             message: '批量恢复失败',
-            position: 'top'
+            position: 'top',
         });
     } finally {
         batchRestoring.value = false;
@@ -435,14 +432,14 @@ const batchPermanentDelete = () => {
         cancel: {
             label: '取消',
             flat: true,
-            color: 'grey-7'
+            color: 'grey-7',
         },
         ok: {
             label: '永久删除',
             color: 'negative',
-            icon: 'delete_forever'
+            icon: 'delete_forever',
         },
-        persistent: true
+        persistent: true,
     }).onOk(() => {
         void (async () => {
             try {
@@ -451,7 +448,7 @@ const batchPermanentDelete = () => {
                 $q.notify({
                     type: 'positive',
                     message: `已永久删除 ${taskCount} 个任务`,
-                    position: 'top'
+                    position: 'top',
                 });
                 await fetchTrashTasks(currentPage.value);
             } catch (error) {
@@ -459,7 +456,7 @@ const batchPermanentDelete = () => {
                 $q.notify({
                     type: 'negative',
                     message: '批量永久删除失败',
-                    position: 'top'
+                    position: 'top',
                 });
             } finally {
                 batchDeleting.value = false;
@@ -478,14 +475,14 @@ const confirmEmptyTrash = () => {
         cancel: {
             label: '取消',
             flat: true,
-            color: 'grey-7'
+            color: 'grey-7',
         },
         ok: {
             label: '清空回收站',
             color: 'negative',
-            icon: 'delete_forever'
+            icon: 'delete_forever',
         },
-        persistent: true
+        persistent: true,
     }).onOk(() => {
         void (async () => {
             try {
@@ -493,7 +490,7 @@ const confirmEmptyTrash = () => {
                 $q.notify({
                     type: 'positive',
                     message: `回收站已清空，共删除 ${taskCount} 个任务`,
-                    position: 'top'
+                    position: 'top',
                 });
                 await fetchTrashTasks(1); // 重新获取第一页
             } catch (error) {
@@ -501,7 +498,7 @@ const confirmEmptyTrash = () => {
                 $q.notify({
                     type: 'negative',
                     message: '清空回收站失败',
-                    position: 'top'
+                    position: 'top',
                 });
             }
         })();
@@ -514,7 +511,7 @@ const formatDeleteTime = (deletedAt: string | undefined): string => {
     try {
         return formatDistanceToNow(new Date(deletedAt), {
             addSuffix: true,
-            locale: zhCN
+            locale: zhCN,
         });
     } catch (error) {
         console.error('时间格式化失败:', error);
@@ -537,42 +534,42 @@ const getRemainingDays = (deletedAt: string | undefined): number => {
 
 const getPriorityColor = (priority: string): string => {
     const colors = {
-        'LOW': 'green',
-        'MEDIUM': 'blue',
-        'HIGH': 'orange',
-        'URGENT': 'red'
+        LOW: 'green',
+        MEDIUM: 'blue',
+        HIGH: 'orange',
+        URGENT: 'red',
     };
     return colors[priority as keyof typeof colors] || 'grey';
 };
 
 const getPriorityLabel = (priority: string): string => {
     const labels = {
-        'LOW': '低优先级',
-        'MEDIUM': '中优先级',
-        'HIGH': '高优先级',
-        'URGENT': '紧急'
+        LOW: '低优先级',
+        MEDIUM: '中优先级',
+        HIGH: '高优先级',
+        URGENT: '紧急',
     };
     return labels[priority as keyof typeof labels] || priority;
 };
 
 const getStatusColor = (status: string): string => {
     const colors = {
-        'PENDING': 'grey',
-        'IN_PROGRESS': 'blue',
-        'COMPLETED': 'green',
-        'CANCELLED': 'red',
-        'ON_HOLD': 'orange'
+        PENDING: 'grey',
+        IN_PROGRESS: 'blue',
+        COMPLETED: 'green',
+        CANCELLED: 'red',
+        ON_HOLD: 'orange',
     };
     return colors[status as keyof typeof colors] || 'grey';
 };
 
 const getStatusLabel = (status: string): string => {
     const labels = {
-        'PENDING': '待处理',
-        'IN_PROGRESS': '进行中',
-        'COMPLETED': '已完成',
-        'CANCELLED': '已取消',
-        'ON_HOLD': '暂停'
+        PENDING: '待处理',
+        IN_PROGRESS: '进行中',
+        COMPLETED: '已完成',
+        CANCELLED: '已取消',
+        ON_HOLD: '暂停',
     };
     return labels[status as keyof typeof labels] || status;
 };

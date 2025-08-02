@@ -16,7 +16,7 @@ djangorestframework-simplejwt==5.3.0
 PyJWT==2.8.0
 
 # Authentication and Security
-cryptography==41.0.8
+cryptography==45.0.5
 
 # Database Support
 psycopg2-binary==2.9.9

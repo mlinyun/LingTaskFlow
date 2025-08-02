@@ -187,7 +187,9 @@
                                         />
                                     </q-item-section>
                                     <q-item-section>
-                                        <q-item-label :class="`text-${getPriorityColor(opt.value)}`">
+                                        <q-item-label
+                                            :class="`text-${getPriorityColor(opt.value)}`"
+                                        >
                                             {{ opt.label }}
                                         </q-item-label>
                                     </q-item-section>
@@ -277,7 +279,12 @@
                             color="blue"
                             text-color="white"
                             icon="search"
-                            @remove="() => { searchQuery = ''; nextTick(() => handleSearch()); }"
+                            @remove="
+                                () => {
+                                    searchQuery = '';
+                                    nextTick(() => handleSearch());
+                                }
+                            "
                         >
                             搜索: {{ searchQuery }}
                         </q-chip>
@@ -287,7 +294,12 @@
                             :color="getStatusColor(statusFilter)"
                             text-color="white"
                             :icon="getStatusIcon(statusFilter)"
-                            @remove="() => { statusFilter = null; nextTick(() => handleFilterChange()); }"
+                            @remove="
+                                () => {
+                                    statusFilter = null;
+                                    nextTick(() => handleFilterChange());
+                                }
+                            "
                         >
                             状态: {{ getStatusLabel(statusFilter) }}
                         </q-chip>
@@ -297,7 +309,12 @@
                             :color="getPriorityColor(priorityFilter)"
                             text-color="white"
                             :icon="getPriorityIcon(priorityFilter)"
-                            @remove="() => { priorityFilter = null; nextTick(() => handleFilterChange()); }"
+                            @remove="
+                                () => {
+                                    priorityFilter = null;
+                                    nextTick(() => handleFilterChange());
+                                }
+                            "
                         >
                             优先级: {{ getPriorityLabel(priorityFilter) }}
                         </q-chip>
@@ -594,7 +611,7 @@ const getStatusIcon = (status: TaskStatus): string => {
         IN_PROGRESS: 'play_arrow',
         COMPLETED: 'check_circle',
         CANCELLED: 'cancel',
-        ON_HOLD: 'pause_circle'
+        ON_HOLD: 'pause_circle',
     };
     return icons[status] || 'help';
 };
@@ -605,7 +622,7 @@ const getStatusColor = (status: TaskStatus): string => {
         IN_PROGRESS: 'blue',
         COMPLETED: 'green',
         CANCELLED: 'red',
-        ON_HOLD: 'grey'
+        ON_HOLD: 'grey',
     };
     return colors[status] || 'grey';
 };
@@ -616,7 +633,7 @@ const getStatusLabel = (status: TaskStatus): string => {
         IN_PROGRESS: '进行中',
         COMPLETED: '已完成',
         CANCELLED: '已取消',
-        ON_HOLD: '暂停'
+        ON_HOLD: '暂停',
     };
     return labels[status] || '未知';
 };
@@ -625,11 +642,11 @@ const getStatusLabel = (status: TaskStatus): string => {
 const getSortIcon = (sortValue: string): string => {
     const icons: Record<string, string> = {
         '-created_at': 'schedule',
-        'created_at': 'schedule',
+        created_at: 'schedule',
         '-updated_at': 'update',
         '-priority': 'keyboard_arrow_up',
-        'priority': 'keyboard_arrow_down',
-        'due_date': 'event'
+        priority: 'keyboard_arrow_down',
+        due_date: 'event',
     };
     return icons[sortValue] || 'sort';
 };
@@ -700,12 +717,12 @@ const handleDeleteTask = (task: Task) => {
         cancel: {
             label: '取消',
             flat: true,
-            color: 'grey'
+            color: 'grey',
         },
         ok: {
             label: '删除',
             color: 'negative',
-            icon: 'delete'
+            icon: 'delete',
         },
         persistent: true,
     }).onOk(() => {
@@ -741,9 +758,9 @@ const handleDeleteTask = (task: Task) => {
                                         });
                                     }
                                 })();
-                            }
-                        }
-                    ]
+                            },
+                        },
+                    ],
                 });
 
                 // 5秒后自动清除通知（如果用户没有撤销）
@@ -752,7 +769,6 @@ const handleDeleteTask = (task: Task) => {
                         notif();
                     }
                 }, 5000);
-
             } catch {
                 $q.notify({
                     type: 'negative',
@@ -792,12 +808,12 @@ const batchDelete = () => {
         cancel: {
             label: '取消',
             flat: true,
-            color: 'grey'
+            color: 'grey',
         },
         ok: {
             label: '删除',
             color: 'negative',
-            icon: 'delete'
+            icon: 'delete',
         },
         persistent: true,
     }).onOk(() => {
@@ -818,11 +834,10 @@ const batchDelete = () => {
                             color: 'white',
                             handler: () => {
                                 void router.push('/trash');
-                            }
-                        }
-                    ]
+                            },
+                        },
+                    ],
                 });
-
             } catch {
                 $q.notify({
                     type: 'negative',

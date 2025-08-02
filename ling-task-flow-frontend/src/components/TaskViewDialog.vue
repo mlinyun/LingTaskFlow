@@ -1,6 +1,6 @@
 <template>
-    <q-dialog v-model="isOpen" maximized>
-        <q-card class="task-view-dialog">
+    <q-dialog v-model="isOpen" :maximized="false" position="standard">
+        <q-card class="task-view-dialog" style="width: 900px; max-width: 90vw; max-height: 80vh;">
             <!-- 对话框头部 -->
             <q-card-section class="dialog-header">
                 <div class="header-content">
@@ -14,7 +14,6 @@
                             />
                             <div class="title-info">
                                 <h4 class="task-title">{{ task?.title || '任务详情' }}</h4>
-                                <p class="task-subtitle">任务ID: {{ task?.id }}</p>
                             </div>
                         </div>
 
@@ -242,28 +241,7 @@
                         </section>
 
                         <!-- 快速操作 -->
-                        <section class="panel-section">
-                            <h6 class="panel-title">快速操作</h6>
-                            <div class="quick-actions">
-                                <!-- 状态变更按钮 -->
-                                <div class="action-group">
-                                    <q-btn
-                                        v-for="action in getAvailableStatusActions(task.status)"
-                                        :key="action.status"
-                                        :color="action.color"
-                                        :icon="action.icon"
-                                        :label="action.label"
-                                        size="sm"
-                                        no-caps
-                                        class="status-action-btn"
-                                        @click="changeStatus(action.status)"
-                                        :loading="statusLoading"
-                                    >
-                                        <q-tooltip>{{ action.tooltip }}</q-tooltip>
-                                    </q-btn>
-                                </div>
-                            </div>
-                        </section>
+                        <!-- 快速操作功能已移除，提供更简洁的查看体验 -->
 
                         <!-- 统计信息 -->
                         <section class="panel-section">
@@ -311,7 +289,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, withDefaults } from 'vue';
+import { computed, withDefaults } from 'vue';
 import { useQuasar } from 'quasar';
 import type { Task, TaskStatus, TaskPriority } from '../types';
 
@@ -325,7 +303,6 @@ interface Emits {
     (e: 'edit', task: Task): void;
     (e: 'duplicate', task: Task): void;
     (e: 'delete', task: Task): void;
-    (e: 'status-change', taskId: string, status: TaskStatus): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -335,91 +312,11 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 const $q = useQuasar();
 
-// 状态管理
-const statusLoading = ref(false);
-
 // 计算属性
 const isOpen = computed({
     get: () => props.modelValue,
     set: (value: boolean) => emit('update:modelValue', value),
 });
-
-// 状态操作配置
-interface StatusAction {
-    status: TaskStatus;
-    label: string;
-    icon: string;
-    color: string;
-    tooltip: string;
-}
-
-// 获取可用的状态操作
-const getAvailableStatusActions = (currentStatus: TaskStatus): StatusAction[] => {
-    const allActions: StatusAction[] = [
-        {
-            status: 'PENDING',
-            label: '标记为待处理',
-            icon: 'schedule',
-            color: 'orange',
-            tooltip: '将任务状态改为待处理',
-        },
-        {
-            status: 'IN_PROGRESS',
-            label: '开始处理',
-            icon: 'play_arrow',
-            color: 'blue',
-            tooltip: '开始处理这个任务',
-        },
-        {
-            status: 'COMPLETED',
-            label: '标记为完成',
-            icon: 'check_circle',
-            color: 'positive',
-            tooltip: '将任务标记为已完成',
-        },
-        {
-            status: 'ON_HOLD',
-            label: '暂停任务',
-            icon: 'pause',
-            color: 'purple',
-            tooltip: '暂停这个任务',
-        },
-        {
-            status: 'CANCELLED',
-            label: '取消任务',
-            icon: 'cancel',
-            color: 'negative',
-            tooltip: '取消这个任务',
-        },
-    ];
-
-    // 过滤掉当前状态
-    return allActions.filter(action => action.status !== currentStatus);
-};
-
-// 状态变更处理
-const changeStatus = (newStatus: TaskStatus) => {
-    if (!props.task || statusLoading.value) return;
-
-    statusLoading.value = true;
-    try {
-        emit('status-change', props.task.id, newStatus);
-
-        $q.notify({
-            type: 'positive',
-            message: `任务状态已更新为"${getStatusLabel(newStatus)}"`,
-            position: 'top',
-        });
-    } catch {
-        $q.notify({
-            type: 'negative',
-            message: '状态更新失败，请重试',
-            position: 'top',
-        });
-    } finally {
-        statusLoading.value = false;
-    }
-};
 
 // 对话框操作
 const closeDialog = () => {
@@ -604,9 +501,9 @@ const getTimeRemaining = (dueDate: string): string => {
 
 <style scoped lang="scss">
 .task-view-dialog {
-    height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 
     .dialog-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -838,20 +735,6 @@ const getTimeRemaining = (dueDate: string): string => {
                         }
                     }
 
-                    .quick-actions {
-                        .action-group {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 0.5rem;
-
-                            .status-action-btn {
-                                justify-content: flex-start;
-                                text-transform: none;
-                                font-weight: 500;
-                            }
-                        }
-                    }
-
                     .stats-grid {
                         .stat-item {
                             display: flex;
@@ -921,6 +804,7 @@ const getTimeRemaining = (dueDate: string): string => {
 
                 .side-panel {
                     order: -1;
+                    margin-bottom: 1rem;
                 }
             }
         }

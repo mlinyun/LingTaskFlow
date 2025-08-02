@@ -52,7 +52,7 @@
                                 val => !val || val.length <= 1000 || '任务描述不能超过1000个字符',
                             ]"
                             :loading="loading"
-                            class="form-input"
+                            class="form-input description-input"
                         >
                             <template v-slot:prepend>
                                 <q-icon name="description" color="grey-6" />
@@ -225,7 +225,7 @@
 import { ref, watch, computed } from 'vue';
 import { useTaskStore } from 'src/stores/task';
 import { useQuasar } from 'quasar';
-import type { Task, TaskCreateData, TaskUpdateData, TaskPriority, TaskStatus } from 'src/types';
+import type { Task, TaskCreateData, TaskUpdateData, TaskPriority, TaskStatus } from '../types';
 
 interface Props {
     modelValue: boolean;
@@ -489,8 +489,13 @@ watch(
 
                 .form-input {
                     :deep(.q-field__control) {
+                        height: 44px;
+                        min-height: 44px;
                         border-radius: 8px;
                         border: 2px solid #e2e8f0;
+                        padding: 0 12px;
+                        display: flex;
+                        align-items: center;
 
                         &:hover {
                             border-color: #cbd5e1;
@@ -500,6 +505,70 @@ watch(
                     :deep(.q-field--focused .q-field__control) {
                         border-color: #3b82f6;
                         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                    }
+
+                    // 确保输入框内容对齐
+                    :deep(.q-field__native),
+                    :deep(.q-field__input) {
+                        padding: 0;
+                        line-height: 44px;
+                        min-height: 44px;
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    // 确保前缀和后缀图标对齐
+                    :deep(.q-field__marginal) {
+                        height: 44px;
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    // 确保标签浮动时的对齐
+                    :deep(.q-field__control-container) {
+                        padding: 0;
+                        min-height: 44px;
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    // 确保前缀后缀按钮对齐
+                    :deep(.q-field__prepend),
+                    :deep(.q-field__append) {
+                        height: 44px;
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    // 多行文本输入框特殊处理
+                    &.description-input {
+                        :deep(.q-field__control) {
+                            height: auto;
+                            min-height: 80px;
+                            align-items: flex-start;
+                        }
+
+                        :deep(.q-field__native),
+                        :deep(.q-field__input) {
+                            line-height: 1.5;
+                            min-height: 80px;
+                            align-items: flex-start;
+                            padding-top: 8px;
+                        }
+
+                        :deep(.q-field__marginal) {
+                            align-items: flex-start;
+                            padding-top: 8px;
+                        }
+                    }
+
+                    // 选择器芯片样式统一
+                    :deep(.q-chip) {
+                        height: 20px;
+                        max-height: 20px;
+                        font-size: 0.7rem;
+                        margin: 0;
+                        align-self: center;
                     }
                 }
 

@@ -343,9 +343,10 @@ class TaskListSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'status', 'status_display', 'priority', 'priority_display',
             'progress', 'due_date', 'owner', 'owner_username', 'assigned_to', 
             'assigned_to_username', 'category', 'tags', 'is_overdue', 
-            'is_high_priority', 'created_at', 'updated_at', 'time_remaining_display'
+            'is_high_priority', 'created_at', 'updated_at', 'time_remaining_display',
+            'is_deleted', 'deleted_at'  # 添加软删除相关字段
         )
-        read_only_fields = ('id', 'owner', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'owner', 'created_at', 'updated_at', 'is_deleted', 'deleted_at')
     
     def get_time_remaining_display(self, obj):
         """获取剩余时间的友好显示"""

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from 'boot/axios';
-import type { Task, TaskCreateData, TaskUpdateData, TaskSearchParams, TaskStats } from '../types';
+import type { Task, TaskCreateData, TaskUpdateData, TaskSearchParams, TaskStats, TrashStats } from '../types';
 
 export const useTaskStore = defineStore('task', () => {
     // 状态定义
@@ -260,6 +260,41 @@ export const useTaskStore = defineStore('task', () => {
     };
 
     /**
+     * 批量恢复任务
+     */
+    const batchRestoreTasks = async (taskIds: string[]): Promise<void> => {
+        try {
+            const response = await api.post('/tasks/bulk_restore/', {
+                task_ids: taskIds
+            });
+
+            // 根据响应更新本地状态
+            const restoreData = response.data;
+            if (restoreData.stats?.successful_restores > 0) {
+                // 重新获取任务列表以更新状态
+                await fetchTasks();
+            }
+
+        } catch (error) {
+            console.error('批量恢复任务失败:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * 批量永久删除任务
+     */
+    const batchPermanentDeleteTasks = async (taskIds: string[]): Promise<void> => {
+        try {
+            const promises = taskIds.map(id => permanentDeleteTask(id));
+            await Promise.all(promises);
+        } catch (error) {
+            console.error('批量永久删除任务失败:', error);
+            throw error;
+        }
+    };
+
+    /**
      * 搜索任务
      */
     const searchTasks = async (searchQuery: string): Promise<Task[]> => {
@@ -272,6 +307,107 @@ export const useTaskStore = defineStore('task', () => {
             return response.data || [];
         } catch (error) {
             console.error('搜索任务失败:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * 获取回收站任务
+     */
+    const fetchTrashTasks = async (page = 1): Promise<{
+        tasks: Task[];
+        total: number;
+        trashStats: TrashStats;
+    }> => {
+        try {
+            loading.value = true;
+            const response = await api.get('/tasks/trash/', {
+                params: {
+                    page,
+                    page_size: pageSize.value
+                }
+            });
+
+            const responseData = response.data;
+
+            // 处理后端的特殊响应结构
+            // 后端返回: { data: { data: [...], meta: { pagination: {...} } }, meta: { trash_stats: {...} } }
+            let tasks: Task[] = [];
+            let total = 0;
+            let trashStats: TrashStats = {
+                total_deleted_tasks: 0,
+                can_be_restored: 0
+            };
+
+            // 解析任务数据
+            if (responseData.data) {
+                const innerData = responseData.data;
+
+                if (Array.isArray(innerData.data)) {
+                    // 分页响应：data.data 是任务数组
+                    tasks = innerData.data;
+                    total = innerData.meta?.pagination?.total_count || tasks.length;
+                } else if (Array.isArray(innerData.results)) {
+                    // DRF分页格式：data.results 是任务数组
+                    tasks = innerData.results;
+                    total = innerData.count || tasks.length;
+                } else if (Array.isArray(innerData)) {
+                    // 直接是数组
+                    tasks = innerData;
+                    total = tasks.length;
+                }
+            }
+
+            // 解析统计数据 - 尝试多个可能的路径
+            if (responseData.meta?.trash_stats) {
+                trashStats = responseData.meta.trash_stats;
+            } else if (responseData.data?.meta?.trash_stats) {
+                trashStats = responseData.data.meta.trash_stats;
+            } else if (responseData.trash_stats) {
+                trashStats = responseData.trash_stats;
+            } else {
+                // 如果没有统计数据，使用任务数量计算
+                trashStats = {
+                    total_deleted_tasks: tasks.length,
+                    can_be_restored: tasks.length
+                };
+
+                // 如果有任务，找出最早删除的时间
+                if (tasks.length > 0) {
+                    const oldestTask = tasks.reduce((oldest, task) => {
+                        if (!task.deleted_at) return oldest;
+                        if (!oldest.deleted_at) return task;
+                        return new Date(task.deleted_at) < new Date(oldest.deleted_at) ? task : oldest;
+                    });
+                    if (oldestTask.deleted_at) {
+                        trashStats.oldest_deleted = oldestTask.deleted_at;
+                    }
+                }
+            }
+
+            return {
+                tasks,
+                total,
+                trashStats
+            };
+        } catch (error) {
+            console.error('获取回收站任务失败:', error);
+            throw error;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    /**
+     * 清空回收站
+     */
+    const emptyTrash = async (confirm = false): Promise<void> => {
+        try {
+            await api.post('/tasks/empty_trash/', {
+                confirm
+            });
+        } catch (error) {
+            console.error('清空回收站失败:', error);
             throw error;
         }
     };
@@ -299,7 +435,7 @@ export const useTaskStore = defineStore('task', () => {
      * 设置搜索参数
      */
     const setSearchParams = (params: TaskSearchParams) => {
-        searchParams.value = { ...searchParams.value, ...params };
+        searchParams.value = { ...params }; // 直接替换而非合并
         currentPage.value = 1; // 重置到第一页
     };
 
@@ -400,7 +536,11 @@ export const useTaskStore = defineStore('task', () => {
         permanentDeleteTask,
         batchUpdateTasks,
         batchDeleteTasks,
+        batchRestoreTasks,
+        batchPermanentDeleteTasks,
         searchTasks,
+        fetchTrashTasks,
+        emptyTrash,
         fetchTaskStats,
         setSearchParams,
         clearSearchParams,

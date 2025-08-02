@@ -391,13 +391,18 @@ const goToRegister = async () => {
 
 .login-form {
     .input-group {
-        margin-bottom: 0.25rem;
+        margin-bottom: 1.5rem;
 
         :deep(.modern-input) {
             .q-field__control {
+                height: 48px;
+                min-height: 48px;
                 border-radius: 12px;
                 border: 2px solid #e5e7eb;
                 background: white;
+                padding: 0 16px;
+                display: flex;
+                align-items: center;
 
                 &:hover {
                     border-color: #d1d5db;
@@ -412,6 +417,39 @@ const goToRegister = async () => {
             .q-field__label {
                 font-weight: 500;
                 color: #6b7280;
+            }
+
+            // 确保输入框内容对齐
+            .q-field__native,
+            .q-field__input {
+                padding: 0;
+                line-height: 48px;
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+            }
+
+            // 确保前缀和后缀图标对齐
+            .q-field__marginal {
+                height: 48px;
+                display: flex;
+                align-items: center;
+            }
+
+            // 确保标签浮动时的对齐
+            .q-field__control-container {
+                padding: 0;
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+            }
+
+            // 确保前缀后缀按钮对齐
+            .q-field__prepend,
+            .q-field__append {
+                height: 48px;
+                display: flex;
+                align-items: center;
             }
         }
     }

@@ -341,8 +341,17 @@ const deleteTask = () => {
     if (props.task) {
         $q.dialog({
             title: '确认删除',
-            message: `确定要删除任务"${props.task.title}"吗？此操作可以恢复。`,
-            cancel: true,
+            message: `确定要删除任务"${props.task.title}"吗？删除后可以在回收站中恢复。`,
+            cancel: {
+                label: '取消',
+                flat: true,
+                color: 'grey'
+            },
+            ok: {
+                label: '删除',
+                color: 'negative',
+                icon: 'delete'
+            },
             persistent: true,
         }).onOk(() => {
             if (props.task) {

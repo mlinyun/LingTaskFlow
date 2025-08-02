@@ -46,8 +46,36 @@ export interface TaskSearchParams {
     tags?: string[];
     due_date_from?: string;
     due_date_to?: string;
+    created_date_from?: string;
+    created_date_to?: string;
+    updated_date_from?: string;
+    updated_date_to?: string;
+    owner?: number;
+    assigned_to?: number;
+    has_due_date?: boolean;
+    is_overdue?: boolean;
+    progress_min?: number;
+    progress_max?: number;
+    category?: string;
     ordering?: string;
     include_deleted?: boolean;
+}
+
+export interface SavedSearch {
+    id: string;
+    name: string;
+    description?: string;
+    params: TaskSearchParams;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SearchHistory {
+    id: string;
+    query: string;
+    params: TaskSearchParams;
+    results_count: number;
+    searched_at: string;
 }
 
 export interface TaskStats {
@@ -68,4 +96,16 @@ export interface TaskActivity {
     task_title: string;
     action: 'created' | 'updated' | 'completed' | 'deleted' | 'restored';
     timestamp: string;
+}
+
+export interface TrashStats {
+    total_deleted_tasks: number;
+    can_be_restored: number;
+    oldest_deleted?: string; // ISO date string
+}
+
+export interface TrashResponse {
+    tasks: Task[];
+    total: number;
+    trashStats: TrashStats;
 }

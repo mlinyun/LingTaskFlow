@@ -56,23 +56,26 @@ export type {
 
 export { NotificationType } from './ui';
 
-// 任务管理相关类型（来自 task.ts）
+// 任务相关类型
 export type {
     Task,
-    TaskStatus,
-    TaskPriority,
     TaskCreateData,
     TaskUpdateData,
     TaskSearchParams,
     TaskStats,
     TaskActivity,
+    TrashStats,
+    TrashResponse,
+    SavedSearch,
+    SearchHistory,
 } from './task';
+
+export type { TaskStatus, TaskPriority } from './task';
 
 // 业务相关类型（排除Task，使用task.ts中的定义）
 export type {
     Tag,
     Project,
-    TaskFormData,
     ProjectFormData,
     TagFormData,
     ProjectStats,

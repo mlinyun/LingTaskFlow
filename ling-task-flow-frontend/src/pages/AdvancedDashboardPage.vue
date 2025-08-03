@@ -7,7 +7,8 @@
                     <h4 class="page-title q-ma-none">
                         <q-icon name="analytics" size="32px" class="q-mr-sm" />
                         高级数据分析中心
-                                     <p class="page-subtitle q-ma-none q-mt-sm">
+                    </h4>
+                    <p class="page-subtitle q-ma-none q-mt-sm">
                         {{ formatDate(new Date()) }} • 多维度数据洞察
                     </p>
                 </div>
@@ -991,49 +992,6 @@ const getEfficiencyColor = (rating: string) => {
 
         .from-status,
         .to-status {
-border-bottom: 1px solid #e2e8f0;
-    }
-}
-
-.status-item {
-    .status-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 4px;
-    }
-
-    .status-label {
-        font-weight: 500;
-        color: #374151;
-    }
-
-    .status-percentage {
-        font-weight: 600;
-        color: #1976d2;
-    }
-
-    .status-details {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-top: 4px;
-    }
-}
-
-.transition-item {
-    padding: 8px;
-    background: #f8fafc;
-    border-radius: 6px;
-
-    .transition-path {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
-
-        .from-status, .to-status {
             font-weight: 500;
             font-size: 0.875rem;
         }

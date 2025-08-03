@@ -1089,7 +1089,7 @@ onMounted(() => {
         z-index: 2;
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         gap: 2rem;
 
         .title-section {
@@ -1099,7 +1099,6 @@ onMounted(() => {
                 display: flex;
                 align-items: center;
                 gap: 1.5rem;
-                margin-bottom: 1.5rem;
 
                 .icon-wrapper {
                     position: relative;

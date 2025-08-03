@@ -1,6 +1,6 @@
 <template>
     <q-page class="dashboard-page">
-        <!-- 页面头部 - 科技感重新设计 -->
+        <!-- 页面头部 - 科技感设计 -->
         <div class="page-header">
             <div class="header-background">
                 <div class="tech-grid"></div>
@@ -16,17 +16,17 @@
                 <div class="title-section">
                     <div class="title-container">
                         <div class="icon-wrapper">
-                            <q-icon name="dashboard" size="32px" class="title-icon" />
+                            <q-icon name="analytics" size="24px" class="title-icon" />
                             <div class="icon-glow"></div>
                         </div>
                         <div class="title-text">
                             <h1 class="page-title">
                                 <span class="title-primary">数据概览</span>
-                                <span class="title-accent">仪表板</span>
+                                <span class="title-accent">仪表盘</span>
                             </h1>
                             <p class="page-subtitle">
                                 <q-icon name="insights" size="14px" class="q-mr-xs" />
-                                {{ formatDate(new Date()) }} • 实时数据监控与智能分析
+                                {{ formatDate(new Date()) }} 实时数据监控与智能分析
                             </p>
                         </div>
                     </div>
@@ -34,54 +34,31 @@
 
                 <div class="action-section">
                     <div class="action-buttons">
-                        <!-- 主要操作按钮 -->
                         <q-btn
-                            color="primary"
                             icon="refresh"
                             label="刷新数据"
-                            unelevated
-                            rounded
-                            size="md"
                             class="refresh-btn"
-                            @click="refreshData"
+                            rounded
                             :loading="loading"
-                        >
-                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
-                                刷新统计数据
-                            </q-tooltip>
-                        </q-btn>
-
-                        <!-- 次要操作按钮 -->
+                            @click="refreshData"
+                        />
                         <q-btn
-                            flat
-                            round
-                            icon="fullscreen"
-                            color="primary"
-                            size="md"
+                            icon="settings"
                             class="fullscreen-btn"
-                        >
-                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
-                                全屏模式
-                            </q-tooltip>
-                        </q-btn>
-
-                        <q-btn
                             flat
                             round
-                            icon="download"
-                            color="primary"
-                            size="md"
+                        />
+                        <q-btn
+                            icon="fullscreen"
                             class="download-btn"
-                        >
-                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
-                                导出报告
-                            </q-tooltip>
-                        </q-btn>
+                            flat
+                            round
+                        />
                     </div>
                 </div>
             </div>
 
-            <!-- 底部装饰线 - 重新设计 -->
+            <!-- 底部装饰线 - 重新设计为更科技感的效果 -->
             <div class="header-decoration">
                 <div class="deco-border-glow"></div>
                 <div class="deco-particles">
@@ -95,253 +72,197 @@
             </div>
         </div>
 
-        <!-- 统计卡片网格 -->
-        <div class="stats-grid q-pa-lg">
-            <div class="row q-gutter-lg">
-                <!-- 总任务数 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="assignment"
-                        title="总任务数"
-                        :value="taskStats?.basic_stats?.total_tasks || 0"
-                        color="blue"
-                        :trend="getTrend('total')"
-                        @click="goToTasks()"
-                    />
+        <!-- 主要内容区域 -->
+        <div class="content-grid">
+            <!-- 左侧：关键指标卡片 -->
+            <div class="metrics-panel">
+                <div class="panel-header">
+                    <h3>关键指标</h3>
+                    <q-chip icon="trending_up" color="positive" text-color="white" size="sm">
+                        实时更新
+                    </q-chip>
                 </div>
 
-                <!-- 活跃任务 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="schedule"
-                        title="活跃任务"
-                        :value="taskStats?.workload_stats?.total_active_tasks || 0"
-                        color="orange"
-                        :trend="getTrend('active')"
-                        @click="() => goToTasks({ status: 'IN_PROGRESS' })"
-                    />
-                </div>
+                <div class="metrics-grid">
+                    <!-- 主要指标卡片 -->
+                    <div class="metric-card primary">
+                        <StatsCard
+                            icon="assignment"
+                            title="总任务数"
+                            :value="taskStats?.basic_stats?.total_tasks || 0"
+                            color="blue"
+                            :trend="getTrend('total')"
+                            @click="goToTasks()"
+                        />
+                    </div>
 
-                <!-- 已完成任务 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="done_all"
-                        title="已完成"
-                        :value="taskStats?.basic_stats?.completed_tasks || 0"
-                        color="green"
-                        :trend="getTrend('completed')"
-                        @click="goToTasks({ status: 'COMPLETED' })"
-                    />
-                </div>
+                    <div class="metric-card primary">
+                        <StatsCard
+                            icon="done_all"
+                            title="已完成"
+                            :value="taskStats?.basic_stats?.completed_tasks || 0"
+                            color="green"
+                            :trend="getTrend('completed')"
+                            @click="goToTasks({ status: 'COMPLETED' })"
+                        />
+                    </div>
 
-                <!-- 完成率 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="trending_up"
-                        title="完成率"
-                        :value="`${taskStats?.basic_stats?.completion_rate?.toFixed(1) || 0}%`"
-                        color="purple"
-                        :trend="getTrend('completion_rate')"
-                        @click="goToTasks()"
-                    />
-                </div>
-            </div>
+                    <div class="metric-card primary">
+                        <StatsCard
+                            icon="schedule"
+                            title="进行中"
+                            :value="taskStats?.workload_stats?.total_active_tasks || 0"
+                            color="orange"
+                            :trend="getTrend('active')"
+                            @click="goToTasks({ status: 'IN_PROGRESS' })"
+                        />
+                    </div>
 
-            <!-- 第二行卡片 -->
-            <div class="row q-gutter-lg q-mt-md">
-                <!-- 逾期任务 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="schedule_send"
-                        title="逾期任务"
-                        :value="taskStats?.overdue_analysis?.total_overdue || 0"
-                        color="red"
-                        :trend="getTrend('overdue')"
-                        @click="goToTasks()"
-                    />
-                </div>
+                    <div class="metric-card primary">
+                        <StatsCard
+                            icon="trending_up"
+                            title="完成率"
+                            :value="`${taskStats?.basic_stats?.completion_rate?.toFixed(1) || 0}%`"
+                            color="purple"
+                            :trend="getTrend('completion_rate')"
+                            @click="goToTasks()"
+                        />
+                    </div>
 
-                <!-- 平均进度 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="timeline"
-                        title="平均进度"
-                        :value="`${taskStats?.basic_stats?.average_progress?.toFixed(1) || 0}%`"
-                        color="blue"
-                        :trend="getTrend('progress')"
-                        @click="goToTasks()"
-                    />
-                </div>
+                    <!-- 次要指标卡片 -->
+                    <div class="metric-card secondary">
+                        <StatsCard
+                            icon="schedule_send"
+                            title="逾期任务"
+                            :value="taskStats?.overdue_analysis?.total_overdue || 0"
+                            color="red"
+                            :trend="getTrend('overdue')"
+                            @click="goToTasks()"
+                        />
+                    </div>
 
-                <!-- 预估工时 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="schedule"
-                        title="预估工时"
-                        :value="`${taskStats?.basic_stats?.total_estimated_hours || 0}h`"
-                        color="green"
-                        :trend="getTrend('estimated_hours')"
-                        @click="goToTasks()"
-                    />
-                </div>
-
-                <!-- 工作效率 -->
-                <div class="col-12 col-sm-6 col-md-3">
-                    <StatsCard
-                        icon="speed"
-                        title="工作效率"
-                        :value="`${taskStats?.basic_stats?.efficiency_rate?.toFixed(1) || 0}%`"
-                        color="purple"
-                        :trend="getTrend('efficiency')"
-                        @click="goToTasks()"
-                    />
+                    <div class="metric-card secondary">
+                        <StatsCard
+                            icon="timeline"
+                            title="平均进度"
+                            :value="`${taskStats?.basic_stats?.average_progress?.toFixed(1) || 0}%`"
+                            color="blue"
+                            :trend="getTrend('progress')"
+                            @click="goToTasks()"
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 图表和详细信息 -->
-        <div class="charts-section q-pa-lg">
-            <div class="row q-gutter-lg">
+            <!-- 右侧：图表和分析 -->
+            <div class="analytics-panel">
                 <!-- 状态分布图表 -->
-                <div class="col-12 col-md-6">
-                    <q-card class="stats-chart-card">
-                        <q-card-section>
-                            <div class="chart-title-section">
-                                <q-icon name="pie_chart" size="24px" class="chart-title-icon" />
-                                <div class="text-h6 chart-title">任务状态分布</div>
-                                <div class="chart-subtitle">实时状态统计分析</div>
-                            </div>
-                            <StatusDistributionChart
-                                :data="statusChartData"
-                                @status-click="handleStatusClick"
-                            />
-                        </q-card-section>
-                    </q-card>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <q-icon name="pie_chart" size="20px" />
+                            <span>任务状态分布</span>
+                        </div>
+                        <q-btn icon="more_vert" flat round size="sm" />
+                    </div>
+                    <div class="chart-content">
+                        <StatusDistributionChart
+                            :data="statusChartData"
+                            @status-click="handleStatusClick"
+                        />
+                    </div>
                 </div>
 
                 <!-- 优先级分布图表 -->
-                <div class="col-12 col-md-6">
-                    <q-card class="stats-chart-card">
-                        <q-card-section>
-                            <div class="chart-title-section">
-                                <q-icon name="bar_chart" size="24px" class="chart-title-icon" />
-                                <div class="text-h6 chart-title">优先级分布</div>
-                                <div class="chart-subtitle">任务优先级分析</div>
-                            </div>
-                            <PriorityDistributionChart
-                                :data="priorityChartData"
-                                @priority-click="handlePriorityClick"
-                            />
-                        </q-card-section>
-                    </q-card>
-                </div>
-            </div>
-
-            <!-- 第二行图表 -->
-            <div class="row q-gutter-lg q-mt-lg">
-                <!-- 分类统计图表 -->
-                <div class="col-12 col-md-6">
-                    <q-card class="stats-chart-card">
-                        <q-card-section>
-                            <div class="chart-title-section">
-                                <q-icon name="category" size="24px" class="chart-title-icon" />
-                                <div class="text-h6 chart-title">分类统计</div>
-                                <div class="chart-subtitle">任务分类分布</div>
-                            </div>
-                            <div class="category-chart">
-                                <div
-                                    v-if="
-                                        taskStats?.category_stats &&
-                                        taskStats.category_stats.length > 0
-                                    "
-                                >
-                                    <div
-                                        v-for="category in taskStats.category_stats"
-                                        :key="category.category"
-                                        class="category-item"
-                                    >
-                                        <div class="category-label">{{ category.category }}</div>
-                                        <div class="category-progress">
-                                            <q-linear-progress
-                                                :value="category.percentage / 100"
-                                                color="primary"
-                                                size="8px"
-                                                rounded
-                                            />
-                                            <span class="category-count"
-                                                >{{ category.count }} ({{
-                                                    category.percentage.toFixed(1)
-                                                }}%)</span
-                                            >
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-else class="no-data">暂无分类数据</div>
-                            </div>
-                        </q-card-section>
-                    </q-card>
-                </div>
-
-                <!-- 进度分析图表 -->
-                <div class="col-12 col-md-6">
-                    <q-card class="stats-chart-card">
-                        <q-card-section>
-                            <div class="chart-title-section">
-                                <q-icon name="analytics" size="24px" class="chart-title-icon" />
-                                <div class="text-h6 chart-title">进度分析</div>
-                                <div class="chart-subtitle">任务完成进度分布</div>
-                            </div>
-                            <div class="progress-chart">
-                                <div
-                                    v-if="
-                                        taskStats?.progress_analysis?.distribution &&
-                                        taskStats.progress_analysis.distribution.length > 0
-                                    "
-                                >
-                                    <div
-                                        v-for="item in taskStats.progress_analysis.distribution"
-                                        :key="item.range"
-                                        class="progress-item"
-                                    >
-                                        <div class="progress-label">{{ item.label }}</div>
-                                        <div class="progress-bar">
-                                            <q-linear-progress
-                                                :value="item.percentage / 100"
-                                                :color="getProgressColor(item.range)"
-                                                size="10px"
-                                                rounded
-                                            />
-                                            <span class="progress-count"
-                                                >{{ item.count }} ({{
-                                                    item.percentage.toFixed(1)
-                                                }}%)</span
-                                            >
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-else class="no-data">暂无进度数据</div>
-                            </div>
-                        </q-card-section>
-                    </q-card>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <q-icon name="bar_chart" size="20px" />
+                            <span>优先级分布</span>
+                        </div>
+                        <q-btn icon="more_vert" flat round size="sm" />
+                    </div>
+                    <div class="chart-content">
+                        <PriorityDistributionChart
+                            :data="priorityChartData"
+                            @priority-click="handlePriorityClick"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 最近活动 -->
-        <div class="activity-section q-pa-lg">
-            <div class="row q-gutter-lg">
-                <!-- 最近活动 -->
-                <div class="col-12">
-                    <q-card class="activity-card">
-                        <q-card-section>
-                            <div class="chart-title-section">
-                                <q-icon name="timeline" size="24px" class="chart-title-icon" />
-                                <div class="text-h6 chart-title">最近活动</div>
-                                <div class="chart-subtitle">实时动态追踪</div>
+        <!-- 底部：详细信息面板 -->
+        <div class="details-section">
+            <div class="details-grid">
+                <!-- 分类统计 -->
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <q-icon name="category" size="20px" />
+                        <span>分类统计</span>
+                    </div>
+                    <div class="detail-content">
+                        <div v-if="taskStats?.category_stats && taskStats.category_stats.length > 0">
+                            <div
+                                v-for="category in taskStats.category_stats"
+                                :key="category.category"
+                                class="category-row"
+                            >
+                                <span class="category-name">{{ category.category }}</span>
+                                <div class="category-bar">
+                                    <q-linear-progress
+                                        :value="category.percentage / 100"
+                                        color="primary"
+                                        size="6px"
+                                        rounded
+                                    />
+                                    <span class="category-value">{{ category.count }}</span>
+                                </div>
                             </div>
-                            <RecentActivityList :activities="recentActivities" />
-                        </q-card-section>
-                    </q-card>
+                        </div>
+                        <div v-else class="no-data">暂无分类数据</div>
+                    </div>
+                </div>
+
+                <!-- 进度分析 -->
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <q-icon name="analytics" size="20px" />
+                        <span>进度分析</span>
+                    </div>
+                    <div class="detail-content">
+                        <div v-if="taskStats?.progress_analysis?.distribution && taskStats.progress_analysis.distribution.length > 0">
+                            <div
+                                v-for="item in taskStats.progress_analysis.distribution"
+                                :key="item.range"
+                                class="progress-row"
+                            >
+                                <span class="progress-label">{{ item.label }}</span>
+                                <div class="progress-bar">
+                                    <q-linear-progress
+                                        :value="item.percentage / 100"
+                                        :color="getProgressColor(item.range)"
+                                        size="6px"
+                                        rounded
+                                    />
+                                    <span class="progress-value">{{ item.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="no-data">暂无进度数据</div>
+                    </div>
+                </div>
+
+                <!-- 最近活动 -->
+                <div class="detail-card activity-card">
+                    <div class="detail-header">
+                        <q-icon name="timeline" size="20px" />
+                        <span>最近活动</span>
+                        <q-chip size="xs" color="blue" text-color="white">实时</q-chip>
+                    </div>
+                    <div class="detail-content">
+                        <RecentActivityList :activities="recentActivities" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -429,6 +350,7 @@ const refreshData = async () => {
     });
 };
 
+// 日期格式化函数
 const formatDate = (date: Date) => {
     return date.toLocaleDateString('zh-CN', {
         year: 'numeric',
@@ -508,24 +430,12 @@ const handlePriorityClick = async (priority: string) => {
 
 <style lang="scss" scoped>
 .dashboard-page {
-    // 修改为白色背景，与其他页面保持一致
-    background: #ffffff;
-    min-height: calc(100vh - 50px);
-    position: relative;
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 1.5rem;
 
-    // 添加科技感网格纹理 - 调整为蓝色系
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image:
-            linear-gradient(rgba(59, 130, 246, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.02) 1px, transparent 1px);
-        background-size: 40px 40px;
-        pointer-events: none;
+    @media (max-width: 768px) {
+        padding: 1rem;
     }
 }
 
@@ -949,69 +859,236 @@ const handlePriorityClick = async (priority: string) => {
     }
 }
 
-.stats-grid {
-    .col-12,
-    .col-sm-6,
-    .col-md-3 {
-        min-height: 140px;
+// 主要内容网格
+.content-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+
+    @media (max-width: 1200px) {
+        grid-template-columns: 350px 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 }
 
-.stats-chart-card,
-.activity-card {
-    height: 400px;
-    border-radius: 20px;
-    // 蓝白科技感卡片样式
-    background: rgba(255, 255, 255, 0.98);
-    border: 1px solid rgba(59, 130, 246, 0.1);
+// 指标面板
+.metrics-panel {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
     box-shadow:
-        0 8px 32px rgba(14, 165, 233, 0.08),
-        0 2px 8px rgba(59, 130, 246, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+        0 4px 20px rgba(0, 0, 0, 0.04),
+        0 1px 3px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    height: fit-content;
 
-    // 科技感边框发光
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 20px;
-        padding: 1px;
-        background: linear-gradient(
-            135deg,
-            rgba(59, 130, 246, 0.2) 0%,
-            rgba(14, 165, 233, 0.1) 50%,
-            rgba(2, 132, 199, 0.2) 100%
-        );
-        mask:
-            linear-gradient(#fff 0 0) content-box,
-            linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-        pointer-events: none;
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+
+        h3 {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
     }
 
-    &:hover {
-        transform: translateY(-6px) scale(1.02);
-        box-shadow:
-            0 20px 60px rgba(14, 165, 233, 0.15),
-            0 8px 24px rgba(59, 130, 246, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.9);
-        border-color: rgba(59, 130, 246, 0.2);
+    .metrics-grid {
+        display: grid;
+        gap: 1rem;
 
-        &::before {
-            background: linear-gradient(
-                135deg,
-                rgba(59, 130, 246, 0.4) 0%,
-                rgba(14, 165, 233, 0.3) 50%,
-                rgba(2, 132, 199, 0.4) 100%
-            );
+        .metric-card {
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow:
+                    0 8px 25px rgba(0, 0, 0, 0.08),
+                    0 3px 10px rgba(0, 0, 0, 0.04);
+            }
+
+            &.secondary {
+                opacity: 0.9;
+
+                &:hover {
+                    opacity: 1;
+                }
+            }
         }
+    }
+}
+
+// 分析面板
+.analytics-panel {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 1.5rem;
+
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.04),
+            0 1px 3px rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.08),
+                0 3px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+
+            .chart-title {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #1e293b;
+
+                .q-icon {
+                    color: #3b82f6;
+                }
+            }
+        }
+
+        .chart-content {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+}
+
+// 详细信息区域
+.details-section {
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+
+        .detail-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow:
+                0 4px 20px rgba(0, 0, 0, 0.04),
+                0 1px 3px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow:
+                    0 8px 25px rgba(0, 0, 0, 0.08),
+                    0 3px 10px rgba(0, 0, 0, 0.04);
+            }
+
+            &.activity-card {
+                grid-column: 1 / -1;
+            }
+
+            .detail-header {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid #e2e8f0;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #1e293b;
+
+                .q-icon {
+                    color: #3b82f6;
+                }
+            }
+
+            .detail-content {
+                .no-data {
+                    text-align: center;
+                    color: #64748b;
+                    font-style: italic;
+                    padding: 2rem 0;
+                }
+
+                .category-row,
+                .progress-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.75rem 0;
+                    border-bottom: 1px solid #f1f5f9;
+
+                    &:last-child {
+                        border-bottom: none;
+                    }
+
+                    .category-name,
+                    .progress-label {
+                        font-weight: 500;
+                        color: #374151;
+                        flex: 0 0 30%;
+                    }
+
+                    .category-bar,
+                    .progress-bar {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        flex: 1;
+
+                        .q-linear-progress {
+                            flex: 1;
+                        }
+
+                        .category-value,
+                        .progress-value {
+                            font-weight: 600;
+                            color: #3b82f6;
+                            font-size: 0.875rem;
+                            min-width: 2rem;
+                            text-align: right;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 动画定义
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.4;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.1);
     }
 }
 
@@ -1066,25 +1143,27 @@ const handlePriorityClick = async (priority: string) => {
         }
     }
 
-    .stats-grid,
-    .charts-section,
-    .activity-section {
-        padding: 1rem !important;
+    .content-grid {
+        gap: 1rem;
     }
 
-    .stats-chart-card,
-    .activity-card {
-        height: auto;
-        min-height: 300px;
-        border-radius: 16px;
+    .metrics-panel,
+    .analytics-panel .chart-card,
+    .details-section .detail-card {
+        padding: 1rem;
+    }
 
-        &:hover {
-            transform: translateY(-3px) scale(1.01);
-        }
+    .details-section .details-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 }
 
 @media (max-width: 480px) {
+    .dashboard-page {
+        padding: 0.75rem;
+    }
+
     .page-header {
         padding: 1rem;
 
@@ -1127,72 +1206,10 @@ const handlePriorityClick = async (priority: string) => {
             }
         }
     }
-}
 
-// 科技感动画效果
-@keyframes techGlow {
-    0%,
-    100% {
-        box-shadow:
-            0 8px 32px rgba(14, 165, 233, 0.08),
-            0 2px 8px rgba(59, 130, 246, 0.05);
+    .content-grid {
+        gap: 0.75rem;
+        margin-bottom: 1rem;
     }
-    50% {
-        box-shadow:
-            0 8px 32px rgba(14, 165, 233, 0.12),
-            0 2px 8px rgba(59, 130, 246, 0.08);
-    }
-}
-
-// 为重要卡片添加轻微的脉冲效果
-.stats-chart-card:nth-child(odd) {
-    animation: techGlow 6s ease-in-out infinite;
-}
-
-// 图表标题样式
-.chart-title-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-    position: relative;
-
-    // 科技感底部装饰线
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        width: 60px;
-        height: 2px;
-        background: linear-gradient(90deg, #3b82f6, transparent);
-        border-radius: 1px;
-    }
-}
-
-.chart-title-icon {
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
-    padding: 8px;
-    border-radius: 8px;
-}
-
-.chart-title {
-    color: #1e40af;
-    font-weight: 600;
-    margin: 0;
-    flex: 1;
-}
-
-.chart-subtitle {
-    font-size: 12px;
-    color: #64748b;
-    margin-left: auto;
-    padding: 4px 12px;
-    background: rgba(14, 165, 233, 0.05);
-    border-radius: 20px;
-    border: 1px solid rgba(14, 165, 233, 0.1);
 }
 </style>

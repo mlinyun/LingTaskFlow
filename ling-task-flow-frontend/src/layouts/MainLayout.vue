@@ -1,103 +1,15 @@
 <template>
-    <q-layout view="lHh Lpr lFf">
-        <q-header elevated class="bg-primary text-white">
-            <q-toolbar>
-                <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+    <q-layout view="hHh Lpr lFf">
+        <!-- 使用独立的 AppHeader 组件 -->
+        <app-header @toggleDrawer="toggleLeftDrawer" />
 
-                <q-toolbar-title class="text-weight-bold">
-                    <q-icon name="task" size="sm" class="q-mr-sm" />
-                    LingTaskFlow
-                </q-toolbar-title>
+        <!-- 使用独立的 AppDrawer 组件 -->
+        <app-drawer
+            v-model="leftDrawerOpen"
+            :navigation-links="navigationLinks"
+        />
 
-                <!-- 用户信息和操作按钮 -->
-                <div class="q-gutter-sm row items-center">
-                    <q-chip
-                        v-if="authStore.user"
-                        :label="authStore.userDisplayName"
-                        icon="person"
-                        color="white"
-                        text-color="primary"
-                        class="q-pa-sm"
-                    />
-
-                    <q-btn-dropdown flat round dense icon="account_circle" class="q-ml-sm">
-                        <q-list>
-                            <q-item clickable v-close-popup @click="handleProfile">
-                                <q-item-section avatar>
-                                    <q-icon name="person" />
-                                </q-item-section>
-                                <q-item-section>个人资料</q-item-section>
-                            </q-item>
-
-                            <q-item clickable v-close-popup @click="handleSettings">
-                                <q-item-section avatar>
-                                    <q-icon name="settings" />
-                                </q-item-section>
-                                <q-item-section>设置</q-item-section>
-                            </q-item>
-
-                            <q-separator />
-
-                            <q-item clickable v-close-popup @click="handleLogout">
-                                <q-item-section avatar>
-                                    <q-icon name="logout" />
-                                </q-item-section>
-                                <q-item-section>退出登录</q-item-section>
-                            </q-item>
-                        </q-list>
-                    </q-btn-dropdown>
-                </div>
-            </q-toolbar>
-        </q-header>
-
-        <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-1" :width="280">
-            <q-list padding>
-                <!-- 任务统计概览 -->
-                <q-item-label header class="text-weight-bold text-primary"> 任务概览 </q-item-label>
-
-                <q-item v-if="authStore.user?.profile" class="q-mb-md">
-                    <q-item-section>
-                        <div class="row q-gutter-sm">
-                            <q-card flat bordered class="col">
-                                <q-card-section class="text-center q-pa-sm">
-                                    <div class="text-h6 text-primary">
-                                        {{ authStore.user.profile.task_count }}
-                                    </div>
-                                    <div class="text-caption">总任务</div>
-                                </q-card-section>
-                            </q-card>
-                            <q-card flat bordered class="col">
-                                <q-card-section class="text-center q-pa-sm">
-                                    <div class="text-h6 text-positive">
-                                        {{ authStore.user.profile.completed_task_count }}
-                                    </div>
-                                    <div class="text-caption">已完成</div>
-                                </q-card-section>
-                            </q-card>
-                        </div>
-                        <q-linear-progress
-                            :value="authStore.completionRate / 100"
-                            color="positive"
-                            class="q-mt-sm"
-                            size="8px"
-                            rounded
-                        />
-                        <div class="text-center text-caption q-mt-xs">
-                            完成率 {{ authStore.completionRate }}%
-                        </div>
-                    </q-item-section>
-                </q-item>
-
-                <q-separator class="q-mb-md" />
-
-                <!-- 导航菜单 -->
-                <q-item-label header class="text-weight-bold text-primary"> 导航菜单 </q-item-label>
-
-                <navigation-link v-for="link in navigationLinks" :key="link.title" v-bind="link" />
-            </q-list>
-        </q-drawer>
-
-        <q-page-container>
+        <q-page-container class="main-page-container">
             <router-view />
         </q-page-container>
     </q-layout>
@@ -105,18 +17,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
-import { useAuthStore } from 'stores/auth';
-import NavigationLink from 'components/NavigationLink.vue';
+import AppHeader from 'components/layout/AppHeader.vue';
+import AppDrawer from 'components/layout/AppDrawer.vue';
 
 // 响应式数据
 const leftDrawerOpen = ref(false);
-
-// 依赖注入
-const router = useRouter();
-const $q = useQuasar();
-const authStore = useAuthStore();
 
 // 导航链接配置
 const navigationLinks = [
@@ -154,30 +59,139 @@ const navigationLinks = [
 const toggleLeftDrawer = () => {
     leftDrawerOpen.value = !leftDrawerOpen.value;
 };
-
-const handleProfile = () => {
-    $q.notify('个人资料功能开发中...');
-};
-
-const handleSettings = () => {
-    $q.notify('设置功能开发中...');
-};
-
-const handleLogout = () => {
-    $q.dialog({
-        title: '确认退出',
-        message: '您确定要退出登录吗？',
-        cancel: true,
-        persistent: true,
-    }).onOk(() => {
-        void authStore.logout().then(() => {
-            $q.notify({
-                type: 'positive',
-                message: '已成功退出登录',
-                position: 'top',
-            });
-            void router.push('/login');
-        });
-    });
-};
 </script>
+
+<style lang="scss" scoped>
+.main-page-container {
+    // 确保容器占满剩余空间
+    height: 100vh;
+    min-height: 100vh;
+
+    // 处理内容溢出
+    overflow: auto;
+
+    // 确保内容不会超出视窗
+    max-width: 100vw;
+
+    // 为内容添加适当的内边距
+    padding: 0;
+
+    // 确保子元素正确布局
+    display: flex;
+    flex-direction: column;
+
+    // 处理滚动条样式 - 柔和蓝白科技风格
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+        border-radius: 4px;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        box-shadow: inset 0 0 2px rgba(148, 163, 184, 0.1);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #94a3b8, #64748b);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow:
+            0 1px 3px rgba(100, 116, 139, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+            background: linear-gradient(135deg, #64748b, #475569);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow:
+                0 2px 4px rgba(100, 116, 139, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        &:active {
+            background: linear-gradient(135deg, #475569, #374151);
+            transform: scale(0.95);
+        }
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 4px;
+    }
+}
+
+// 确保 router-view 内容正确填充
+:deep(.q-page) {
+    // 确保页面内容正确占据空间
+    min-height: calc(100vh - var(--header-height-desktop)); // 减去头部高度
+    width: 100%;
+
+    // 处理页面内容溢出
+    overflow-x: auto;
+    overflow-y: auto;
+
+    // 为页面内容添加基本内边距
+    padding: 1rem;
+    box-sizing: border-box;
+
+    // 确保内容不会超出容器
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break: break-word;
+
+    // 页面内容滚动条样式 - 柔和蓝白科技风格
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+        border-radius: 3px;
+        border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+        border-radius: 3px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 1px 2px rgba(148, 163, 184, 0.1);
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 3px rgba(148, 163, 184, 0.15);
+        }
+
+        &:active {
+            background: linear-gradient(135deg, #64748b, #475569);
+        }
+    }
+}
+
+// 处理移动端适配
+@media (max-width: 768px) {
+    .main-page-container {
+        // 移动端减少内边距
+        :deep(.q-page) {
+            padding: 0.5rem;
+            min-height: calc(100vh - 56px); // 移动端头部通常稍高
+        }
+    }
+}
+
+// 处理超宽屏幕
+@media (min-width: 1920px) {
+    .main-page-container {
+        :deep(.q-page) {
+            // 超宽屏幕限制最大内容宽度
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+    }
+}
+</style>

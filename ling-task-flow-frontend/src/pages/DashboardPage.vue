@@ -42,18 +42,8 @@
                             :loading="loading"
                             @click="refreshData"
                         />
-                        <q-btn
-                            icon="settings"
-                            class="fullscreen-btn"
-                            flat
-                            round
-                        />
-                        <q-btn
-                            icon="fullscreen"
-                            class="download-btn"
-                            flat
-                            round
-                        />
+                        <q-btn icon="settings" class="fullscreen-btn" flat round />
+                        <q-btn icon="fullscreen" class="download-btn" flat round />
                     </div>
                 </div>
             </div>
@@ -202,7 +192,9 @@
                         <span>分类统计</span>
                     </div>
                     <div class="detail-content">
-                        <div v-if="taskStats?.category_stats && taskStats.category_stats.length > 0">
+                        <div
+                            v-if="taskStats?.category_stats && taskStats.category_stats.length > 0"
+                        >
                             <div
                                 v-for="category in taskStats.category_stats"
                                 :key="category.category"
@@ -231,7 +223,12 @@
                         <span>进度分析</span>
                     </div>
                     <div class="detail-content">
-                        <div v-if="taskStats?.progress_analysis?.distribution && taskStats.progress_analysis.distribution.length > 0">
+                        <div
+                            v-if="
+                                taskStats?.progress_analysis?.distribution &&
+                                taskStats.progress_analysis.distribution.length > 0
+                            "
+                        >
                             <div
                                 v-for="item in taskStats.progress_analysis.distribution"
                                 :key="item.range"
@@ -527,7 +524,7 @@ const handlePriorityClick = async (priority: string) => {
         z-index: 2;
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         gap: 2rem;
 
         .title-section {
@@ -907,25 +904,6 @@ const handlePriorityClick = async (priority: string) => {
     .metrics-grid {
         display: grid;
         gap: 1rem;
-
-        .metric-card {
-            transition: all 0.3s ease;
-
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow:
-                    0 8px 25px rgba(0, 0, 0, 0.08),
-                    0 3px 10px rgba(0, 0, 0, 0.04);
-            }
-
-            &.secondary {
-                opacity: 0.9;
-
-                &:hover {
-                    opacity: 1;
-                }
-            }
-        }
     }
 }
 
@@ -1082,7 +1060,8 @@ const handlePriorityClick = async (priority: string) => {
 
 // 动画定义
 @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 0.4;
         transform: translate(-50%, -50%) scale(1);
     }

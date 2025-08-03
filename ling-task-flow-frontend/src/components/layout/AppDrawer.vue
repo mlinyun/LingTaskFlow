@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useAuthStore } from 'stores/auth';
-import NavigationLink from 'components/NavigationLink.vue';
+import NavigationLink from './NavigationLink.vue';
 
 // Props
 interface Props {

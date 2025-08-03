@@ -1,22 +1,97 @@
 <template>
     <q-page padding class="task-list-page">
-        <!-- 页面头部 -->
+        <!-- 页面头部 - 科技感重新设计 -->
         <div class="page-header">
+            <div class="header-background">
+                <div class="tech-grid"></div>
+                <div class="floating-particles">
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                </div>
+            </div>
+
             <div class="header-content">
                 <div class="title-section">
-                    <h1 class="page-title">任务管理</h1>
-                    <p class="page-subtitle">管理您的所有任务，提升工作效率</p>
+                    <div class="title-container">
+                        <div class="icon-wrapper">
+                            <q-icon name="assignment" size="32px" class="title-icon" />
+                            <div class="icon-glow"></div>
+                        </div>
+                        <div class="title-text">
+                            <h1 class="page-title">
+                                <span class="title-primary">任务管理</span>
+                                <span class="title-accent">系统</span>
+                            </h1>
+                            <p class="page-subtitle">
+                                <q-icon name="trending_up" size="14px" class="q-mr-xs" />
+                                智能化任务管理，提升工作效率与团队协作
+                            </p>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="action-section">
-                    <q-btn
-                        color="primary"
-                        icon="add"
-                        label="新建任务"
-                        unelevated
-                        rounded
-                        @click="openCreateDialog"
-                    />
+                    <div class="action-buttons">
+                        <!-- 主要操作按钮 -->
+                        <q-btn
+                            color="primary"
+                            icon="add"
+                            label="新建任务"
+                            unelevated
+                            rounded
+                            size="md"
+                            class="create-btn"
+                            @click="openCreateDialog"
+                        >
+                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
+                                创建新的任务项目
+                            </q-tooltip>
+                        </q-btn>
+
+                        <!-- 次要操作按钮 -->
+                        <q-btn
+                            flat
+                            round
+                            icon="refresh"
+                            color="primary"
+                            size="md"
+                            class="refresh-btn"
+                            @click="loadTasks"
+                        >
+                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
+                                刷新任务列表
+                            </q-tooltip>
+                        </q-btn>
+
+                        <q-btn
+                            flat
+                            round
+                            icon="filter_list"
+                            color="primary"
+                            size="md"
+                            class="filter-toggle-btn"
+                        >
+                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
+                                快速筛选
+                            </q-tooltip>
+                        </q-btn>
+                    </div>
                 </div>
+            </div>
+
+            <!-- 底部装饰线 - 重新设计 -->
+            <div class="header-decoration">
+                <div class="deco-border-glow"></div>
+                <div class="deco-particles">
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                </div>
+                <div class="deco-pulse-line"></div>
             </div>
         </div>
 
@@ -927,56 +1002,434 @@ onMounted(() => {
 }
 
 .page-header {
-    margin-bottom: 1.5rem;
-    background: rgba(59, 130, 246, 0.05);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-    border-radius: 16px;
-    padding: 1.5rem;
+    margin-bottom: 2rem;
     position: relative;
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.08) 0%,
+        rgba(14, 165, 233, 0.05) 50%,
+        rgba(6, 182, 212, 0.08) 100%
+    );
+    border-radius: 24px;
+    padding: 2rem;
+    overflow: hidden;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    box-shadow:
+        0 20px 60px rgba(14, 165, 233, 0.08),
+        0 8px 24px rgba(59, 130, 246, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
 
-    // 科技感发光效果
-    &::after {
-        content: '';
+    // 科技感背景
+    .header-background {
         position: absolute;
-        bottom: -1px;
-        left: 20px;
-        right: 20px;
-        height: 1px;
-        background: linear-gradient(
-            90deg,
-            transparent 0%,
-            rgba(59, 130, 246, 0.6) 50%,
-            transparent 100%
-        );
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+
+        .tech-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+
+            .particle {
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: radial-gradient(circle, rgba(59, 130, 246, 0.8) 0%, transparent 70%);
+                border-radius: 50%;
+                animation: float 6s ease-in-out infinite;
+
+                &:nth-child(1) {
+                    top: 20%;
+                    left: 10%;
+                    animation-delay: 0s;
+                }
+
+                &:nth-child(2) {
+                    top: 60%;
+                    left: 80%;
+                    animation-delay: 2s;
+                }
+
+                &:nth-child(3) {
+                    top: 30%;
+                    right: 20%;
+                    animation-delay: 4s;
+                }
+
+                &:nth-child(4) {
+                    bottom: 40%;
+                    left: 60%;
+                    animation-delay: 1s;
+                }
+            }
+        }
     }
 
     .header-content {
+        position: relative;
+        z-index: 2;
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 1.5rem;
+        gap: 2rem;
 
         .title-section {
             flex: 1;
 
-            .page-title {
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: #1e40af;
-                margin: 0 0 0.25rem 0;
-            }
+            .title-container {
+                display: flex;
+                align-items: center;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
 
-            .page-subtitle {
-                color: #64748b;
-                margin: 0;
-                font-size: 0.875rem;
+                .icon-wrapper {
+                    position: relative;
+                    width: 56px;
+                    height: 56px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: linear-gradient(
+                        135deg,
+                        rgba(59, 130, 246, 0.15),
+                        rgba(14, 165, 233, 0.1)
+                    );
+                    border-radius: 16px;
+                    border: 2px solid rgba(59, 130, 246, 0.2);
+                    box-shadow:
+                        0 8px 24px rgba(59, 130, 246, 0.15),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+                    .title-icon {
+                        color: #3b82f6;
+                        z-index: 2;
+                    }
+
+                    .icon-glow {
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        width: 40px;
+                        height: 40px;
+                        background: radial-gradient(
+                            circle,
+                            rgba(59, 130, 246, 0.2) 0%,
+                            transparent 70%
+                        );
+                        border-radius: 50%;
+                        animation: pulse 2s ease-in-out infinite;
+                    }
+                }
+
+                .title-text {
+                    flex: 1;
+
+                    .page-title {
+                        font-size: 2rem;
+                        font-weight: 800;
+                        margin: 0 0 0.5rem 0;
+                        line-height: 1.2;
+                        display: flex;
+                        align-items: baseline;
+                        gap: 0.5rem;
+
+                        .title-primary {
+                            background: linear-gradient(135deg, #1e40af, #3b82f6);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                        }
+
+                        .title-accent {
+                            color: #0ea5e9;
+                            font-weight: 600;
+                            font-size: 1.5rem;
+                        }
+                    }
+
+                    .page-subtitle {
+                        color: #64748b;
+                        margin: 0;
+                        font-size: 0.95rem;
+                        font-weight: 500;
+                        display: flex;
+                        align-items: center;
+                        letter-spacing: 0.02em;
+                    }
+                }
             }
         }
 
         .action-section {
             flex-shrink: 0;
+
+            .action-buttons {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+
+                .create-btn {
+                    background: linear-gradient(135deg, #3b82f6, #2563eb);
+                    color: white;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    box-shadow:
+                        0 8px 24px rgba(59, 130, 246, 0.25),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    font-weight: 600;
+                    height: 44px;
+                    padding: 0 1.5rem;
+
+                    &:hover {
+                        transform: translateY(-2px);
+                        box-shadow:
+                            0 12px 32px rgba(59, 130, 246, 0.35),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+                        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                    }
+
+                    &:active {
+                        transform: translateY(0);
+                    }
+                }
+
+                .refresh-btn,
+                .filter-toggle-btn {
+                    width: 44px;
+                    height: 44px;
+                    background: rgba(59, 130, 246, 0.08);
+                    border: 1px solid rgba(59, 130, 246, 0.15);
+                    color: #3b82f6;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+                    &:hover {
+                        background: rgba(59, 130, 246, 0.15);
+                        border-color: rgba(59, 130, 246, 0.25);
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+                    }
+
+                    &:active {
+                        transform: translateY(0);
+                    }
+                }
+            }
         }
+    }
+
+    // 底部装饰线 - 重新设计为更科技感的效果
+    .header-decoration {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        overflow: hidden;
+
+        // 发光边框效果
+        .deco-border-glow {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(59, 130, 246, 0.3) 20%,
+                rgba(14, 165, 233, 0.8) 50%,
+                rgba(59, 130, 246, 0.3) 80%,
+                transparent 100%
+            );
+            box-shadow:
+                0 0 8px rgba(14, 165, 233, 0.4),
+                0 0 16px rgba(59, 130, 246, 0.2);
+            animation: borderPulse 3s ease-in-out infinite;
+        }
+
+        // 流动粒子效果
+        .deco-particles {
+            position: absolute;
+            bottom: 1px;
+            left: 0;
+            right: 0;
+            height: 4px;
+
+            .deco-particle {
+                position: absolute;
+                width: 3px;
+                height: 3px;
+                background: radial-gradient(
+                    circle,
+                    #3b82f6 0%,
+                    rgba(59, 130, 246, 0.6) 50%,
+                    transparent 100%
+                );
+                border-radius: 50%;
+                opacity: 0;
+                animation: particleFlow 4s linear infinite;
+
+                &:nth-child(1) {
+                    left: 10%;
+                    animation-delay: 0s;
+                }
+
+                &:nth-child(2) {
+                    left: 30%;
+                    animation-delay: 0.8s;
+                }
+
+                &:nth-child(3) {
+                    left: 50%;
+                    animation-delay: 1.6s;
+                }
+
+                &:nth-child(4) {
+                    left: 70%;
+                    animation-delay: 2.4s;
+                }
+
+                &:nth-child(5) {
+                    left: 90%;
+                    animation-delay: 3.2s;
+                }
+            }
+        }
+
+        // 脉冲扫描线
+        .deco-pulse-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 1px;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(6, 182, 212, 0.8) 50%,
+                transparent 100%
+            );
+            box-shadow: 0 0 6px rgba(6, 182, 212, 0.6);
+            animation: scanLine 6s linear infinite;
+        }
+    }
+}
+
+// 动画定义
+@keyframes gridMove {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(30px, 30px);
+    }
+}
+
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translateY(-10px) rotate(180deg);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.9;
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+// 新增装饰线动画
+@keyframes borderPulse {
+    0%,
+    100% {
+        opacity: 0.6;
+        box-shadow:
+            0 0 8px rgba(14, 165, 233, 0.4),
+            0 0 16px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+        opacity: 1;
+        box-shadow:
+            0 0 12px rgba(14, 165, 233, 0.6),
+            0 0 24px rgba(59, 130, 246, 0.4);
+    }
+}
+
+@keyframes particleFlow {
+    0% {
+        opacity: 0;
+        transform: translateX(-10px) scale(0.5);
+    }
+    10% {
+        opacity: 1;
+        transform: translateX(0px) scale(1);
+    }
+    90% {
+        opacity: 1;
+        transform: translateX(30px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(40px) scale(0.5);
+    }
+}
+
+@keyframes scanLine {
+    0% {
+        left: -100px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        left: calc(100% + 100px);
+        opacity: 0;
     }
 }
 
@@ -1424,15 +1877,49 @@ onMounted(() => {
 // 响应式设计
 @media (max-width: 768px) {
     .page-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+
         .header-content {
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
+
+            .title-section {
+                .title-container {
+                    gap: 1rem;
+
+                    .icon-wrapper {
+                        width: 48px;
+                        height: 48px;
+                    }
+
+                    .title-text {
+                        .page-title {
+                            font-size: 1.75rem;
+
+                            .title-accent {
+                                font-size: 1.25rem;
+                            }
+                        }
+
+                        .page-subtitle {
+                            font-size: 0.9rem;
+                        }
+                    }
+                }
+            }
 
             .action-section {
                 width: 100%;
 
-                .q-btn {
+                .action-buttons {
+                    justify-content: space-between;
                     width: 100%;
+
+                    .create-btn {
+                        flex: 1;
+                        max-width: 200px;
+                    }
                 }
             }
         }
@@ -1502,6 +1989,50 @@ onMounted(() => {
 }
 
 @media (max-width: 480px) {
+    .page-header {
+        padding: 1rem;
+        border-radius: 16px;
+
+        .header-content {
+            .title-section {
+                .title-container {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 1rem;
+
+                    .title-text {
+                        .page-title {
+                            font-size: 1.5rem;
+                            justify-content: center;
+
+                            .title-accent {
+                                font-size: 1.125rem;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .action-section {
+                .action-buttons {
+                    flex-direction: column;
+                    gap: 0.75rem;
+
+                    .create-btn {
+                        max-width: none;
+                        width: 100%;
+                    }
+
+                    .refresh-btn,
+                    .filter-toggle-btn {
+                        width: 100%;
+                        height: 40px;
+                    }
+                }
+            }
+        }
+    }
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.75rem !important;

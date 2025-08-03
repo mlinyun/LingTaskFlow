@@ -57,7 +57,7 @@ import { useAuthStore } from 'stores/auth';
 
 // 定义组件事件
 const emit = defineEmits<{
-    toggleDrawer: []
+    toggleDrawer: [];
 }>();
 
 // 依赖注入

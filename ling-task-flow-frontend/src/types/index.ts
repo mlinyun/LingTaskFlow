@@ -68,6 +68,9 @@ export type {
     TrashResponse,
     SavedSearch,
     SearchHistory,
+    StatusDistribution,
+    TagDistribution,
+    TimeDistribution,
 } from './task';
 
 export type { TaskStatus, TaskPriority } from './task';

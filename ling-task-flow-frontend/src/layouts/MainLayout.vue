@@ -4,10 +4,7 @@
         <app-header @toggleDrawer="toggleLeftDrawer" />
 
         <!-- 使用独立的 AppDrawer 组件 -->
-        <app-drawer
-            v-model="leftDrawerOpen"
-            :navigation-links="navigationLinks"
-        />
+        <app-drawer v-model="leftDrawerOpen" :navigation-links="navigationLinks" />
 
         <q-page-container class="main-page-container">
             <router-view />
@@ -45,6 +42,13 @@ const navigationLinks = [
         icon: 'dashboard',
         link: '/dashboard',
         color: 'info',
+    },
+    {
+        title: '高级分析',
+        caption: '多维度数据深度分析',
+        icon: 'analytics',
+        link: '/advanced-analytics',
+        color: 'purple',
     },
     {
         title: '回收站',

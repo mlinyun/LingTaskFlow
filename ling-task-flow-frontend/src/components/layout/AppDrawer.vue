@@ -48,35 +48,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useAuthStore } from 'stores/auth'
-import NavigationLink from 'components/NavigationLink.vue'
+import { computed } from 'vue';
+import { useAuthStore } from 'stores/auth';
+import NavigationLink from 'components/NavigationLink.vue';
 
 // Props
 interface Props {
-    modelValue: boolean
+    modelValue: boolean;
     navigationLinks: Array<{
-        title: string
-        caption: string
-        icon: string
-        link: string
-        color: string
-    }>
+        title: string;
+        caption: string;
+        icon: string;
+        link: string;
+        color: string;
+    }>;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Emits
 const emit = defineEmits<{
-    'update:modelValue': [value: boolean]
-}>()
+    'update:modelValue': [value: boolean];
+}>();
 
 // Store
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 
 // Computed
 const drawerOpen = computed({
     get: () => props.modelValue,
-    set: (value: boolean) => emit('update:modelValue', value)
-})
+    set: (value: boolean) => emit('update:modelValue', value),
+});
 </script>

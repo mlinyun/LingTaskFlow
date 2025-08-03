@@ -8,6 +8,9 @@ import type {
     TaskSearchParams,
     TaskStats,
     TrashStats,
+    StatusDistribution,
+    TagDistribution,
+    TimeDistribution,
 } from '../types';
 
 export const useTaskStore = defineStore('task', () => {
@@ -439,6 +442,71 @@ export const useTaskStore = defineStore('task', () => {
         }
     };
 
+    /**
+     * 获取状态分布统计
+     */
+    const fetchStatusDistribution = async (params?: {
+        period?: string;
+        include_deleted?: boolean;
+        date_field?: string;
+        include_transitions?: boolean;
+        include_duration?: boolean;
+    }): Promise<StatusDistribution> => {
+        try {
+            const response = await api.get('/tasks/status-distribution/', { params });
+            return response.data;
+        } catch (error) {
+            console.error('获取状态分布失败:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * 获取标签分布统计
+     */
+    const fetchTagDistribution = async (params?: {
+        period?: string;
+        include_deleted?: boolean;
+        date_field?: string;
+        include_usage?: boolean;
+        include_combination?: boolean;
+        include_efficiency?: boolean;
+        min_frequency?: number;
+        top_n?: number;
+    }): Promise<TagDistribution> => {
+        try {
+            const response = await api.get('/tasks/tag-distribution/', { params });
+            return response.data;
+        } catch (error) {
+            console.error('获取标签分布失败:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * 获取时间分布统计
+     */
+    const fetchTimeDistribution = async (params?: {
+        period?: string;
+        include_deleted?: boolean;
+        analysis_type?: string;
+        date_field?: string;
+        include_hourly?: boolean;
+        include_daily?: boolean;
+        include_weekly?: boolean;
+        include_monthly?: boolean;
+        include_trends?: boolean;
+        timezone?: string;
+    }): Promise<TimeDistribution> => {
+        try {
+            const response = await api.get('/tasks/time-distribution/', { params });
+            return response.data;
+        } catch (error) {
+            console.error('获取时间分布失败:', error);
+            throw error;
+        }
+    };
+
     // 状态管理方法
 
     /**
@@ -552,6 +620,9 @@ export const useTaskStore = defineStore('task', () => {
         fetchTrashTasks,
         emptyTrash,
         fetchTaskStats,
+        fetchStatusDistribution,
+        fetchTagDistribution,
+        fetchTimeDistribution,
         setSearchParams,
         clearSearchParams,
         setPage,

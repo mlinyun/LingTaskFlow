@@ -74,8 +74,8 @@ const sortedData = computed(() => {
 });
 
 const getPercentage = (count: number) => {
-    if (totalTasks.value === 0) return 0;
-    return Math.round((count / totalTasks.value) * 100);
+    if (totalTasks.value === 0) return '0.00';
+    return ((count / totalTasks.value) * 100).toFixed(2);
 };
 
 const drawChart = () => {

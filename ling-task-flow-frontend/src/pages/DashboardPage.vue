@@ -186,81 +186,24 @@
         <div class="details-section">
             <div class="details-grid">
                 <!-- 分类统计 -->
-                <div class="detail-card">
-                    <div class="detail-header">
-                        <q-icon name="category" size="20px" />
-                        <span>分类统计</span>
-                    </div>
-                    <div class="detail-content">
-                        <div
-                            v-if="taskStats?.category_stats && taskStats.category_stats.length > 0"
-                        >
-                            <div
-                                v-for="category in taskStats.category_stats"
-                                :key="category.category"
-                                class="category-row"
-                            >
-                                <span class="category-name">{{ category.category }}</span>
-                                <div class="category-bar">
-                                    <q-linear-progress
-                                        :value="category.percentage / 100"
-                                        color="primary"
-                                        size="6px"
-                                        rounded
-                                    />
-                                    <span class="category-value">{{ category.count }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-else class="no-data">暂无分类数据</div>
-                    </div>
-                </div>
+                <StatisticCard
+                    title="分类统计"
+                    icon="category"
+                    :items="categoryStatItems"
+                    type="category"
+                    no-data-text="暂无分类数据"
+                    @item-click="handleCategoryClick"
+                />
 
                 <!-- 进度分析 -->
-                <div class="detail-card">
-                    <div class="detail-header">
-                        <q-icon name="analytics" size="20px" />
-                        <span>进度分析</span>
-                    </div>
-                    <div class="detail-content">
-                        <div
-                            v-if="
-                                taskStats?.progress_analysis?.distribution &&
-                                taskStats.progress_analysis.distribution.length > 0
-                            "
-                        >
-                            <div
-                                v-for="item in taskStats.progress_analysis.distribution"
-                                :key="item.range"
-                                class="progress-row"
-                            >
-                                <span class="progress-label">{{ item.label }}</span>
-                                <div class="progress-bar">
-                                    <q-linear-progress
-                                        :value="item.percentage / 100"
-                                        :color="getProgressColor(item.range)"
-                                        size="6px"
-                                        rounded
-                                    />
-                                    <span class="progress-value">{{ item.count }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-else class="no-data">暂无进度数据</div>
-                    </div>
-                </div>
-
-                <!-- 最近活动 -->
-                <div class="detail-card activity-card">
-                    <div class="detail-header">
-                        <q-icon name="timeline" size="20px" />
-                        <span>最近活动</span>
-                        <q-chip size="xs" color="blue" text-color="white">实时</q-chip>
-                    </div>
-                    <div class="detail-content">
-                        <RecentActivityList :activities="recentActivities" />
-                    </div>
-                </div>
+                <StatisticCard
+                    title="进度分析"
+                    icon="analytics"
+                    :items="progressStatItems"
+                    type="progress"
+                    no-data-text="暂无进度数据"
+                    @item-click="handleProgressClick"
+                />
             </div>
         </div>
 
@@ -277,7 +220,7 @@ import type { TaskStats, TaskSearchParams, TaskStatus, TaskPriority } from 'src/
 import StatsCard from '../components/dashboard/StatsCard.vue';
 import StatusDistributionChart from '../components/dashboard/StatusDistributionChart.vue';
 import PriorityDistributionChart from '../components/dashboard/PriorityDistributionChart.vue';
-import RecentActivityList from '../components/dashboard/RecentActivityList.vue';
+import StatisticCard from '../components/dashboard/StatisticCard.vue';
 import { Notify } from 'quasar';
 
 const router = useRouter();
@@ -310,9 +253,30 @@ const priorityChartData = computed(() => {
     }));
 });
 
-const recentActivities = computed(() => {
-    // 由于新的API结构没有recent_activity，我们可以基于其他数据生成或返回空数组
-    return [];
+// 分类统计数据转换
+const categoryStatItems = computed(() => {
+    if (!taskStats.value?.category_stats) return [];
+
+    return taskStats.value.category_stats.map(item => ({
+        key: item.category,
+        label: item.category,
+        count: item.count,
+        percentage: item.percentage,
+        category: item.category,
+    }));
+});
+
+// 进度分析数据转换
+const progressStatItems = computed(() => {
+    if (!taskStats.value?.progress_analysis?.distribution) return [];
+
+    return taskStats.value.progress_analysis.distribution.map(item => ({
+        key: item.range,
+        label: item.label,
+        count: item.count,
+        percentage: item.percentage,
+        range: item.range,
+    }));
 });
 
 // 初始化
@@ -386,7 +350,7 @@ const getStatusColor = (status: string) => {
     return colors[status as keyof typeof colors] || '#94a3b8';
 };
 
-// 优先级相关辅助方法
+// 进度颜色辅助方法
 const getPriorityColor = (priority: string) => {
     // 蓝白科技感配色 - 按优先级使用不同深度的蓝色
     const colors = {
@@ -396,16 +360,6 @@ const getPriorityColor = (priority: string) => {
         URGENT: '#1e40af', // 深海蓝 - 紧急
     };
     return colors[priority as keyof typeof colors] || '#94a3b8';
-};
-
-// 进度颜色辅助方法
-const getProgressColor = (range: string): string => {
-    if (range.includes('0')) return 'red';
-    if (range.includes('25')) return 'orange';
-    if (range.includes('50')) return 'amber';
-    if (range.includes('75')) return 'light-green';
-    if (range.includes('100')) return 'green';
-    return 'blue';
 };
 
 // 导航方法
@@ -422,6 +376,38 @@ const handleStatusClick = async (status: string) => {
 
 const handlePriorityClick = async (priority: string) => {
     await goToTasks({ priority: priority as TaskPriority });
+};
+
+// 统计项接口定义（与 StatisticCard 组件一致）
+interface StatisticItem {
+    key: string;
+    label: string;
+    count: number;
+    percentage: number;
+    range?: string;
+    category?: string;
+}
+
+// 分类点击事件处理
+const handleCategoryClick = (item: StatisticItem) => {
+    // 可以根据分类导航到任务列表，这里暂时显示通知
+    Notify.create({
+        type: 'info',
+        message: `点击了分类：${item.label} (${item.count}个任务)`,
+        position: 'top',
+    });
+    // 未来可以添加：await goToTasks({ category: item.category });
+};
+
+// 进度点击事件处理
+const handleProgressClick = (item: StatisticItem) => {
+    // 可以根据进度范围导航到任务列表，这里暂时显示通知
+    Notify.create({
+        type: 'info',
+        message: `点击了进度范围：${item.label} (${item.count}个任务)`,
+        position: 'top',
+    });
+    // 未来可以添加：await goToTasks({ progressRange: item.range });
 };
 </script>
 
@@ -884,6 +870,14 @@ const handlePriorityClick = async (priority: string) => {
         0 1px 3px rgba(0, 0, 0, 0.02);
     border: 1px solid rgba(226, 232, 240, 0.8);
     height: fit-content;
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            0 8px 25px rgba(0, 0, 0, 0.08),
+            0 3px 10px rgba(0, 0, 0, 0.04);
+    }
 
     .panel-header {
         display: flex;
@@ -922,6 +916,9 @@ const handlePriorityClick = async (priority: string) => {
             0 1px 3px rgba(0, 0, 0, 0.02);
         border: 1px solid rgba(226, 232, 240, 0.8);
         transition: all 0.3s ease;
+        min-height: 380px;
+        display: flex;
+        flex-direction: column;
 
         &:hover {
             transform: translateY(-2px);
@@ -953,10 +950,12 @@ const handlePriorityClick = async (priority: string) => {
         }
 
         .chart-content {
-            height: 200px;
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 10px;
+            min-height: 300px;
         }
     }
 }
@@ -967,94 +966,6 @@ const handlePriorityClick = async (priority: string) => {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1.5rem;
-
-        .detail-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow:
-                0 4px 20px rgba(0, 0, 0, 0.04),
-                0 1px 3px rgba(0, 0, 0, 0.02);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.3s ease;
-
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow:
-                    0 8px 25px rgba(0, 0, 0, 0.08),
-                    0 3px 10px rgba(0, 0, 0, 0.04);
-            }
-
-            &.activity-card {
-                grid-column: 1 / -1;
-            }
-
-            .detail-header {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                margin-bottom: 1rem;
-                padding-bottom: 0.75rem;
-                border-bottom: 1px solid #e2e8f0;
-                font-size: 1rem;
-                font-weight: 600;
-                color: #1e293b;
-
-                .q-icon {
-                    color: #3b82f6;
-                }
-            }
-
-            .detail-content {
-                .no-data {
-                    text-align: center;
-                    color: #64748b;
-                    font-style: italic;
-                    padding: 2rem 0;
-                }
-
-                .category-row,
-                .progress-row {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0.75rem 0;
-                    border-bottom: 1px solid #f1f5f9;
-
-                    &:last-child {
-                        border-bottom: none;
-                    }
-
-                    .category-name,
-                    .progress-label {
-                        font-weight: 500;
-                        color: #374151;
-                        flex: 0 0 30%;
-                    }
-
-                    .category-bar,
-                    .progress-bar {
-                        display: flex;
-                        align-items: center;
-                        gap: 0.75rem;
-                        flex: 1;
-
-                        .q-linear-progress {
-                            flex: 1;
-                        }
-
-                        .category-value,
-                        .progress-value {
-                            font-weight: 600;
-                            color: #3b82f6;
-                            font-size: 0.875rem;
-                            min-width: 2rem;
-                            text-align: right;
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -1130,6 +1041,14 @@ const handlePriorityClick = async (priority: string) => {
     .analytics-panel .chart-card,
     .details-section .detail-card {
         padding: 1rem;
+    }
+
+    .analytics-panel .chart-card {
+        min-height: 320px;
+
+        .chart-content {
+            min-height: 240px;
+        }
     }
 
     .details-section .details-grid {

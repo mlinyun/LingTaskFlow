@@ -1820,7 +1820,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             'average_progress': round(avg_progress, 2),
             'total_estimated_hours': float(total_estimated),
             'total_actual_hours': float(total_actual),
-            'efficiency_rate': round((total_actual / total_estimated * 100) if total_estimated > 0 else 0.0, 2)
+            'efficiency_rate': round((float(total_actual) / float(total_estimated) * 100) if total_estimated > 0 else 0.0, 2)
         }
     
     def _calculate_status_distribution(self, queryset):

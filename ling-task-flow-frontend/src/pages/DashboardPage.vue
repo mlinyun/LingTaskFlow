@@ -4,8 +4,8 @@
         <div class="page-header q-pa-lg">
             <div class="row items-center justify-between">
                 <div>
-                    <h4 class="text-h4 q-ma-none text-white">统计仪表板</h4>
-                    <p class="text-subtitle1 q-ma-none text-white-7">
+                    <h4 class="text-h4 q-ma-none text-blue-9">统计仪表板</h4>
+                    <p class="text-subtitle1 q-ma-none text-blue-7">
                         {{ formatDate(new Date()) }} • 数据概览
                     </p>
                 </div>
@@ -13,7 +13,7 @@
                     icon="refresh"
                     label="刷新数据"
                     flat
-                    color="white"
+                    color="blue"
                     @click="refreshData"
                     :loading="loading"
                 />
@@ -80,7 +80,11 @@
                 <div class="col-12 col-md-6">
                     <q-card class="stats-chart-card">
                         <q-card-section>
-                            <div class="text-h6 q-mb-md">任务状态分布</div>
+                            <div class="chart-title-section">
+                                <q-icon name="pie_chart" size="24px" class="chart-title-icon" />
+                                <div class="text-h6 chart-title">任务状态分布</div>
+                                <div class="chart-subtitle">实时状态统计分析</div>
+                            </div>
                             <StatusDistributionChart
                                 :data="statusChartData"
                                 @status-click="handleStatusClick"
@@ -93,7 +97,11 @@
                 <div class="col-12 col-md-6">
                     <q-card class="stats-chart-card">
                         <q-card-section>
-                            <div class="text-h6 q-mb-md">优先级分布</div>
+                            <div class="chart-title-section">
+                                <q-icon name="bar_chart" size="24px" class="chart-title-icon" />
+                                <div class="text-h6 chart-title">优先级分布</div>
+                                <div class="chart-subtitle">任务优先级分析</div>
+                            </div>
                             <PriorityDistributionChart
                                 :data="priorityChartData"
                                 @priority-click="handlePriorityClick"
@@ -104,58 +112,19 @@
             </div>
         </div>
 
-        <!-- 最近活动和快速操作 -->
+        <!-- 最近活动 -->
         <div class="activity-section q-pa-lg">
             <div class="row q-gutter-lg">
                 <!-- 最近活动 -->
-                <div class="col-12 col-md-8">
+                <div class="col-12">
                     <q-card class="activity-card">
                         <q-card-section>
-                            <div class="text-h6 q-mb-md">最近活动</div>
-                            <RecentActivityList :activities="recentActivities" />
-                        </q-card-section>
-                    </q-card>
-                </div>
-
-                <!-- 快速操作 -->
-                <div class="col-12 col-md-4">
-                    <q-card class="quick-actions-card">
-                        <q-card-section>
-                            <div class="text-h6 q-mb-md">快速操作</div>
-                            <div class="quick-actions">
-                                <q-btn
-                                    unelevated
-                                    color="primary"
-                                    icon="add"
-                                    label="新建任务"
-                                    class="full-width q-mb-sm"
-                                    @click="createNewTask"
-                                />
-                                <q-btn
-                                    unelevated
-                                    color="secondary"
-                                    icon="search"
-                                    label="搜索任务"
-                                    class="full-width q-mb-sm"
-                                    @click="() => goToTasks()"
-                                />
-                                <q-btn
-                                    unelevated
-                                    color="orange"
-                                    icon="schedule"
-                                    label="查看逾期"
-                                    class="full-width q-mb-sm"
-                                    @click="goToTasks({ is_overdue: true })"
-                                />
-                                <q-btn
-                                    unelevated
-                                    color="negative"
-                                    icon="delete"
-                                    label="回收站"
-                                    class="full-width"
-                                    @click="goToTrash"
-                                />
+                            <div class="chart-title-section">
+                                <q-icon name="timeline" size="24px" class="chart-title-icon" />
+                                <div class="text-h6 chart-title">最近活动</div>
+                                <div class="chart-subtitle">实时动态追踪</div>
                             </div>
+                            <RecentActivityList :activities="recentActivities" />
                         </q-card-section>
                     </q-card>
                 </div>
@@ -278,14 +247,15 @@ const getStatusLabel = (status: string) => {
 };
 
 const getStatusColor = (status: string) => {
+    // 蓝白科技感配色 - 统一使用蓝色系
     const colors = {
-        PENDING: '#ff9800',
-        IN_PROGRESS: '#2196f3',
-        COMPLETED: '#4caf50',
-        CANCELLED: '#f44336',
-        ON_HOLD: '#9c27b0',
+        PENDING: '#0ea5e9', // 天空蓝 - 待处理
+        IN_PROGRESS: '#3b82f6', // 皇家蓝 - 进行中
+        COMPLETED: '#06b6d4', // 青蓝色 - 已完成
+        CANCELLED: '#64748b', // 石板蓝 - 已取消
+        ON_HOLD: '#1e40af', // 深海蓝 - 暂停
     };
-    return colors[status as keyof typeof colors] || '#757575';
+    return colors[status as keyof typeof colors] || '#94a3b8';
 };
 
 // 优先级相关辅助方法
@@ -300,13 +270,14 @@ const getPriorityLabel = (priority: string) => {
 };
 
 const getPriorityColor = (priority: string) => {
+    // 蓝白科技感配色 - 按优先级使用不同深度的蓝色
     const colors = {
-        LOW: '#4caf50',
-        MEDIUM: '#ff9800',
-        HIGH: '#f44336',
-        URGENT: '#e91e63',
+        LOW: '#06b6d4', // 青蓝色 - 低优先级
+        MEDIUM: '#0ea5e9', // 天空蓝 - 中优先级
+        HIGH: '#3b82f6', // 皇家蓝 - 高优先级
+        URGENT: '#1e40af', // 深海蓝 - 紧急
     };
-    return colors[priority as keyof typeof colors] || '#757575';
+    return colors[priority as keyof typeof colors] || '#94a3b8';
 };
 
 // 导航方法
@@ -324,28 +295,52 @@ const handleStatusClick = async (status: string) => {
 const handlePriorityClick = async (priority: string) => {
     await goToTasks({ priority: priority as TaskPriority });
 };
-
-const goToTrash = async () => {
-    await router.push('/trash');
-};
-
-const createNewTask = async () => {
-    // 触发新建任务操作，通过事件总线或直接调用任务列表页面的方法
-    await router.push('/tasks');
-    // TODO: 在任务页面实现新建任务对话框的打开
-};
 </script>
 
 <style lang="scss" scoped>
 .dashboard-page {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    // 修改为白色背景，与其他页面保持一致
+    background: #ffffff;
+    min-height: calc(100vh - 50px);
+    position: relative;
+
+    // 添加科技感网格纹理 - 调整为蓝色系
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image:
+            linear-gradient(rgba(59, 130, 246, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+    }
 }
 
 .page-header {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(59, 130, 246, 0.05);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    box-shadow: 0 2px 20px rgba(59, 130, 246, 0.05);
+
+    // 科技感发光效果
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(59, 130, 246, 0.6) 50%,
+            transparent 100%
+        );
+    }
 }
 
 .stats-grid {
@@ -357,31 +352,59 @@ const createNewTask = async () => {
 }
 
 .stats-chart-card,
-.activity-card,
-.quick-actions-card {
+.activity-card {
     height: 400px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    border-radius: 20px;
+    // 蓝白科技感卡片样式
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    box-shadow:
+        0 8px 32px rgba(14, 165, 233, 0.08),
+        0 2px 8px rgba(59, 130, 246, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    // 科技感边框发光
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 20px;
+        padding: 1px;
+        background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.2) 0%,
+            rgba(14, 165, 233, 0.1) 50%,
+            rgba(2, 132, 199, 0.2) 100%
+        );
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
+    }
 
     &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-    }
-}
+        transform: translateY(-6px) scale(1.02);
+        box-shadow:
+            0 20px 60px rgba(14, 165, 233, 0.15),
+            0 8px 24px rgba(59, 130, 246, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(59, 130, 246, 0.2);
 
-.quick-actions {
-    .q-btn {
-        border-radius: 12px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        &::before {
+            background: linear-gradient(
+                135deg,
+                rgba(59, 130, 246, 0.4) 0%,
+                rgba(14, 165, 233, 0.3) 50%,
+                rgba(2, 132, 199, 0.4) 100%
+            );
         }
     }
 }
@@ -399,10 +422,81 @@ const createNewTask = async () => {
     }
 
     .stats-chart-card,
-    .activity-card,
-    .quick-actions-card {
+    .activity-card {
         height: auto;
         min-height: 300px;
+        border-radius: 16px;
+
+        &:hover {
+            transform: translateY(-3px) scale(1.01);
+        }
     }
+}
+
+// 科技感动画效果
+@keyframes techGlow {
+    0%,
+    100% {
+        box-shadow:
+            0 8px 32px rgba(14, 165, 233, 0.08),
+            0 2px 8px rgba(59, 130, 246, 0.05);
+    }
+    50% {
+        box-shadow:
+            0 8px 32px rgba(14, 165, 233, 0.12),
+            0 2px 8px rgba(59, 130, 246, 0.08);
+    }
+}
+
+// 为重要卡片添加轻微的脉冲效果
+.stats-chart-card:nth-child(odd) {
+    animation: techGlow 6s ease-in-out infinite;
+}
+
+// 图表标题样式
+.chart-title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    position: relative;
+
+    // 科技感底部装饰线
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 60px;
+        height: 2px;
+        background: linear-gradient(90deg, #3b82f6, transparent);
+        border-radius: 1px;
+    }
+}
+
+.chart-title-icon {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.chart-title {
+    color: #1e40af;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.chart-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin-left: auto;
+    padding: 4px 12px;
+    background: rgba(14, 165, 233, 0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(14, 165, 233, 0.1);
 }
 </style>

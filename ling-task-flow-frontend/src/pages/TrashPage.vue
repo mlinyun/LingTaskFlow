@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="q-pa-md trash-page">
         <div class="row q-gutter-md">
             <!-- 页面标题和统计 -->
             <div class="col-12">
@@ -580,20 +580,111 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+// 页面整体样式 - 统一科技感设计
+.trash-page {
+    background: #ffffff;
+    min-height: calc(100vh - 50px);
+    position: relative;
+
+    // 添加科技感网格纹理 - 与仪表板一致
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image:
+            linear-gradient(rgba(59, 130, 246, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+    }
+}
+
 .border-bottom {
-    border-bottom: 1px solid var(--q-separator-color);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.05);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+
+    // 科技感发光效果
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 20px;
+        right: 20px;
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(59, 130, 246, 0.6) 50%,
+            transparent 100%
+        );
+    }
+
+    .text-h4 {
+        color: #1e40af;
+    }
+
+    .text-body2 {
+        color: #64748b;
+    }
 }
 
 .task-item {
-    transition: background-color 0.2s ease;
-}
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    margin-bottom: 8px;
 
-.task-item:hover {
-    background-color: var(--q-color-grey-1);
+    &:hover {
+        background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.02) 0%,
+            rgba(14, 165, 233, 0.02) 100%
+        );
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);
+    }
 }
 
 .bg-selected {
-    background-color: var(--q-color-blue-1);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+}
+
+// 统计卡片科技感升级
+:deep(.q-card) {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 20px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    box-shadow:
+        0 8px 32px rgba(14, 165, 233, 0.08),
+        0 2px 8px rgba(59, 130, 246, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow:
+            0 16px 48px rgba(14, 165, 233, 0.12),
+            0 4px 16px rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .text-h5 {
+        color: #1e40af;
+    }
+
+    .text-caption {
+        color: #64748b;
+    }
 }
 </style>

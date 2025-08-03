@@ -87,20 +87,60 @@ const trendUnit = computed(() => {
 
 <style lang="scss" scoped>
 .stats-card {
-    border-radius: 16px;
-    border: none;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    border-radius: 20px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    // 蓝白科技感卡片设计
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow:
+        0 8px 32px rgba(14, 165, 233, 0.08),
+        0 2px 8px rgba(59, 130, 246, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     position: relative;
     height: 140px;
 
-    &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    // 科技感边框发光效果
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 20px;
+        padding: 1px;
+        background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.2) 0%,
+            rgba(14, 165, 233, 0.1) 50%,
+            rgba(2, 132, 199, 0.2) 100%
+        );
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
-    &::before {
+    &:hover {
+        transform: translateY(-6px) scale(1.02);
+        box-shadow:
+            0 20px 60px rgba(14, 165, 233, 0.15),
+            0 8px 24px rgba(59, 130, 246, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(59, 130, 246, 0.2);
+
+        &::before {
+            opacity: 1;
+        }
+    }
+
+    // 顶部科技感装饰条
+    &::after {
         content: '';
         position: absolute;
         top: 0;
@@ -108,6 +148,7 @@ const trendUnit = computed(() => {
         right: 0;
         height: 4px;
         background: linear-gradient(90deg, var(--card-gradient));
+        opacity: 0.8;
     }
 
     .q-card__section {
@@ -175,45 +216,49 @@ const trendUnit = computed(() => {
     color: var(--decoration-color);
 }
 
-// 颜色主题
+// 蓝白科技感颜色主题 - 统一使用蓝色系
 .stats-card--blue {
-    --card-gradient: #2196f3, #21cbf3;
-    --icon-bg: rgba(33, 150, 243, 0.1);
-    --icon-color: #2196f3;
-    --icon-shadow: rgba(33, 150, 243, 0.3);
-    --decoration-color: #2196f3;
+    --card-gradient: #3b82f6, #1d4ed8;
+    --icon-bg: rgba(59, 130, 246, 0.15);
+    --icon-color: #3b82f6;
+    --icon-shadow: rgba(59, 130, 246, 0.4);
+    --decoration-color: #3b82f6;
 }
 
 .stats-card--orange {
-    --card-gradient: #ff9800, #ffc107;
-    --icon-bg: rgba(255, 152, 0, 0.1);
-    --icon-color: #ff9800;
-    --icon-shadow: rgba(255, 152, 0, 0.3);
-    --decoration-color: #ff9800;
+    // 改为浅蓝色调
+    --card-gradient: #0ea5e9, #0284c7;
+    --icon-bg: rgba(14, 165, 233, 0.15);
+    --icon-color: #0ea5e9;
+    --icon-shadow: rgba(14, 165, 233, 0.4);
+    --decoration-color: #0ea5e9;
 }
 
 .stats-card--green {
-    --card-gradient: #4caf50, #8bc34a;
-    --icon-bg: rgba(76, 175, 80, 0.1);
-    --icon-color: #4caf50;
-    --icon-shadow: rgba(76, 175, 80, 0.3);
-    --decoration-color: #4caf50;
+    // 改为青蓝色调
+    --card-gradient: #06b6d4, #0891b2;
+    --icon-bg: rgba(6, 182, 212, 0.15);
+    --icon-color: #06b6d4;
+    --icon-shadow: rgba(6, 182, 212, 0.4);
+    --decoration-color: #06b6d4;
 }
 
 .stats-card--purple {
-    --card-gradient: #9c27b0, #e91e63;
-    --icon-bg: rgba(156, 39, 176, 0.1);
-    --icon-color: #9c27b0;
-    --icon-shadow: rgba(156, 39, 176, 0.3);
-    --decoration-color: #9c27b0;
+    // 改为深蓝色调
+    --card-gradient: #1e40af, #1e3a8a;
+    --icon-bg: rgba(30, 64, 175, 0.15);
+    --icon-color: #1e40af;
+    --icon-shadow: rgba(30, 64, 175, 0.4);
+    --decoration-color: #1e40af;
 }
 
 .stats-card--red {
-    --card-gradient: #f44336, #ff5722;
-    --icon-bg: rgba(244, 67, 54, 0.1);
-    --icon-color: #f44336;
-    --icon-shadow: rgba(244, 67, 54, 0.3);
-    --decoration-color: #f44336;
+    // 改为中蓝色调
+    --card-gradient: #2563eb, #1d4ed8;
+    --icon-bg: rgba(37, 99, 235, 0.15);
+    --icon-color: #2563eb;
+    --icon-shadow: rgba(37, 99, 235, 0.4);
+    --decoration-color: #2563eb;
 }
 
 // 响应式设计

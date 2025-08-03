@@ -1,5 +1,5 @@
 <template>
-    <q-page padding>
+    <q-page padding class="task-list-page">
         <!-- 页面头部 -->
         <div class="page-header">
             <div class="header-content">
@@ -904,8 +904,52 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 页面整体样式 - 统一科技感设计
+.task-list-page {
+    background: #ffffff;
+    min-height: calc(100vh - 50px);
+    position: relative;
+
+    // 添加科技感网格纹理 - 与仪表板一致
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image:
+            linear-gradient(rgba(59, 130, 246, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+    }
+}
+
 .page-header {
     margin-bottom: 1.5rem;
+    background: rgba(59, 130, 246, 0.05);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+
+    // 科技感发光效果
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 20px;
+        right: 20px;
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(59, 130, 246, 0.6) 50%,
+            transparent 100%
+        );
+    }
 
     .header-content {
         display: flex;
@@ -919,12 +963,12 @@ onMounted(() => {
             .page-title {
                 font-size: 1.5rem;
                 font-weight: 700;
-                color: #1f2937;
+                color: #1e40af;
                 margin: 0 0 0.25rem 0;
             }
 
             .page-subtitle {
-                color: #6b7280;
+                color: #64748b;
                 margin: 0;
                 font-size: 0.875rem;
             }
@@ -942,57 +986,108 @@ onMounted(() => {
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 0.75rem;
+        gap: 1rem;
 
         .stat-card {
-            border-radius: 8px;
-            transition: all 0.2s ease;
+            // 科技感卡片设计 - 与仪表板一致
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            box-shadow:
+                0 8px 32px rgba(14, 165, 233, 0.08),
+                0 2px 8px rgba(59, 130, 246, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+
+            // 科技感边框发光
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border-radius: 20px;
+                padding: 1px;
+                background: linear-gradient(
+                    135deg,
+                    rgba(59, 130, 246, 0.2) 0%,
+                    rgba(14, 165, 233, 0.1) 50%,
+                    rgba(2, 132, 199, 0.2) 100%
+                );
+                mask:
+                    linear-gradient(#fff 0 0) content-box,
+                    linear-gradient(#fff 0 0);
+                mask-composite: exclude;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
 
             &:hover {
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                transform: translateY(-1px);
+                transform: translateY(-6px) scale(1.02);
+                box-shadow:
+                    0 20px 60px rgba(14, 165, 233, 0.15),
+                    0 8px 24px rgba(59, 130, 246, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+                border-color: rgba(59, 130, 246, 0.2);
+
+                &::before {
+                    opacity: 1;
+                }
             }
 
             .stat-content {
                 display: flex;
                 align-items: center;
-                gap: 0.75rem;
+                gap: 1rem;
 
                 .stat-icon {
                     flex-shrink: 0;
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 8px;
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 12px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: rgba(59, 130, 246, 0.1);
+                    background: rgba(59, 130, 246, 0.15);
+                    border: 2px solid rgba(59, 130, 246, 0.2);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
                 }
 
                 .stat-info {
                     flex: 1;
 
                     .stat-value {
-                        font-size: 1.25rem;
+                        font-size: 1.5rem;
                         font-weight: 700;
-                        color: #1f2937;
+                        color: #1e40af;
                         line-height: 1.2;
                     }
 
                     .stat-label {
-                        font-size: 0.75rem;
-                        color: #6b7280;
-                        margin-top: 0.125rem;
+                        font-size: 0.875rem;
+                        color: #64748b;
+                        margin-top: 0.25rem;
+                        font-weight: 500;
                     }
                 }
             }
 
+            // 统一使用蓝色系图标背景
             &.stat-pending .stat-icon {
-                background: rgba(245, 158, 11, 0.1);
+                background: rgba(14, 165, 233, 0.15);
+                border-color: rgba(14, 165, 233, 0.2);
+                box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
             }
 
             &.stat-progress .stat-icon {
-                background: rgba(59, 130, 246, 0.1);
+                background: rgba(59, 130, 246, 0.15);
+                border-color: rgba(59, 130, 246, 0.2);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
             }
 
             &.stat-completed .stat-icon {

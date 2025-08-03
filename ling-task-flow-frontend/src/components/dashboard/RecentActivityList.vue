@@ -94,14 +94,15 @@ const getActionIcon = (action: string) => {
 };
 
 const getActionColor = (action: string) => {
+    // 蓝白科技感配色 - 使用不同深度的蓝色表示不同动作
     const colors = {
-        created: 'positive',
-        updated: 'info',
-        completed: 'positive',
-        deleted: 'negative',
-        restored: 'warning',
+        created: '#3b82f6', // 皇家蓝 - 创建
+        updated: '#0ea5e9', // 天空蓝 - 更新
+        completed: '#06b6d4', // 青蓝色 - 完成
+        deleted: '#64748b', // 石板蓝 - 删除
+        restored: '#1e40af', // 深海蓝 - 恢复
     };
-    return colors[action as keyof typeof colors] || 'grey';
+    return colors[action as keyof typeof colors] || '#94a3b8';
 };
 
 const getActionText = (action: string) => {
@@ -199,18 +200,44 @@ const loadMore = () => {
     align-items: flex-start;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+
+    // 科技感左侧连接线
+    &::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 44px;
+        bottom: -12px;
+        width: 2px;
+        background: linear-gradient(
+            180deg,
+            rgba(59, 130, 246, 0.3) 0%,
+            rgba(59, 130, 246, 0.1) 100%
+        );
+    }
 
     &:last-child {
         border-bottom: none;
+
+        &::before {
+            display: none;
+        }
     }
 
     &:hover {
-        background-color: rgba(0, 0, 0, 0.02);
-        border-radius: 8px;
-        padding-left: 8px;
-        padding-right: 8px;
+        background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.02) 0%,
+            rgba(14, 165, 233, 0.02) 100%
+        );
+        border-radius: 12px;
+        padding-left: 12px;
+        padding-right: 12px;
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);
     }
 }
 
@@ -221,9 +248,36 @@ const loadMore = () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(var(--q-primary-rgb), 0.1);
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
     flex-shrink: 0;
     margin-top: 2px;
+    position: relative;
+    z-index: 2;
+
+    // 科技感发光效果
+    &::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.2) 0%,
+            rgba(14, 165, 233, 0.1) 100%
+        );
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .activity-item:hover &::before {
+        opacity: 1;
+    }
 }
 
 .activity-content {
@@ -241,17 +295,21 @@ const loadMore = () => {
 }
 
 .activity-action {
-    color: #666;
+    color: #64748b;
     font-weight: 500;
 }
 
 .activity-task {
-    color: #333;
+    color: #1e40af;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 200px;
+    padding: 2px 8px;
+    background: rgba(59, 130, 246, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .activity-time {
@@ -259,7 +317,11 @@ const loadMore = () => {
     align-items: center;
     gap: 4px;
     font-size: 12px;
-    color: #999;
+    color: #64748b;
+
+    .q-icon {
+        color: #0ea5e9;
+    }
 }
 
 .activity-link {

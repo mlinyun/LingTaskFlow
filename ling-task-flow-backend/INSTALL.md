@@ -12,6 +12,7 @@
 ### 1. 创建虚拟环境
 
 #### 使用 Conda (推荐)
+
 ```bash
 # 创建环境
 conda create -n ling-task-flow-backend python=3.12
@@ -21,6 +22,7 @@ conda activate ling-task-flow-backend
 ```
 
 #### 使用 venv
+
 ```bash
 # 创建环境
 python -m venv ling-task-flow-backend
@@ -35,21 +37,25 @@ source ling-task-flow-backend/bin/activate
 ### 2. 安装依赖
 
 #### 开发环境安装 (包含所有工具)
+
 ```bash
 pip install -r requirements-dev.txt
 ```
 
 #### 生产环境安装 (仅核心依赖)
+
 ```bash
 pip install -r requirements-production.txt
 ```
 
 #### 完整安装 (所有功能)
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 3. 数据库迁移
+
 ```bash
 # 创建迁移文件
 python manage.py makemigrations
@@ -62,6 +68,7 @@ python manage.py createsuperuser
 ```
 
 ### 4. 启动开发服务器
+
 ```bash
 python manage.py runserver
 ```
@@ -71,16 +78,19 @@ python manage.py runserver
 ## 📦 依赖文件说明
 
 ### requirements.txt
+
 - **用途**: 完整功能安装，包含所有可选组件
 - **场景**: 功能测试、完整开发环境
 - **包含**: 核心功能 + 开发工具 + 可选组件
 
 ### requirements-production.txt
+
 - **用途**: 生产环境部署
-- **场景**: 正式部署、Docker容器
+- **场景**: 正式部署、Docker 容器
 - **包含**: 仅运行时必需的核心依赖
 
 ### requirements-dev.txt
+
 - **用途**: 开发环境专用
 - **场景**: 日常开发、代码调试
 - **包含**: 生产依赖 + 开发工具 + 测试框架
@@ -88,6 +98,7 @@ python manage.py runserver
 ## 🛠️ 可选组件安装
 
 ### Redis 缓存 (推荐生产环境)
+
 ```bash
 # 安装Redis (Windows)
 # 下载Redis for Windows或使用WSL
@@ -102,6 +113,7 @@ sudo apt-get install redis-server
 ```
 
 ### PostgreSQL 数据库 (生产环境)
+
 ```bash
 # 安装PostgreSQL (Windows)
 # 下载官方安装程序
@@ -118,6 +130,7 @@ sudo apt-get install postgresql postgresql-contrib
 ## 🧪 验证安装
 
 ### 运行测试套件
+
 ```bash
 # 运行所有测试
 python manage.py test
@@ -130,6 +143,7 @@ python manage.py test tests.integration.test_task_api_integration
 ```
 
 ### 检查项目状态
+
 ```bash
 # Django系统检查
 python manage.py check
@@ -144,6 +158,7 @@ pip list
 ## 🔧 常见问题解决
 
 ### 1. 安装失败
+
 ```bash
 # 升级pip
 pip install --upgrade pip
@@ -156,6 +171,7 @@ pip install -r requirements.txt --force-reinstall
 ```
 
 ### 2. 数据库问题
+
 ```bash
 # 重置数据库 (开发环境)
 rm db.sqlite3
@@ -168,6 +184,7 @@ python manage.py migrate
 ```
 
 ### 3. 端口占用
+
 ```bash
 # 使用其他端口启动
 python manage.py runserver 8001
@@ -182,17 +199,19 @@ lsof -i :8000
 ## 🌟 开发工具配置
 
 ### IDE 推荐设置
+
 ```json
 // VS Code settings.json
 {
-    "python.defaultInterpreterPath": "./ling-task-flow-backend/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true,
-    "python.formatting.provider": "black"
+  "python.defaultInterpreterPath": "./ling-task-flow-backend/bin/python",
+  "python.linting.enabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.formatting.provider": "black"
 }
 ```
 
 ### 代码质量检查
+
 ```bash
 # 代码格式化
 black .
@@ -210,19 +229,20 @@ black . && isort . && flake8 .
 ## 📚 更多信息
 
 - **项目文档**: `/docs/`
-- **API文档**: `http://localhost:8000/swagger/` (安装drf-yasg后)
+- **API 文档**: `http://localhost:8000/swagger/` (安装 drf-yasg 后)
 - **管理后台**: `http://localhost:8000/admin/`
 - **健康检查**: `http://localhost:8000/api/health/`
 
 ## 🆘 获取帮助
 
 如果遇到问题，请检查：
-1. Python版本是否符合要求
+
+1. Python 版本是否符合要求
 2. 虚拟环境是否正确激活
 3. 所有依赖是否成功安装
 4. 数据库迁移是否完成
 
 ---
 
-*更新日期: 2025年8月2日*  
-*维护者: LingTaskFlow开发团队*
+_更新日期: 2025 年 8 月 2 日_  
+_维护者: LingTaskFlow 开发团队_

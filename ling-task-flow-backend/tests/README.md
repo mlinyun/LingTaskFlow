@@ -10,23 +10,24 @@ tests/
 │   ├── test_register_api.py    # 用户注册API测试
 │   ├── test_login_api.py       # 用户登录API测试
 │   ├── test_token_refresh.py   # Token刷新测试
-│   ├── test_token_refresh_simple.py
 │   ├── test_account_lockout.py # 账户锁定测试
-│   └── simple_login_test.py    # 简单登录测试
+│   ├── test_middleware.py      # 中间件测试
+│   ├── test_models.py          # 认证模型测试
+│   ├── test_serializers.py     # 序列化器测试
+│   ├── test_utils.py           # 认证工具测试
+│   ├── test_views.py           # 视图测试
+│   └── verify_tests.py         # 测试验证脚本
 ├── permissions/                # 权限系统测试
 │   ├── __init__.py
 │   ├── test_permissions.py     # 权限类测试
-│   ├── test_permissions_fixed.py
-│   ├── test_permissions_simple.py
+│   ├── test_permissions_fixed.py # 修复版权限测试
 │   └── test_all_permissions.py # 完整权限测试
 ├── models/                     # 数据模型测试
 │   ├── __init__.py
 │   └── test_userprofile.py     # UserProfile模型测试
 └── utils/                      # 测试工具和辅助
     ├── __init__.py
-    ├── test_helpers.py         # 测试辅助函数
-    ├── check_login_history.py  # 登录历史检查工具
-    └── set_user_password.py    # 密码设置工具
+    └── test_helpers.py         # 测试辅助函数
 ```
 
 ## 🚀 运行测试

@@ -3,19 +3,21 @@
 ## 📋 文档信息
 
 | 项目名称 | LingTaskFlow - 凌云任务管理应用 |
-|---------|------------------------------|
-| 文档版本 | v2.0 Professional |
-| 创建日期 | 2025年1月31日 |
-| 更新日期 | 2025年1月31日 |
-| 文档作者 | GitHub Copilot |
-| 项目状态 | 开发中 |
+| -------- | ------------------------------- |
+| 文档版本 | v2.0 Professional               |
+| 创建日期 | 2025 年 1 月 31 日              |
+| 更新日期 | 2025 年 1 月 31 日              |
+| 文档作者 | GitHub Copilot                  |
+| 项目状态 | 开发中                          |
 
 ## 🎯 项目概述
 
 ### 产品愿景
+
 构建一个高效、直观、安全的个人任务管理系统，帮助用户实现任务的全生命周期管理，提升个人工作效率。
 
 ### 核心价值主张
+
 - **简洁高效**：极简设计，专注核心功能
 - **数据安全**：用户数据完全隔离，本地化存储
 - **响应迅速**：毫秒级响应，流畅用户体验
@@ -24,6 +26,7 @@
 ### 技术栈选择
 
 #### 后端技术栈
+
 ```
 - 框架：Django 5.2 + Django REST Framework 3.14+
 - 认证：django-rest-framework-simplejwt
@@ -34,6 +37,7 @@
 ```
 
 #### 前端技术栈
+
 ```
 - 框架：Vue 3.4+ (Composition API)
 - UI库：Quasar Framework 2.14+
@@ -50,6 +54,7 @@
 ## 📊 系统架构设计
 
 ### 整体架构
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │    Backend      │    │    Database     │
@@ -64,8 +69,9 @@
 ```
 
 ### 数据流向
+
 ```
-User Action → Vue Component → Pinia Store → Axios → Django View → 
+User Action → Vue Component → Pinia Store → Axios → Django View →
 DRF Serializer → Model → Database → Response → JSON → Frontend
 ```
 
@@ -74,6 +80,7 @@ DRF Serializer → Model → Database → Response → JSON → Frontend
 ## 🔐 认证与授权系统
 
 ### JWT Token 配置
+
 ```python
 # settings.py
 SIMPLE_JWT = {
@@ -89,6 +96,7 @@ SIMPLE_JWT = {
 ```
 
 ### 权限类设计
+
 ```python
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
@@ -103,6 +111,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 ## 📋 数据模型设计
 
 ### 用户扩展模型
+
 ```python
 # models.py
 class UserProfile(models.Model):
@@ -111,12 +120,13 @@ class UserProfile(models.Model):
     timezone = models.CharField(max_length=50, default='Asia/Shanghai')
     task_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = 'user_profiles'
 ```
 
 ### 任务模型
+
 ```python
 class Task(models.Model):
     class Status(models.TextChoices):
@@ -124,24 +134,24 @@ class Task(models.Model):
         IN_PROGRESS = 'IN_PROGRESS', '进行中'
         COMPLETED = 'COMPLETED', '已完成'
         CANCELLED = 'CANCELLED', '已取消'
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100, db_index=True)
     description = models.TextField(max_length=1000, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.TODO, db_index=True)
     priority = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(5)])
-    
+
     # 软删除相关
     is_deleted = models.BooleanField(default=False, db_index=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
-    
+
     # 时间戳
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     # 关联用户
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
-    
+
     class Meta:
         db_table = 'tasks'
         ordering = ['-created_at']
@@ -150,16 +160,16 @@ class Task(models.Model):
             models.Index(fields=['user', 'created_at']),
             models.Index(fields=['is_deleted', 'deleted_at']),
         ]
-    
+
     def __str__(self):
         return f"{self.title} ({self.get_status_display()})"
-    
+
     def soft_delete(self):
         """软删除方法"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save(update_fields=['is_deleted', 'deleted_at'])
-    
+
     def restore(self):
         """恢复删除的任务"""
         self.is_deleted = False
@@ -172,6 +182,7 @@ class Task(models.Model):
 ## 🔌 API 接口规范
 
 ### 基础响应格式
+
 ```json
 {
   "success": true,
@@ -183,6 +194,7 @@ class Task(models.Model):
 ```
 
 ### 错误响应格式
+
 ```json
 {
   "success": false,
@@ -196,9 +208,10 @@ class Task(models.Model):
 }
 ```
 
-### 1. 认证相关API
+### 1. 认证相关 API
 
 #### 1.1 用户注册
+
 ```
 POST /api/auth/register/
 Content-Type: application/json
@@ -231,6 +244,7 @@ Response (201):
 ```
 
 #### 1.2 用户登录
+
 ```
 POST /api/auth/login/
 Content-Type: application/json
@@ -260,7 +274,8 @@ Response (200):
 }
 ```
 
-#### 1.3 刷新Token
+#### 1.3 刷新 Token
+
 ```
 POST /api/auth/token/refresh/
 Content-Type: application/json
@@ -280,9 +295,10 @@ Response (200):
 }
 ```
 
-### 2. 任务管理API
+### 2. 任务管理 API
 
 #### 2.1 获取任务列表
+
 ```
 GET /api/tasks/?page=1&page_size=20&status=TODO&search=关键词&ordering=-created_at
 Authorization: Bearer {access_token}
@@ -319,6 +335,7 @@ Response (200):
 ```
 
 #### 2.2 创建任务
+
 ```
 POST /api/tasks/
 Authorization: Bearer {access_token}
@@ -349,6 +366,7 @@ Response (201):
 ```
 
 #### 2.3 更新任务
+
 ```
 PATCH /api/tasks/{task_id}/
 Authorization: Bearer {access_token}
@@ -379,6 +397,7 @@ Response (200):
 ```
 
 #### 2.4 软删除任务
+
 ```
 DELETE /api/tasks/{task_id}/
 Authorization: Bearer {access_token}
@@ -395,6 +414,7 @@ Response (200):
 ```
 
 #### 2.5 恢复任务
+
 ```
 POST /api/tasks/{task_id}/restore/
 Authorization: Bearer {access_token}
@@ -414,6 +434,7 @@ Response (200):
 ```
 
 #### 2.6 永久删除任务
+
 ```
 DELETE /api/tasks/{task_id}/permanent/
 Authorization: Bearer {access_token}
@@ -425,9 +446,10 @@ Response (204):
 }
 ```
 
-### 3. 统计信息API
+### 3. 统计信息 API
 
 #### 3.1 获取任务统计
+
 ```
 GET /api/tasks/stats/
 Authorization: Bearer {access_token}
@@ -469,99 +491,100 @@ Response (200):
 ### 状态管理 (Pinia Store)
 
 #### Task Store
+
 ```typescript
 // stores/task.ts
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { Task, TaskFilters, PaginatedResponse } from '@/types'
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import type { Task, TaskFilters, PaginatedResponse } from "@/types";
 
-export const useTaskStore = defineStore('task', () => {
+export const useTaskStore = defineStore("task", () => {
   // State
-  const tasks = ref<Task[]>([])
-  const loading = ref(false)
+  const tasks = ref<Task[]>([]);
+  const loading = ref(false);
   const filters = ref<TaskFilters>({
     page: 1,
     page_size: 20,
     status: [],
-    search: '',
-    ordering: '-created_at',
-    include_deleted: false
-  })
+    search: "",
+    ordering: "-created_at",
+    include_deleted: false,
+  });
   const pagination = ref({
     count: 0,
     next: null,
-    previous: null
-  })
+    previous: null,
+  });
 
   // Getters
-  const activeTasks = computed(() => 
-    tasks.value.filter(task => !task.is_deleted)
-  )
-  
+  const activeTasks = computed(() =>
+    tasks.value.filter((task) => !task.is_deleted)
+  );
+
   const tasksByStatus = computed(() => {
-    const grouped: Record<string, Task[]> = {}
-    activeTasks.value.forEach(task => {
-      if (!grouped[task.status]) grouped[task.status] = []
-      grouped[task.status].push(task)
-    })
-    return grouped
-  })
+    const grouped: Record<string, Task[]> = {};
+    activeTasks.value.forEach((task) => {
+      if (!grouped[task.status]) grouped[task.status] = [];
+      grouped[task.status].push(task);
+    });
+    return grouped;
+  });
 
   // Actions
   async function fetchTasks() {
-    loading.value = true
+    loading.value = true;
     try {
-      const response = await taskApi.getTasks(filters.value)
-      tasks.value = response.data.results
+      const response = await taskApi.getTasks(filters.value);
+      tasks.value = response.data.results;
       pagination.value = {
         count: response.data.count,
         next: response.data.next,
-        previous: response.data.previous
-      }
+        previous: response.data.previous,
+      };
     } catch (error) {
-      console.error('Failed to fetch tasks:', error)
-      throw error
+      console.error("Failed to fetch tasks:", error);
+      throw error;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
   async function createTask(taskData: Partial<Task>) {
     try {
-      const response = await taskApi.createTask(taskData)
-      tasks.value.unshift(response.data)
-      return response.data
+      const response = await taskApi.createTask(taskData);
+      tasks.value.unshift(response.data);
+      return response.data;
     } catch (error) {
-      console.error('Failed to create task:', error)
-      throw error
+      console.error("Failed to create task:", error);
+      throw error;
     }
   }
 
   async function updateTask(taskId: string, updates: Partial<Task>) {
     try {
-      const response = await taskApi.updateTask(taskId, updates)
-      const index = tasks.value.findIndex(t => t.id === taskId)
+      const response = await taskApi.updateTask(taskId, updates);
+      const index = tasks.value.findIndex((t) => t.id === taskId);
       if (index !== -1) {
-        tasks.value[index] = response.data
+        tasks.value[index] = response.data;
       }
-      return response.data
+      return response.data;
     } catch (error) {
-      console.error('Failed to update task:', error)
-      throw error
+      console.error("Failed to update task:", error);
+      throw error;
     }
   }
 
   async function deleteTask(taskId: string) {
     try {
-      await taskApi.deleteTask(taskId)
-      const task = tasks.value.find(t => t.id === taskId)
+      await taskApi.deleteTask(taskId);
+      const task = tasks.value.find((t) => t.id === taskId);
       if (task) {
-        task.is_deleted = true
-        task.deleted_at = new Date().toISOString()
+        task.is_deleted = true;
+        task.deleted_at = new Date().toISOString();
       }
     } catch (error) {
-      console.error('Failed to delete task:', error)
-      throw error
+      console.error("Failed to delete task:", error);
+      throw error;
     }
   }
 
@@ -578,34 +601,35 @@ export const useTaskStore = defineStore('task', () => {
     fetchTasks,
     createTask,
     updateTask,
-    deleteTask
-  }
-})
+    deleteTask,
+  };
+});
 ```
 
 ### 主要组件结构
 
 #### TaskList.vue
+
 ```vue
 <template>
   <div class="task-list">
-    <TaskFilters 
+    <TaskFilters
       v-model:filters="taskStore.filters"
       @filter-change="handleFilterChange"
     />
-    
+
     <div v-if="taskStore.loading" class="loading">
       <q-spinner size="50px" />
     </div>
-    
+
     <div v-else-if="taskStore.activeTasks.length === 0" class="empty-state">
-      <EmptyState 
+      <EmptyState
         icon="task_alt"
         title="暂无任务"
         description="点击右下角按钮创建您的第一个任务"
       />
     </div>
-    
+
     <div v-else class="task-grid">
       <TaskCard
         v-for="task in taskStore.activeTasks"
@@ -616,100 +640,92 @@ export const useTaskStore = defineStore('task', () => {
         @status-change="handleStatusChange"
       />
     </div>
-    
+
     <q-pagination
       v-if="taskStore.pagination.count > taskStore.filters.page_size"
       v-model="taskStore.filters.page"
       :max="Math.ceil(taskStore.pagination.count / taskStore.filters.page_size)"
       @update:model-value="handlePageChange"
     />
-    
+
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn
-        fab
-        icon="add"
-        color="primary"
-        @click="showCreateDialog = true"
-      />
+      <q-btn fab icon="add" color="primary" @click="showCreateDialog = true" />
     </q-page-sticky>
-    
-    <TaskCreateDialog
-      v-model="showCreateDialog"
-      @created="handleTaskCreated"
-    />
+
+    <TaskCreateDialog v-model="showCreateDialog" @created="handleTaskCreated" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useTaskStore } from '@/stores/task'
-import TaskFilters from '@/components/TaskFilters.vue'
-import TaskCard from '@/components/TaskCard.vue'
-import TaskCreateDialog from '@/components/TaskCreateDialog.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import { ref, onMounted } from "vue";
+import { useTaskStore } from "@/stores/task";
+import TaskFilters from "@/components/TaskFilters.vue";
+import TaskCard from "@/components/TaskCard.vue";
+import TaskCreateDialog from "@/components/TaskCreateDialog.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
-const taskStore = useTaskStore()
-const showCreateDialog = ref(false)
+const taskStore = useTaskStore();
+const showCreateDialog = ref(false);
 
 onMounted(() => {
-  taskStore.fetchTasks()
-})
+  taskStore.fetchTasks();
+});
 
 const handleFilterChange = () => {
-  taskStore.filters.page = 1
-  taskStore.fetchTasks()
-}
+  taskStore.filters.page = 1;
+  taskStore.fetchTasks();
+};
 
 const handlePageChange = () => {
-  taskStore.fetchTasks()
-}
+  taskStore.fetchTasks();
+};
 
 const handleEditTask = (task: Task) => {
   // 打开编辑对话框
-}
+};
 
 const handleDeleteTask = async (taskId: string) => {
   try {
-    await taskStore.deleteTask(taskId)
+    await taskStore.deleteTask(taskId);
     $q.notify({
-      type: 'positive',
-      message: '任务已移入回收站',
-      position: 'top'
-    })
+      type: "positive",
+      message: "任务已移入回收站",
+      position: "top",
+    });
   } catch (error) {
     $q.notify({
-      type: 'negative',
-      message: '删除失败，请重试',
-      position: 'top'
-    })
+      type: "negative",
+      message: "删除失败，请重试",
+      position: "top",
+    });
   }
-}
+};
 
 const handleStatusChange = async (taskId: string, newStatus: string) => {
   try {
-    await taskStore.updateTask(taskId, { status: newStatus })
+    await taskStore.updateTask(taskId, { status: newStatus });
     $q.notify({
-      type: 'positive',
-      message: '状态更新成功',
-      position: 'top'
-    })
+      type: "positive",
+      message: "状态更新成功",
+      position: "top",
+    });
   } catch (error) {
     $q.notify({
-      type: 'negative',
-      message: '状态更新失败',
-      position: 'top'
-    })
+      type: "negative",
+      message: "状态更新失败",
+      position: "top",
+    });
   }
-}
+};
 
 const handleTaskCreated = (task: Task) => {
-  showCreateDialog.value = false
+  showCreateDialog.value = false;
   $q.notify({
-    type: 'positive',
-    message: '任务创建成功',
-    position: 'top'
-  })
-}
+    type: "positive",
+    message: "任务创建成功",
+    position: "top",
+  });
+};
 </script>
 ```
 
@@ -717,21 +733,21 @@ const handleTaskCreated = (task: Task) => {
 
 ## 🔍 错误处理与状态码
 
-### HTTP状态码定义
+### HTTP 状态码定义
 
-| 状态码 | 含义 | 使用场景 |
-|--------|------|----------|
-| 200 | OK | 请求成功 |
-| 201 | Created | 资源创建成功 |
-| 204 | No Content | 删除成功，无返回内容 |
-| 400 | Bad Request | 请求参数错误 |
-| 401 | Unauthorized | 认证失败 |
-| 403 | Forbidden | 权限不足 |
-| 404 | Not Found | 资源不存在 |
-| 409 | Conflict | 资源冲突 |
-| 422 | Unprocessable Entity | 数据验证失败 |
-| 429 | Too Many Requests | 请求过于频繁 |
-| 500 | Internal Server Error | 服务器内部错误 |
+| 状态码 | 含义                  | 使用场景             |
+| ------ | --------------------- | -------------------- |
+| 200    | OK                    | 请求成功             |
+| 201    | Created               | 资源创建成功         |
+| 204    | No Content            | 删除成功，无返回内容 |
+| 400    | Bad Request           | 请求参数错误         |
+| 401    | Unauthorized          | 认证失败             |
+| 403    | Forbidden             | 权限不足             |
+| 404    | Not Found             | 资源不存在           |
+| 409    | Conflict              | 资源冲突             |
+| 422    | Unprocessable Entity  | 数据验证失败         |
+| 429    | Too Many Requests     | 请求过于频繁         |
+| 500    | Internal Server Error | 服务器内部错误       |
 
 ### 业务错误码定义
 
@@ -743,24 +759,25 @@ class ErrorCodes:
     USER_ALREADY_EXISTS = 1002
     WEAK_PASSWORD = 1003
     ACCOUNT_LOCKED = 1004
-    
+
     # 任务相关 (2xxx)
     TASK_NOT_FOUND = 2001
     TASK_LIMIT_EXCEEDED = 2002
     INVALID_STATUS_TRANSITION = 2003
     TASK_ALREADY_DELETED = 2004
     TASK_RECOVERY_EXPIRED = 2005
-    
+
     # 权限相关 (3xxx)
     PERMISSION_DENIED = 3001
     RESOURCE_NOT_OWNED = 3002
-    
+
     # 系统相关 (9xxx)
     SYSTEM_MAINTENANCE = 9001
     RATE_LIMIT_EXCEEDED = 9002
 ```
 
 ### 异常处理器
+
 ```python
 # exceptions.py
 from rest_framework.views import exception_handler
@@ -774,7 +791,7 @@ def custom_exception_handler(exc, context):
     """自定义异常处理器"""
     response = exception_handler(exc, context)
     request_id = str(uuid.uuid4())
-    
+
     if response is not None:
         custom_response_data = {
             'success': False,
@@ -784,16 +801,16 @@ def custom_exception_handler(exc, context):
             'timestamp': timezone.now().isoformat(),
             'request_id': request_id
         }
-        
+
         # 记录错误日志
         logger.error(
             f"API Error - Request ID: {request_id}, "
             f"Exception: {str(exc)}, "
             f"Context: {context}"
         )
-        
+
         response.data = custom_response_data
-    
+
     return response
 ```
 
@@ -804,11 +821,12 @@ def custom_exception_handler(exc, context):
 ### 数据库优化
 
 #### 索引策略
+
 ```python
 # 在模型中添加的索引
 class Task(models.Model):
     # ...existing fields...
-    
+
     class Meta:
         indexes = [
             # 复合索引：用户+状态+删除标记（最常用的查询组合）
@@ -823,33 +841,35 @@ class Task(models.Model):
 ```
 
 #### 查询优化
+
 ```python
 # views.py - 优化的查询集
 class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Task.objects.filter(user=self.request.user)
-        
+
         # 根据include_deleted参数过滤
         include_deleted = self.request.query_params.get('include_deleted', 'false').lower() == 'true'
         if not include_deleted:
             queryset = queryset.filter(is_deleted=False)
-        
+
         # 预加载相关对象（如果有外键关系）
         queryset = queryset.select_related('user')
-        
+
         # 只查询需要的字段（如果是列表视图）
         if self.action == 'list':
             queryset = queryset.only(
-                'id', 'title', 'status', 'priority', 
+                'id', 'title', 'status', 'priority',
                 'created_at', 'updated_at', 'is_deleted'
             )
-        
+
         return queryset
 ```
 
 ### 前端优化
 
 #### 虚拟滚动（大量数据）
+
 ```vue
 <!-- TaskList.vue 大数据量优化版本 -->
 <template>
@@ -870,48 +890,55 @@ class TaskViewSet(viewsets.ModelViewSet):
 ```
 
 #### 请求缓存策略
+
 ```typescript
 // api/task.ts
-import { AxiosResponse } from 'axios'
+import { AxiosResponse } from "axios";
 
 interface CacheConfig {
-  ttl: number // 缓存时间（毫秒）
-  key: string
+  ttl: number; // 缓存时间（毫秒）
+  key: string;
 }
 
 class TaskAPI {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
-  
-  async getTasks(filters: TaskFilters, cacheConfig?: CacheConfig): Promise<AxiosResponse> {
-    const cacheKey = cacheConfig?.key || `tasks-${JSON.stringify(filters)}`
-    
+  private cache = new Map<
+    string,
+    { data: any; timestamp: number; ttl: number }
+  >();
+
+  async getTasks(
+    filters: TaskFilters,
+    cacheConfig?: CacheConfig
+  ): Promise<AxiosResponse> {
+    const cacheKey = cacheConfig?.key || `tasks-${JSON.stringify(filters)}`;
+
     // 检查缓存
     if (cacheConfig) {
-      const cached = this.cache.get(cacheKey)
+      const cached = this.cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < cached.ttl) {
-        return { data: cached.data } as AxiosResponse
+        return { data: cached.data } as AxiosResponse;
       }
     }
-    
-    const response = await api.get('/tasks/', { params: filters })
-    
+
+    const response = await api.get("/tasks/", { params: filters });
+
     // 更新缓存
     if (cacheConfig) {
       this.cache.set(cacheKey, {
         data: response.data,
         timestamp: Date.now(),
-        ttl: cacheConfig.ttl
-      })
+        ttl: cacheConfig.ttl,
+      });
     }
-    
-    return response
+
+    return response;
   }
-  
+
   // 清除相关缓存
   invalidateCache(pattern: string) {
     for (const key of this.cache.keys()) {
       if (key.includes(pattern)) {
-        this.cache.delete(key)
+        this.cache.delete(key);
       }
     }
   }
@@ -925,6 +952,7 @@ class TaskAPI {
 ### 后端测试
 
 #### 单元测试
+
 ```python
 # tests/test_models.py
 from django.test import TestCase
@@ -938,7 +966,7 @@ class TaskModelTest(TestCase):
             email='test@example.com',
             password='testpass123'
         )
-    
+
     def test_task_creation(self):
         """测试任务创建"""
         task = Task.objects.create(
@@ -950,7 +978,7 @@ class TaskModelTest(TestCase):
         self.assertEqual(task.status, 'TODO')
         self.assertEqual(task.user, self.user)
         self.assertFalse(task.is_deleted)
-    
+
     def test_soft_delete(self):
         """测试软删除功能"""
         task = Task.objects.create(
@@ -958,16 +986,17 @@ class TaskModelTest(TestCase):
             user=self.user
         )
         task.soft_delete()
-        
+
         self.assertTrue(task.is_deleted)
         self.assertIsNotNone(task.deleted_at)
-        
+
         # 测试软删除的任务不在默认查询中
         active_tasks = Task.objects.filter(is_deleted=False)
         self.assertNotIn(task, active_tasks)
 ```
 
-#### API测试
+#### API 测试
+
 ```python
 # tests/test_api.py
 from rest_framework.test import APITestCase
@@ -985,7 +1014,7 @@ class TaskAPITest(APITestCase):
         refresh = RefreshToken.for_user(self.user)
         self.access_token = str(refresh.access_token)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
-    
+
     def test_create_task(self):
         """测试创建任务API"""
         data = {
@@ -994,11 +1023,11 @@ class TaskAPITest(APITestCase):
             'priority': 3
         }
         response = self.client.post('/api/tasks/', data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['success'], True)
         self.assertEqual(response.data['data']['title'], 'New Task')
-    
+
     def test_list_tasks_pagination(self):
         """测试任务列表分页"""
         # 创建多个任务
@@ -1007,9 +1036,9 @@ class TaskAPITest(APITestCase):
                 title=f'Task {i}',
                 user=self.user
             )
-        
+
         response = self.client.get('/api/tasks/?page=1&page_size=20')
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['data']['results']), 20)
         self.assertIsNotNone(response.data['data']['next'])
@@ -1018,49 +1047,50 @@ class TaskAPITest(APITestCase):
 ### 前端测试
 
 #### 组件测试
+
 ```typescript
 // tests/TaskCard.test.ts
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
-import TaskCard from '@/components/TaskCard.vue'
-import { Quasar } from 'quasar'
+import { mount } from "@vue/test-utils";
+import { describe, it, expect, vi } from "vitest";
+import TaskCard from "@/components/TaskCard.vue";
+import { Quasar } from "quasar";
 
-describe('TaskCard', () => {
+describe("TaskCard", () => {
   const mockTask = {
-    id: '1',
-    title: 'Test Task',
-    description: 'Test Description',
-    status: 'TODO',
+    id: "1",
+    title: "Test Task",
+    description: "Test Description",
+    status: "TODO",
     priority: 3,
-    created_at: '2025-01-31T10:30:00Z',
-    updated_at: '2025-01-31T10:30:00Z',
-    is_deleted: false
-  }
+    created_at: "2025-01-31T10:30:00Z",
+    updated_at: "2025-01-31T10:30:00Z",
+    is_deleted: false,
+  };
 
-  it('renders task information correctly', () => {
+  it("renders task information correctly", () => {
     const wrapper = mount(TaskCard, {
       props: { task: mockTask },
       global: {
-        plugins: [Quasar]
-      }
-    })
+        plugins: [Quasar],
+      },
+    });
 
-    expect(wrapper.text()).toContain('Test Task')
-    expect(wrapper.text()).toContain('Test Description')
-  })
+    expect(wrapper.text()).toContain("Test Task");
+    expect(wrapper.text()).toContain("Test Description");
+  });
 
-  it('emits edit event when edit button is clicked', async () => {
+  it("emits edit event when edit button is clicked", async () => {
     const wrapper = mount(TaskCard, {
       props: { task: mockTask },
       global: {
-        plugins: [Quasar]
-      }
-    })
+        plugins: [Quasar],
+      },
+    });
 
-    await wrapper.find('[data-test="edit-button"]').trigger('click')
-    expect(wrapper.emitted().edit).toBeTruthy()
-  })
-})
+    await wrapper.find('[data-test="edit-button"]').trigger("click");
+    expect(wrapper.emitted().edit).toBeTruthy();
+  });
+});
 ```
 
 ---
@@ -1070,6 +1100,7 @@ describe('TaskCard', () => {
 ### 开发环境部署
 
 #### 后端启动脚本
+
 ```bash
 #!/bin/bash
 # scripts/start-backend.sh
@@ -1098,6 +1129,7 @@ python manage.py runserver 0.0.0.0:8000
 ```
 
 #### 前端启动脚本
+
 ```bash
 #!/bin/bash
 # scripts/start-frontend.sh
@@ -1119,6 +1151,7 @@ npm run dev
 ### 生产环境部署
 
 #### Docker 配置
+
 ```dockerfile
 # Dockerfile.backend
 FROM python:3.11-slim
@@ -1170,9 +1203,10 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 #### Docker Compose
+
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   database:
@@ -1219,12 +1253,13 @@ volumes:
 ### 性能监控
 
 #### Django 性能监控
+
 ```python
 # settings.py
 if DEBUG:
     INSTALLED_APPS += ['debug_toolbar']
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-    
+
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_TOOLBAR_CALLBACK': lambda request: True,
     }
@@ -1256,6 +1291,7 @@ LOGGING = {
 ```
 
 #### 定时任务清理
+
 ```python
 # management/commands/cleanup_deleted_tasks.py
 from django.core.management.base import BaseCommand
@@ -1268,15 +1304,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         cutoff_date = timezone.now() - timedelta(days=30)
-        
+
         deleted_tasks = Task.objects.filter(
             is_deleted=True,
             deleted_at__lt=cutoff_date
         )
-        
+
         count = deleted_tasks.count()
         deleted_tasks.delete()
-        
+
         self.stdout.write(
             self.style.SUCCESS(f'Successfully cleaned up {count} expired tasks')
         )
@@ -1285,6 +1321,7 @@ class Command(BaseCommand):
 ### 备份策略
 
 #### 数据库备份脚本
+
 ```bash
 #!/bin/bash
 # scripts/backup-database.sh
@@ -1315,11 +1352,11 @@ echo "数据库备份完成: ${BACKUP_FILE}.gz"
 ### 后端开发检查项
 
 - [ ] 数据模型设计完成
-- [ ] API接口实现完成
+- [ ] API 接口实现完成
 - [ ] 认证授权配置完成
 - [ ] 输入验证和错误处理完成
 - [ ] 单元测试编写完成
-- [ ] API文档更新完成
+- [ ] API 文档更新完成
 - [ ] 性能优化实施完成
 - [ ] 安全检查通过
 
@@ -1328,7 +1365,7 @@ echo "数据库备份完成: ${BACKUP_FILE}.gz"
 - [ ] 组件设计完成
 - [ ] 状态管理实现完成
 - [ ] 路由配置完成
-- [ ] UI/UX设计实现完成
+- [ ] UI/UX 设计实现完成
 - [ ] 响应式适配完成
 - [ ] 错误处理实现完成
 - [ ] 组件测试编写完成
@@ -1351,16 +1388,18 @@ echo "数据库备份完成: ${BACKUP_FILE}.gz"
 
 ### A. 技术选型说明
 
-#### 为什么选择Django？
-- 成熟的Web框架，内置ORM和管理后台
+#### 为什么选择 Django？
+
+- 成熟的 Web 框架，内置 ORM 和管理后台
 - 强大的认证授权系统
 - 丰富的第三方库生态
 - 良好的安全默认配置
 
-#### 为什么选择Vue 3 + Quasar？
-- Vue 3 Composition API提供更好的代码组织
-- Quasar提供丰富的UI组件和工具
-- TypeScript支持提高代码质量
+#### 为什么选择 Vue 3 + Quasar？
+
+- Vue 3 Composition API 提供更好的代码组织
+- Quasar 提供丰富的 UI 组件和工具
+- TypeScript 支持提高代码质量
 - 单页应用提供更流畅的用户体验
 
 ### B. 数据库设计图
@@ -1395,12 +1434,12 @@ echo "数据库备份完成: ${BACKUP_FILE}.gz"
 └─────────────────┘
 ```
 
-### C. API响应示例
+### C. API 响应示例
 
-详细的API响应示例已在接口规范章节中提供。
+详细的 API 响应示例已在接口规范章节中提供。
 
 ---
 
-*文档版本：v2.0 Professional*  
-*最后更新：2025年1月31日*  
-*维护者：GitHub Copilot*
+_文档版本：v2.0 Professional_  
+_最后更新：2025 年 1 月 31 日_  
+_维护者：GitHub Copilot_

@@ -83,6 +83,11 @@
                 {{ task.description }}
             </div>
 
+            <!-- 为没有描述的任务提供占位空间 -->
+            <div v-else class="task-description task-description--empty">
+                <!-- 空描述占位 -->
+            </div>
+
             <!-- 任务标签 -->
             <div v-if="getTaskTags(task.tags).length > 0" class="task-tags">
                 <q-chip
@@ -596,6 +601,13 @@ const formatRelativeTime = (dateStr: string): string => {
             line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            min-height: 4rem; /* 固定最小高度，确保统一显示 */
+            height: 4rem; /* 固定高度，约等于3行文字的高度 */
+
+            &--empty {
+                background: transparent;
+                /* 保持相同的高度但不显示任何内容 */
+            }
         }
 
         .task-tags {

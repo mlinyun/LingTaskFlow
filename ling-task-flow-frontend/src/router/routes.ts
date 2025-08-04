@@ -39,12 +39,6 @@ const routes: RouteRecordRaw[] = [
                 name: 'Dashboard',
                 component: () => import('pages/DashboardPage.vue'),
             },
-            // 高级数据分析
-            {
-                path: 'advanced-analytics',
-                name: 'AdvancedAnalytics',
-                component: () => import('pages/AdvancedDashboardPage.vue'),
-            },
             // 回收站
             {
                 path: 'trash',

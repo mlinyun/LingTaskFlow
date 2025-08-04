@@ -95,18 +95,18 @@ const getProgressColor = (range: string): string => {
 const getCategoryColor = (category: string): string => {
     // 定义颜色序列，按排名顺序分配
     const colorSequence = [
-        'blue',        // 第1名 - 皇家蓝
-        'green',       // 第2名 - 绿色
-        'orange',      // 第3名 - 橙色
-        'purple',      // 第4名 - 紫色
-        'teal',        // 第5名 - 青色
-        'indigo',      // 第6名 - 靛蓝
-        'pink',        // 第7名 - 粉色
-        'amber',       // 第8名 - 琥珀色
+        'blue', // 第1名 - 皇家蓝
+        'green', // 第2名 - 绿色
+        'orange', // 第3名 - 橙色
+        'purple', // 第4名 - 紫色
+        'teal', // 第5名 - 青色
+        'indigo', // 第6名 - 靛蓝
+        'pink', // 第7名 - 粉色
+        'amber', // 第8名 - 琥珀色
         'deep-orange', // 第9名 - 深橙色
-        'cyan',        // 第10名 - 青蓝色
-        'lime',        // 第11名 - 柠檬绿
-        'grey',        // 第12名及以后 - 灰色
+        'cyan', // 第10名 - 青蓝色
+        'lime', // 第11名 - 柠檬绿
+        'grey', // 第12名及以后 - 灰色
     ];
 
     // 如果是标签类型，根据排序获取颜色

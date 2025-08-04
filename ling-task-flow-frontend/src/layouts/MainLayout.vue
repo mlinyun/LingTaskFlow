@@ -44,13 +44,6 @@ const navigationLinks = [
         color: 'info',
     },
     {
-        title: '高级分析',
-        caption: '多维度数据深度分析',
-        icon: 'analytics',
-        link: '/advanced-analytics',
-        color: 'purple',
-    },
-    {
         title: '回收站',
         caption: '已删除的任务',
         icon: 'delete',

@@ -984,6 +984,7 @@ onMounted(() => {
     background: #ffffff;
     min-height: calc(100vh - 50px);
     position: relative;
+    padding: 1.5rem;
 
     // 添加科技感网格纹理 - 与仪表板一致
     &::before {

@@ -414,7 +414,7 @@ const handleProgressClick = (item: StatisticItem) => {
 <style lang="scss" scoped>
 .dashboard-page {
     background: #f8fafc;
-    min-height: 100vh;
+    min-height: calc(100vh - 50px);
     padding: 1.5rem;
 
     @media (max-width: 768px) {

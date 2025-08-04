@@ -1,405 +1,416 @@
 <template>
-  <q-page class="trash-page">
-    <!-- 页面头部 - 科技风格设计 -->
-    <div class="page-header">
-      <div class="header-background">
-        <div class="tech-grid"></div>
-        <div class="floating-particles">
-          <div class="particle"></div>
-          <div class="particle"></div>
-          <div class="particle"></div>
-          <div class="particle"></div>
-        </div>
-      </div>
-
-      <div class="header-content">
-        <div class="title-section">
-          <div class="title-container">
-            <div class="icon-wrapper">
-              <q-icon name="delete" size="24px" class="title-icon" />
-              <div class="icon-glow"></div>
-            </div>
-            <div class="title-text">
-              <h1 class="page-title">
-                <span class="title-primary">回收站</span>
-                <span class="title-accent">管理中心</span>
-              </h1>
-              <p class="page-subtitle">
-                <q-icon name="restore" size="14px" class="q-mr-xs" />
-                {{ formatDate(new Date()) }} 安全管理已删除的任务，支持智能恢复
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="action-section">
-          <div class="action-buttons">
-            <q-btn
-              icon="refresh"
-              label="刷新数据"
-              class="refresh-btn"
-              rounded
-              :loading="loading"
-              @click="refreshTrash"
-            />
-            <q-btn
-              :icon="showBulkOperations ? 'close' : 'checklist'"
-              class="fullscreen-btn"
-              flat
-              round
-              @click="showBulkOperations = !showBulkOperations"
-            />
-            <q-btn
-              icon="settings"
-              class="download-btn"
-              flat
-              round
-              @click="showSettings = true"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- 底部装饰线 - 重新设计为更科技感的效果 -->
-      <div class="header-decoration">
-        <div class="deco-border-glow"></div>
-        <div class="deco-particles">
-          <div class="deco-particle"></div>
-          <div class="deco-particle"></div>
-          <div class="deco-particle"></div>
-          <div class="deco-particle"></div>
-          <div class="deco-particle"></div>
-        </div>
-        <div class="deco-pulse-line"></div>
-      </div>
-    </div>
-
-    <!-- 统计信息面板 - 与数据概览统一的现代化设计 -->
-    <div class="stats-section">
-      <div class="stats-grid">
-        <div class="stats-card stats-card--red">
-          <div class="stats-card__background">
-            <div class="stats-card__gradient"></div>
-            <div class="stats-card__glow"></div>
-            <div class="stats-card__border"></div>
-          </div>
-
-          <div class="stats-card__content">
-            <div class="stats-card__icon-container">
-              <div class="stats-card__icon-bg"></div>
-              <q-icon name="delete_outline" class="stats-card__icon" />
-              <div class="stats-card__icon-pulse"></div>
-            </div>
-
-            <div class="stats-card__data">
-              <div class="stats-card__label">回收站</div>
-              <div class="stats-card__value">{{ trashStats?.total_deleted_tasks || 0 }}</div>
-              <div class="stats-card__metric">总任务数</div>
-            </div>
-
-            <div class="stats-card__decoration">
-              <div class="stats-card__decoration-bg"></div>
-              <div class="stats-card__decoration-pulse"></div>
-            </div>
-          </div>
-
-          <div class="stats-card__data-flow">
-            <div class="stats-card__data-flow-line"></div>
-            <div class="stats-card__data-flow-dot"></div>
-          </div>
-        </div>
-
-        <div class="stats-card stats-card--green">
-          <div class="stats-card__background">
-            <div class="stats-card__gradient"></div>
-            <div class="stats-card__glow"></div>
-            <div class="stats-card__border"></div>
-          </div>
-
-          <div class="stats-card__content">
-            <div class="stats-card__icon-container">
-              <div class="stats-card__icon-bg"></div>
-              <q-icon name="restore" class="stats-card__icon" />
-              <div class="stats-card__icon-pulse"></div>
-            </div>
-
-            <div class="stats-card__data">
-              <div class="stats-card__label">可恢复</div>
-              <div class="stats-card__value">{{ trashStats?.can_be_restored || 0 }}</div>
-              <div class="stats-card__metric">待恢复任务</div>
-            </div>
-
-            <div class="stats-card__decoration">
-              <div class="stats-card__decoration-bg"></div>
-              <div class="stats-card__decoration-pulse"></div>
-            </div>
-          </div>
-
-          <div class="stats-card__data-flow">
-            <div class="stats-card__data-flow-line"></div>
-            <div class="stats-card__data-flow-dot"></div>
-          </div>
-        </div>
-
-        <div class="stats-card stats-card--orange">
-          <div class="stats-card__background">
-            <div class="stats-card__gradient"></div>
-            <div class="stats-card__glow"></div>
-            <div class="stats-card__border"></div>
-          </div>
-
-          <div class="stats-card__content">
-            <div class="stats-card__icon-container">
-              <div class="stats-card__icon-bg"></div>
-              <q-icon name="schedule" class="stats-card__icon" />
-              <div class="stats-card__icon-pulse"></div>
-            </div>
-
-            <div class="stats-card__data">
-              <div class="stats-card__label">最早删除</div>
-              <div class="stats-card__value">{{ daysFromOldest }}</div>
-              <div class="stats-card__metric">天数统计</div>
-            </div>
-
-            <div class="stats-card__decoration">
-              <div class="stats-card__decoration-bg"></div>
-              <div class="stats-card__decoration-pulse"></div>
-            </div>
-          </div>
-
-          <div class="stats-card__data-flow">
-            <div class="stats-card__data-flow-line"></div>
-            <div class="stats-card__data-flow-dot"></div>
-          </div>
-        </div>
-
-        <div class="stats-card stats-card--purple">
-          <div class="stats-card__background">
-            <div class="stats-card__gradient"></div>
-            <div class="stats-card__glow"></div>
-            <div class="stats-card__border"></div>
-          </div>
-
-          <div class="stats-card__content">
-            <div class="stats-card__icon-container">
-              <div class="stats-card__icon-bg"></div>
-              <q-icon name="auto_delete" class="stats-card__icon" />
-              <div class="stats-card__icon-pulse"></div>
-            </div>
-
-            <div class="stats-card__data">
-              <div class="stats-card__label">剩余保留</div>
-              <div class="stats-card__value">{{ Math.max(0, 30 - daysFromOldest) }}</div>
-              <div class="stats-card__metric">天数倒计时</div>
-            </div>
-
-            <div class="stats-card__decoration">
-              <div class="stats-card__decoration-bg"></div>
-              <div class="stats-card__decoration-pulse"></div>
-            </div>
-          </div>
-
-          <div class="stats-card__data-flow">
-            <div class="stats-card__data-flow-line"></div>
-            <div class="stats-card__data-flow-dot"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 任务内容区域 -->
-    <div class="content-section">
-      <!-- 批量操作工具栏 -->
-      <div v-if="showBulkOperations" class="bulk-operations-toolbar">
-        <div class="toolbar-content">
-          <div class="selection-info">
-            <q-checkbox
-              v-model="allSelected"
-              :indeterminate="someSelected"
-              @update:model-value="toggleAllSelection"
-              class="all-select-checkbox"
-            />
-            <span class="selection-text">
-              已选择 {{ selectedTasks.length }} / {{ trashTasks.length }} 个任务
-            </span>
-          </div>
-          <div class="batch-actions">
-            <q-btn
-              class="batch-btn batch-restore-btn"
-              @click="batchRestore"
-              :loading="batchRestoring"
-              :disable="selectedTasks.length === 0"
-              icon="restore"
-              label="批量恢复"
-              no-caps
-              unelevated
-            />
-            <q-btn
-              class="batch-btn batch-delete-btn"
-              @click="batchPermanentDelete"
-              :loading="batchDeleting"
-              :disable="selectedTasks.length === 0"
-              icon="delete_forever"
-              label="批量删除"
-              no-caps
-              unelevated
-            />
-            <q-btn
-              class="clear-btn"
-              @click="clearSelection"
-              icon="clear"
-              label="清空选择"
-              flat
-              no-caps
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- 空状态 -->
-      <div v-if="!loading && trashTasks.length === 0" class="empty-state">
-        <div class="empty-content">
-          <div class="empty-icon">
-            <q-icon name="delete_outline" />
-            <div class="empty-icon-glow"></div>
-          </div>
-          <h3 class="empty-title">回收站是空的</h3>
-          <p class="empty-description">删除的任务会出现在这里，您可以选择恢复或永久删除它们</p>
-          <q-btn
-            class="back-btn"
-            to="/tasks"
-            icon="arrow_back"
-            label="返回任务列表"
-            no-caps
-            unelevated
-          />
-        </div>
-      </div>
-
-      <!-- 任务列表 -->
-      <div v-else-if="trashTasks.length > 0" class="tasks-container">
-        <div class="tasks-header">
-          <div class="header-left">
-            <h3 class="tasks-title">已删除的任务</h3>
-            <div class="tasks-count">共 {{ totalTasks }} 个任务</div>
-          </div>
-          <div class="header-right">
-            <q-btn
-              class="clear-all-btn"
-              @click="handleEmptyTrash"
-              icon="delete_forever"
-              label="清空回收站"
-              no-caps
-              outline
-            />
-          </div>
-        </div>
-
-        <div class="tasks-grid">
-          <div
-            v-for="task in trashTasks"
-            :key="task.id"
-            class="task-card"
-            :class="{ 'task-selected': selectedTasks.includes(task.id) }"
-          >
-            <!-- 选择复选框 -->
-            <div class="task-checkbox" v-if="showBulkOperations">
-              <q-checkbox
-                :model-value="selectedTasks.includes(task.id)"
-                @update:model-value="toggleTaskSelection(task.id)"
-                class="card-checkbox"
-              />
-            </div>
-
-            <!-- 任务内容 -->
-            <div class="task-content">
-              <div class="task-header">
-                <h4 class="task-title">{{ task.title }}</h4>
-                <div class="task-meta">
-                  <q-badge
-                    :color="getPriorityColor(task.priority)"
-                    :label="getPriorityLabel(task.priority)"
-                    class="priority-badge"
-                  />
-                  <q-badge
-                    :color="getStatusColor(task.status)"
-                    :label="getStatusLabel(task.status)"
-                    outline
-                    class="status-badge"
-                  />
+    <q-page class="trash-page">
+        <!-- 页面头部 - 科技风格设计 -->
+        <div class="page-header">
+            <div class="header-background">
+                <div class="tech-grid"></div>
+                <div class="floating-particles">
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
                 </div>
-              </div>
-
-              <p v-if="task.description" class="task-description">
-                {{ task.description }}
-              </p>
-
-              <div class="task-tags" v-if="task.tags">
-                <q-icon name="label" class="tags-icon" />
-                <span class="tags-text">{{ task.tags }}</span>
-              </div>
-
-              <div class="task-delete-info">
-                <div class="delete-time">
-                  <q-icon name="schedule" class="time-icon" />
-                  <span>删除于 {{ formatDeleteTime(task.deleted_at) }}</span>
-                </div>
-                <div class="remaining-days" :class="getRemainingDaysClass(task.deleted_at)">
-                  <q-icon name="timer" class="timer-icon" />
-                  <span>{{ getRemainingDays(task.deleted_at) }}天后永久删除</span>
-                </div>
-              </div>
             </div>
 
-            <!-- 操作按钮 -->
-            <div class="task-actions">
-              <q-btn
-                class="action-btn restore-btn"
-                @click="restoreTask(task)"
-                icon="restore"
-                round
-                unelevated
-              >
-                <q-tooltip>恢复任务</q-tooltip>
-              </q-btn>
-              <q-btn
-                class="action-btn delete-btn"
-                @click="permanentDeleteTask(task)"
-                icon="delete_forever"
-                round
-                unelevated
-              >
-                <q-tooltip>永久删除</q-tooltip>
-              </q-btn>
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="title-container">
+                        <div class="icon-wrapper">
+                            <q-icon name="delete" size="24px" class="title-icon" />
+                            <div class="icon-glow"></div>
+                        </div>
+                        <div class="title-text">
+                            <h1 class="page-title">
+                                <span class="title-primary">回收站</span>
+                                <span class="title-accent">管理中心</span>
+                            </h1>
+                            <p class="page-subtitle">
+                                <q-icon name="restore" size="14px" class="q-mr-xs" />
+                                {{ formatDate(new Date()) }} 安全管理已删除的任务，支持智能恢复
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <div class="action-buttons">
+                        <q-btn
+                            icon="refresh"
+                            label="刷新数据"
+                            class="refresh-btn"
+                            rounded
+                            :loading="loading"
+                            @click="refreshTrash"
+                        />
+                        <q-btn
+                            :icon="showBulkOperations ? 'close' : 'checklist'"
+                            class="fullscreen-btn"
+                            flat
+                            round
+                            @click="showBulkOperations = !showBulkOperations"
+                        />
+                        <q-btn
+                            icon="settings"
+                            class="download-btn"
+                            flat
+                            round
+                            @click="showSettings = true"
+                        />
+                    </div>
+                </div>
             </div>
-          </div>
+
+            <!-- 底部装饰线 - 重新设计为更科技感的效果 -->
+            <div class="header-decoration">
+                <div class="deco-border-glow"></div>
+                <div class="deco-particles">
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                    <div class="deco-particle"></div>
+                </div>
+                <div class="deco-pulse-line"></div>
+            </div>
         </div>
 
-        <!-- 分页 -->
-        <div v-if="totalTasks > pageSize" class="pagination-container">
-          <q-pagination
-            v-model="currentPage"
-            :max="totalPages"
-            :max-pages="7"
-            direction-links
-            boundary-numbers
-            @update:model-value="onPageChange"
-            class="custom-pagination"
-          />
-        </div>
-      </div>
-    </div>
+        <!-- 统计信息面板 - 与数据概览统一的现代化设计 -->
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stats-card stats-card--red">
+                    <div class="stats-card__background">
+                        <div class="stats-card__gradient"></div>
+                        <div class="stats-card__glow"></div>
+                        <div class="stats-card__border"></div>
+                    </div>
 
-    <!-- 加载状态 -->
-    <q-inner-loading :showing="loading" class="custom-loading">
-      <div class="loading-content">
-        <div class="loading-spinner">
-          <q-spinner-dots size="40px" color="primary" />
+                    <div class="stats-card__content">
+                        <div class="stats-card__icon-container">
+                            <div class="stats-card__icon-bg"></div>
+                            <q-icon name="delete_outline" class="stats-card__icon" />
+                            <div class="stats-card__icon-pulse"></div>
+                        </div>
+
+                        <div class="stats-card__data">
+                            <div class="stats-card__label">回收站</div>
+                            <div class="stats-card__value">
+                                {{ trashStats?.total_deleted_tasks || 0 }}
+                            </div>
+                            <div class="stats-card__metric">总任务数</div>
+                        </div>
+
+                        <div class="stats-card__decoration">
+                            <div class="stats-card__decoration-bg"></div>
+                            <div class="stats-card__decoration-pulse"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-card__data-flow">
+                        <div class="stats-card__data-flow-line"></div>
+                        <div class="stats-card__data-flow-dot"></div>
+                    </div>
+                </div>
+
+                <div class="stats-card stats-card--green">
+                    <div class="stats-card__background">
+                        <div class="stats-card__gradient"></div>
+                        <div class="stats-card__glow"></div>
+                        <div class="stats-card__border"></div>
+                    </div>
+
+                    <div class="stats-card__content">
+                        <div class="stats-card__icon-container">
+                            <div class="stats-card__icon-bg"></div>
+                            <q-icon name="restore" class="stats-card__icon" />
+                            <div class="stats-card__icon-pulse"></div>
+                        </div>
+
+                        <div class="stats-card__data">
+                            <div class="stats-card__label">可恢复</div>
+                            <div class="stats-card__value">
+                                {{ trashStats?.can_be_restored || 0 }}
+                            </div>
+                            <div class="stats-card__metric">待恢复任务</div>
+                        </div>
+
+                        <div class="stats-card__decoration">
+                            <div class="stats-card__decoration-bg"></div>
+                            <div class="stats-card__decoration-pulse"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-card__data-flow">
+                        <div class="stats-card__data-flow-line"></div>
+                        <div class="stats-card__data-flow-dot"></div>
+                    </div>
+                </div>
+
+                <div class="stats-card stats-card--orange">
+                    <div class="stats-card__background">
+                        <div class="stats-card__gradient"></div>
+                        <div class="stats-card__glow"></div>
+                        <div class="stats-card__border"></div>
+                    </div>
+
+                    <div class="stats-card__content">
+                        <div class="stats-card__icon-container">
+                            <div class="stats-card__icon-bg"></div>
+                            <q-icon name="schedule" class="stats-card__icon" />
+                            <div class="stats-card__icon-pulse"></div>
+                        </div>
+
+                        <div class="stats-card__data">
+                            <div class="stats-card__label">最早删除</div>
+                            <div class="stats-card__value">{{ daysFromOldest }}</div>
+                            <div class="stats-card__metric">天数统计</div>
+                        </div>
+
+                        <div class="stats-card__decoration">
+                            <div class="stats-card__decoration-bg"></div>
+                            <div class="stats-card__decoration-pulse"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-card__data-flow">
+                        <div class="stats-card__data-flow-line"></div>
+                        <div class="stats-card__data-flow-dot"></div>
+                    </div>
+                </div>
+
+                <div class="stats-card stats-card--purple">
+                    <div class="stats-card__background">
+                        <div class="stats-card__gradient"></div>
+                        <div class="stats-card__glow"></div>
+                        <div class="stats-card__border"></div>
+                    </div>
+
+                    <div class="stats-card__content">
+                        <div class="stats-card__icon-container">
+                            <div class="stats-card__icon-bg"></div>
+                            <q-icon name="auto_delete" class="stats-card__icon" />
+                            <div class="stats-card__icon-pulse"></div>
+                        </div>
+
+                        <div class="stats-card__data">
+                            <div class="stats-card__label">剩余保留</div>
+                            <div class="stats-card__value">
+                                {{ Math.max(0, 30 - daysFromOldest) }}
+                            </div>
+                            <div class="stats-card__metric">天数倒计时</div>
+                        </div>
+
+                        <div class="stats-card__decoration">
+                            <div class="stats-card__decoration-bg"></div>
+                            <div class="stats-card__decoration-pulse"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-card__data-flow">
+                        <div class="stats-card__data-flow-line"></div>
+                        <div class="stats-card__data-flow-dot"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="loading-text">正在加载回收站数据...</div>
-      </div>
-    </q-inner-loading>
-  </q-page>
+
+        <!-- 任务内容区域 -->
+        <div class="content-section">
+            <!-- 批量操作工具栏 -->
+            <div v-if="showBulkOperations" class="bulk-operations-toolbar">
+                <div class="toolbar-content">
+                    <div class="selection-info">
+                        <q-checkbox
+                            v-model="allSelected"
+                            :indeterminate="someSelected"
+                            @update:model-value="toggleAllSelection"
+                            class="all-select-checkbox"
+                        />
+                        <span class="selection-text">
+                            已选择 {{ selectedTasks.length }} / {{ trashTasks.length }} 个任务
+                        </span>
+                    </div>
+                    <div class="batch-actions">
+                        <q-btn
+                            class="batch-btn batch-restore-btn"
+                            @click="batchRestore"
+                            :loading="batchRestoring"
+                            :disable="selectedTasks.length === 0"
+                            icon="restore"
+                            label="批量恢复"
+                            no-caps
+                            unelevated
+                        />
+                        <q-btn
+                            class="batch-btn batch-delete-btn"
+                            @click="batchPermanentDelete"
+                            :loading="batchDeleting"
+                            :disable="selectedTasks.length === 0"
+                            icon="delete_forever"
+                            label="批量删除"
+                            no-caps
+                            unelevated
+                        />
+                        <q-btn
+                            class="clear-btn"
+                            @click="clearSelection"
+                            icon="clear"
+                            label="清空选择"
+                            flat
+                            no-caps
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div v-if="!loading && trashTasks.length === 0" class="empty-state">
+                <div class="empty-content">
+                    <div class="empty-icon">
+                        <q-icon name="delete_outline" />
+                        <div class="empty-icon-glow"></div>
+                    </div>
+                    <h3 class="empty-title">回收站是空的</h3>
+                    <p class="empty-description">
+                        删除的任务会出现在这里，您可以选择恢复或永久删除它们
+                    </p>
+                    <q-btn
+                        class="back-btn"
+                        to="/tasks"
+                        icon="arrow_back"
+                        label="返回任务列表"
+                        no-caps
+                        unelevated
+                    />
+                </div>
+            </div>
+
+            <!-- 任务列表 -->
+            <div v-else-if="trashTasks.length > 0" class="tasks-container">
+                <div class="tasks-header">
+                    <div class="header-left">
+                        <h3 class="tasks-title">已删除的任务</h3>
+                        <div class="tasks-count">共 {{ totalTasks }} 个任务</div>
+                    </div>
+                    <div class="header-right">
+                        <q-btn
+                            class="clear-all-btn"
+                            @click="handleEmptyTrash"
+                            icon="delete_forever"
+                            label="清空回收站"
+                            no-caps
+                            outline
+                        />
+                    </div>
+                </div>
+
+                <div class="tasks-grid">
+                    <div
+                        v-for="task in trashTasks"
+                        :key="task.id"
+                        class="task-card"
+                        :class="{ 'task-selected': selectedTasks.includes(task.id) }"
+                    >
+                        <!-- 选择复选框 -->
+                        <div class="task-checkbox" v-if="showBulkOperations">
+                            <q-checkbox
+                                :model-value="selectedTasks.includes(task.id)"
+                                @update:model-value="toggleTaskSelection(task.id)"
+                                class="card-checkbox"
+                            />
+                        </div>
+
+                        <!-- 任务内容 -->
+                        <div class="task-content">
+                            <div class="task-header">
+                                <h4 class="task-title">{{ task.title }}</h4>
+                                <div class="task-meta">
+                                    <q-badge
+                                        :color="getPriorityColor(task.priority)"
+                                        :label="getPriorityLabel(task.priority)"
+                                        class="priority-badge"
+                                    />
+                                    <q-badge
+                                        :color="getStatusColor(task.status)"
+                                        :label="getStatusLabel(task.status)"
+                                        outline
+                                        class="status-badge"
+                                    />
+                                </div>
+                            </div>
+
+                            <p v-if="task.description" class="task-description">
+                                {{ task.description }}
+                            </p>
+
+                            <div class="task-tags" v-if="task.tags">
+                                <q-icon name="label" class="tags-icon" />
+                                <span class="tags-text">{{ task.tags }}</span>
+                            </div>
+
+                            <div class="task-delete-info">
+                                <div class="delete-time">
+                                    <q-icon name="schedule" class="time-icon" />
+                                    <span>删除于 {{ formatDeleteTime(task.deleted_at) }}</span>
+                                </div>
+                                <div
+                                    class="remaining-days"
+                                    :class="getRemainingDaysClass(task.deleted_at)"
+                                >
+                                    <q-icon name="timer" class="timer-icon" />
+                                    <span>{{ getRemainingDays(task.deleted_at) }}天后永久删除</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div class="task-actions">
+                            <q-btn
+                                class="action-btn restore-btn"
+                                @click="restoreTask(task)"
+                                icon="restore"
+                                round
+                                unelevated
+                            >
+                                <q-tooltip>恢复任务</q-tooltip>
+                            </q-btn>
+                            <q-btn
+                                class="action-btn delete-btn"
+                                @click="permanentDeleteTask(task)"
+                                icon="delete_forever"
+                                round
+                                unelevated
+                            >
+                                <q-tooltip>永久删除</q-tooltip>
+                            </q-btn>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分页 -->
+                <div v-if="totalTasks > pageSize" class="pagination-container">
+                    <q-pagination
+                        v-model="currentPage"
+                        :max="totalPages"
+                        :max-pages="7"
+                        direction-links
+                        boundary-numbers
+                        @update:model-value="onPageChange"
+                        class="custom-pagination"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载状态 -->
+        <q-inner-loading :showing="loading" class="custom-loading">
+            <div class="loading-content">
+                <div class="loading-spinner">
+                    <q-spinner-dots size="40px" color="primary" />
+                </div>
+                <div class="loading-text">正在加载回收站数据...</div>
+            </div>
+        </q-inner-loading>
+    </q-page>
 </template>
 
 <script setup lang="ts">
@@ -760,7 +771,7 @@ onMounted(() => {
     min-height: calc(100vh - 50px);
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     position: relative;
-    padding: 0;
+    padding: 1.5rem;
 
     // 背景纹理
     &::before {
@@ -1285,10 +1296,7 @@ onMounted(() => {
         font-size: 1.75rem;
         font-weight: 800;
         line-height: 1;
-        background: linear-gradient(
-            135deg,
-            var(--value-gradient, #3b82f6, #1e40af)
-        );
+        background: linear-gradient(135deg, var(--value-gradient, #3b82f6, #1e40af));
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -1692,7 +1700,11 @@ onMounted(() => {
 
             &.task-selected {
                 border-color: #3b82f6;
-                background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
+                background: linear-gradient(
+                    135deg,
+                    rgba(59, 130, 246, 0.05) 0%,
+                    rgba(255, 255, 255, 0.95) 100%
+                );
                 box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
             }
 
@@ -1783,9 +1795,15 @@ onMounted(() => {
                     }
 
                     .remaining-days {
-                        &.days-normal { color: #10b981; }
-                        &.days-warning { color: #f59e0b; }
-                        &.days-critical { color: #ef4444; }
+                        &.days-normal {
+                            color: #10b981;
+                        }
+                        &.days-warning {
+                            color: #f59e0b;
+                        }
+                        &.days-critical {
+                            color: #ef4444;
+                        }
                     }
                 }
             }
@@ -1888,47 +1906,106 @@ onMounted(() => {
 
 // 动画定义
 @keyframes gridMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(30px, 30px); }
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(30px, 30px);
+    }
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
-    50% { transform: translateY(-10px) rotate(180deg); opacity: 1; }
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translateY(-10px) rotate(180deg);
+        opacity: 1;
+    }
 }
 
 @keyframes pulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.9;
+    }
 }
 
 @keyframes borderPulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 
 @keyframes particleFlow {
-    0% { opacity: 0; transform: translateX(-10px) scale(0.5); }
-    10% { opacity: 1; transform: translateX(0px) scale(1); }
-    90% { opacity: 1; transform: translateX(30px) scale(1); }
-    100% { opacity: 0; transform: translateX(40px) scale(0.5); }
+    0% {
+        opacity: 0;
+        transform: translateX(-10px) scale(0.5);
+    }
+    10% {
+        opacity: 1;
+        transform: translateX(0px) scale(1);
+    }
+    90% {
+        opacity: 1;
+        transform: translateX(30px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(40px) scale(0.5);
+    }
 }
 
 @keyframes scanLine {
-    0% { left: -100px; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { left: calc(100% + 100px); opacity: 0; }
+    0% {
+        left: -100px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        left: calc(100% + 100px);
+        opacity: 0;
+    }
 }
 
 @keyframes statGlow {
-    0%, 100% { opacity: 0.05; transform: rotate(0deg); }
-    50% { opacity: 0.1; transform: rotate(180deg); }
+    0%,
+    100% {
+        opacity: 0.05;
+        transform: rotate(0deg);
+    }
+    50% {
+        opacity: 0.1;
+        transform: rotate(180deg);
+    }
 }
 
 @keyframes emptyGlow {
-    0%, 100% { opacity: 0.1; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 0.2; transform: translate(-50%, -50%) scale(1.1); }
+    0%,
+    100% {
+        opacity: 0.1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 0.2;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
 }
 
 // 响应式设计

@@ -16,6 +16,7 @@ export interface Task {
     created_at: string;
     updated_at: string;
     owner: number; // 修正字段名从user改为owner
+    owner_username?: string; // 负责人用户名，用于显示
 }
 
 export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ON_HOLD';

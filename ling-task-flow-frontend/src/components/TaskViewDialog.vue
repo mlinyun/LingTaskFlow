@@ -6,12 +6,7 @@
                 <div class="header-content">
                     <div class="task-info">
                         <div class="task-title-container">
-                            <q-icon
-                                name="visibility"
-                                size="32px"
-                                color="primary"
-                                class="title-icon"
-                            />
+                            <q-icon name="visibility" size="32px" class="title-icon" />
                             <div class="title-info">
                                 <h4 class="task-title">{{ task?.title || '任务详情' }}</h4>
                             </div>
@@ -242,12 +237,14 @@
                                     <div class="assignee-info">
                                         <q-avatar size="24px" color="primary" text-color="white">
                                             {{
-                                                task.owner
-                                                    ? task.owner.toString().charAt(0).toUpperCase()
+                                                task.owner_username
+                                                    ? task.owner_username.charAt(0).toUpperCase()
                                                     : 'U'
                                             }}
                                         </q-avatar>
-                                        <span class="assignee-name">用户 {{ task.owner }}</span>
+                                        <span class="assignee-name">{{
+                                            task.owner_username || '未分配'
+                                        }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -535,14 +532,69 @@ const getTimeRemaining = (dueDate: string): string => {
     overflow: hidden;
 
     .dialog-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #f8fafc 15%,
+            #e2e8f0 30%,
+            #cbd5e1 45%,
+            #94a3b8 60%,
+            #64748b 75%,
+            #475569 90%,
+            #334155 100%
+        );
+        position: relative;
+        overflow: hidden;
+        color: #1e293b;
         padding: 1.5rem 2rem;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+
+        // 蓝色科技光效
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                45deg,
+                transparent 0%,
+                rgba(59, 130, 246, 0.08) 20%,
+                rgba(37, 99, 235, 0.12) 40%,
+                rgba(29, 78, 216, 0.15) 60%,
+                rgba(59, 130, 246, 0.1) 80%,
+                transparent 100%
+            );
+            z-index: 1;
+        }
+
+        // 动态蓝色光束
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(59, 130, 246, 0.15) 30%,
+                rgba(37, 99, 235, 0.2) 50%,
+                rgba(59, 130, 246, 0.15) 70%,
+                transparent 100%
+            );
+            animation: sweep 4s ease-in-out infinite;
+            z-index: 2;
+        }
 
         .header-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+            z-index: 3;
 
             .task-info {
                 display: flex;
@@ -556,9 +608,12 @@ const getTimeRemaining = (dueDate: string): string => {
                     gap: 1rem;
 
                     .title-icon {
-                        background: rgba(255, 255, 255, 0.2);
+                        background: linear-gradient(135deg, #3b82f6, #2563eb);
+                        color: white !important;
                         padding: 0.5rem;
                         border-radius: 8px;
+                        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+                        border: 2px solid rgba(255, 255, 255, 0.8);
                     }
 
                     .title-info {
@@ -567,12 +622,15 @@ const getTimeRemaining = (dueDate: string): string => {
                             font-size: 1.5rem;
                             font-weight: 600;
                             line-height: 1.3;
+                            color: #1e293b;
+                            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
                         }
 
                         .task-subtitle {
                             margin: 0;
                             font-size: 0.875rem;
-                            opacity: 0.8;
+                            opacity: 0.7;
+                            color: #475569;
                         }
                     }
                 }
@@ -595,11 +653,30 @@ const getTimeRemaining = (dueDate: string): string => {
 
                 .action-btn,
                 .close-btn {
-                    background: rgba(255, 255, 255, 0.1);
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.9),
+                        rgba(248, 250, 252, 0.8)
+                    );
                     backdrop-filter: blur(10px);
+                    border: 1px solid rgba(59, 130, 246, 0.3);
+                    transition: all 0.3s ease;
+                    color: #475569;
 
                     &:hover {
-                        background: rgba(255, 255, 255, 0.2);
+                        background: linear-gradient(
+                            135deg,
+                            rgba(59, 130, 246, 0.1),
+                            rgba(37, 99, 235, 0.08)
+                        );
+                        border-color: rgba(59, 130, 246, 0.5);
+                        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+                        transform: translateY(-1px);
+                        color: #1e293b;
+                    }
+
+                    .q-icon {
+                        color: inherit;
                     }
                 }
             }
@@ -610,6 +687,41 @@ const getTimeRemaining = (dueDate: string): string => {
         flex: 1;
         padding: 2rem;
         overflow-y: auto;
+
+        // 对话框内容滚动条样式 - 柔和蓝白科技风格
+        &::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+            border-radius: 3px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 1px 2px rgba(148, 163, 184, 0.1);
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: linear-gradient(135deg, #94a3b8, #64748b);
+                border-color: rgba(255, 255, 255, 0.4);
+                box-shadow: 0 1px 3px rgba(148, 163, 184, 0.15);
+            }
+
+            &:active {
+                background: linear-gradient(135deg, #64748b, #475569);
+            }
+        }
+
+        &::-webkit-scrollbar-corner {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 3px;
+        }
 
         .content-layout {
             display: grid;
@@ -718,7 +830,7 @@ const getTimeRemaining = (dueDate: string): string => {
                 height: fit-content;
 
                 .panel-section {
-                    margin-bottom: 2rem;
+                    margin-bottom: 0.5rem;
 
                     &:last-child {
                         margin-bottom: 0;
@@ -873,6 +985,24 @@ const getTimeRemaining = (dueDate: string): string => {
         .dialog-content {
             padding: 1rem;
         }
+    }
+}
+
+// 动画关键帧
+@keyframes sweep {
+    0% {
+        left: -100%;
+        opacity: 0;
+    }
+    25% {
+        opacity: 1;
+    }
+    75% {
+        opacity: 1;
+    }
+    100% {
+        left: 100%;
+        opacity: 0;
     }
 }
 </style>

@@ -185,13 +185,13 @@
         <!-- 底部：详细信息面板 -->
         <div class="details-section">
             <div class="details-grid">
-                <!-- 分类统计 -->
+                <!-- 标签统计 -->
                 <StatisticCard
-                    title="分类统计"
+                    title="标签统计"
                     icon="category"
                     :items="categoryStatItems"
                     type="category"
-                    no-data-text="暂无分类数据"
+                    no-data-text="暂无标签数据"
                     @item-click="handleCategoryClick"
                 />
 
@@ -253,7 +253,7 @@ const priorityChartData = computed(() => {
     }));
 });
 
-// 分类统计数据转换
+// 标签统计数据转换
 const categoryStatItems = computed(() => {
     if (!taskStats.value?.category_stats) return [];
 
@@ -388,12 +388,12 @@ interface StatisticItem {
     category?: string;
 }
 
-// 分类点击事件处理
+// 标签点击事件处理
 const handleCategoryClick = (item: StatisticItem) => {
-    // 可以根据分类导航到任务列表，这里暂时显示通知
+    // 可以根据标签导航到任务列表，这里暂时显示通知
     Notify.create({
         type: 'info',
-        message: `点击了分类：${item.label} (${item.count}个任务)`,
+        message: `点击了标签：${item.label} (${item.count}个任务)`,
         position: 'top',
     });
     // 未来可以添加：await goToTasks({ category: item.category });

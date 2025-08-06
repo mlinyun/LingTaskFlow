@@ -124,11 +124,14 @@ export const useTaskStore = defineStore('task', () => {
             console.error('获取任务列表失败:', error);
 
             // 使用统一的错误处理
-            handleApiError(error as Error & { response?: { status: number; data?: Record<string, unknown> } }, {
-                showNotification: true,
-                autoRetry: true,
-                maxRetries: 2
-            });
+            handleApiError(
+                error as Error & { response?: { status: number; data?: Record<string, unknown> } },
+                {
+                    showNotification: true,
+                    autoRetry: true,
+                    maxRetries: 2,
+                },
+            );
 
             throw error;
         } finally {

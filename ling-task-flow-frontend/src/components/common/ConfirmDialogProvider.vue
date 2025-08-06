@@ -24,27 +24,27 @@
 </template>
 
 <script setup lang="ts">
-import { provide, onMounted } from 'vue'
-import ConfirmDialog from './ConfirmDialog.vue'
-import { useConfirmDialog, type UseConfirmDialogReturn } from '../../composables/useConfirmDialog'
+import { provide, onMounted } from 'vue';
+import ConfirmDialog from './ConfirmDialog.vue';
+import { useConfirmDialog, type UseConfirmDialogReturn } from '../../composables/useConfirmDialog';
 
 // 创建确认对话框实例
-const confirmDialog: UseConfirmDialogReturn = useConfirmDialog()
+const confirmDialog: UseConfirmDialogReturn = useConfirmDialog();
 
 // 立即提供给子组件使用
-provide('confirmDialog', confirmDialog)
+provide('confirmDialog', confirmDialog);
 
 // 全局确认对话框类型声明
 declare global {
     interface Window {
-        $confirm: UseConfirmDialogReturn
+        $confirm: UseConfirmDialogReturn;
     }
 }
 
 // 在挂载后将确认对话框方法挂载到全局
 onMounted(() => {
     if (typeof window !== 'undefined') {
-        window.$confirm = confirmDialog
+        window.$confirm = confirmDialog;
     }
-})
+});
 </script>

@@ -94,7 +94,11 @@
                     </div>
 
                     <!-- 折线骨架 -->
-                    <svg :width="chartSize || '200px'" :height="chartSize || '200px'" class="line-path">
+                    <svg
+                        :width="chartSize || '200px'"
+                        :height="chartSize || '200px'"
+                        class="line-path"
+                    >
                         <q-skeleton type="rect" width="80%" height="2px" class="line-skeleton" />
                     </svg>
                 </div>

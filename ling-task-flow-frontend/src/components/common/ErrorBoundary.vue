@@ -28,19 +28,8 @@
 
                 <!-- 操作按钮 -->
                 <div class="row justify-center q-gutter-md">
-                    <q-btn
-                        color="primary"
-                        icon="refresh"
-                        label="重新加载"
-                        @click="handleReload"
-                    />
-                    <q-btn
-                        color="grey-7"
-                        icon="home"
-                        label="返回首页"
-                        flat
-                        @click="handleGoHome"
-                    />
+                    <q-btn color="primary" icon="refresh" label="重新加载" @click="handleReload" />
+                    <q-btn color="grey-7" icon="home" label="返回首页" flat @click="handleGoHome" />
                     <q-btn
                         v-if="showReport"
                         color="orange"
@@ -57,67 +46,67 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onErrorCaptured } from 'vue'
-import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
+import { ref, computed, onErrorCaptured } from 'vue';
+import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
 
 interface Props {
     // 是否显示错误详情
-    showDetails?: boolean
+    showDetails?: boolean;
     // 是否显示报告按钮
-    showReport?: boolean
+    showReport?: boolean;
     // 自定义错误标题
-    title?: string
+    title?: string;
     // 自定义错误消息
-    message?: string
+    message?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     showDetails: process.env.NODE_ENV === 'development',
     showReport: true,
     title: '',
-    message: ''
-})
+    message: '',
+});
 
-const router = useRouter()
-const $q = useQuasar()
+const router = useRouter();
+const $q = useQuasar();
 
-const hasError = ref(false)
-const error = ref<Error | null>(null)
+const hasError = ref(false);
+const error = ref<Error | null>(null);
 
 // 计算属性
 const errorTitle = computed(() => {
-    if (props.title) return props.title
-    if (error.value?.name === 'ChunkLoadError') return '资源加载失败'
-    if (error.value?.name === 'TypeError') return '类型错误'
-    if (error.value?.name === 'ReferenceError') return '引用错误'
-    return '页面出现错误'
-})
+    if (props.title) return props.title;
+    if (error.value?.name === 'ChunkLoadError') return '资源加载失败';
+    if (error.value?.name === 'TypeError') return '类型错误';
+    if (error.value?.name === 'ReferenceError') return '引用错误';
+    return '页面出现错误';
+});
 
 const errorMessage = computed(() => {
-    if (props.message) return props.message
+    if (props.message) return props.message;
     if (error.value?.name === 'ChunkLoadError') {
-        return '应用资源加载失败，这可能是由于网络问题或新版本发布导致的。请尝试刷新页面。'
+        return '应用资源加载失败，这可能是由于网络问题或新版本发布导致的。请尝试刷新页面。';
     }
-    return '很抱歉，页面遇到了一个意外错误。我们已经记录了这个问题，请尝试刷新页面或返回首页。'
-})
+    return '很抱歉，页面遇到了一个意外错误。我们已经记录了这个问题，请尝试刷新页面或返回首页。';
+});
 
 const errorDetails = computed(() => {
-    if (!error.value) return ''
-    return `${error.value.name}: ${error.value.message}\n\n堆栈跟踪:\n${error.value.stack}`
-})
+    if (!error.value) return '';
+    return `${error.value.name}: ${error.value.message}\n\n堆栈跟踪:\n${error.value.stack}`;
+});
 
 // 错误捕获
 onErrorCaptured((err: Error) => {
-    console.error('ErrorBoundary caught error:', err)
-    error.value = err
-    hasError.value = true
+    console.error('ErrorBoundary caught error:', err);
+    error.value = err;
+    hasError.value = true;
 
     // 记录错误到监控系统（如果有的话）
-    logError(err)
+    logError(err);
 
-    return false // 阻止错误继续向上传播
-})
+    return false; // 阻止错误继续向上传播
+});
 
 // 错误记录函数
 function logError(err: Error) {
@@ -128,21 +117,21 @@ function logError(err: Error) {
         stack: err.stack,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
-        url: window.location.href
-    })
+        url: window.location.href,
+    });
 }
 
 // 事件处理
 function handleReload() {
-    hasError.value = false
-    error.value = null
-    window.location.reload()
+    hasError.value = false;
+    error.value = null;
+    window.location.reload();
 }
 
 function handleGoHome() {
-    hasError.value = false
-    error.value = null
-    void router.push('/')
+    hasError.value = false;
+    error.value = null;
+    void router.push('/');
 }
 
 function handleReportError() {
@@ -152,31 +141,31 @@ function handleReportError() {
         stack: error.value?.stack || 'No stack trace',
         timestamp: new Date().toISOString(),
         url: window.location.href,
-        userAgent: navigator.userAgent
-    }
+        userAgent: navigator.userAgent,
+    };
 
     // 可以在这里打开反馈表单或发送错误报告
     $q.dialog({
         title: '错误报告',
         message: '感谢您报告这个问题！错误信息已被记录，我们会尽快修复。',
-        ok: '确定'
-    })
+        ok: '确定',
+    });
 
     // 示例：发送到错误收集服务
-    console.log('Error report:', errorInfo)
+    console.log('Error report:', errorInfo);
 }
 
 // 暴露方法给父组件
 defineExpose({
     reset: () => {
-        hasError.value = false
-        error.value = null
+        hasError.value = false;
+        error.value = null;
     },
     triggerError: (err: Error) => {
-        error.value = err
-        hasError.value = true
-    }
-})
+        error.value = err;
+        hasError.value = true;
+    },
+});
 </script>
 
 <style lang="scss" scoped>

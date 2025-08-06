@@ -31,27 +31,27 @@ const errorNotificationRef = ref<InstanceType<typeof ErrorNotification> | null>(
 
 // 初始化错误处理器
 onMounted(() => {
-    apiErrorHandler.init()
-})
+    apiErrorHandler.init();
+});
 
 // 为子组件提供错误处理方法
 provide('errorHandler', {
     showNetworkError: (message: string, retryAction?: () => void) => {
-        errorNotificationRef.value?.showNetworkError(message, retryAction)
+        errorNotificationRef.value?.showNetworkError(message, retryAction);
     },
     showApiError: (message: string, retryAction?: () => void) => {
-        errorNotificationRef.value?.showApiError(message, retryAction)
+        errorNotificationRef.value?.showApiError(message, retryAction);
     },
     showValidationError: (message: string) => {
-        errorNotificationRef.value?.showValidationError(message)
+        errorNotificationRef.value?.showValidationError(message);
     },
     showPermissionError: (message: string) => {
-        errorNotificationRef.value?.showPermissionError(message)
+        errorNotificationRef.value?.showPermissionError(message);
     },
     showSystemError: (message: string) => {
-        errorNotificationRef.value?.showSystemError(message)
-    }
-})
+        errorNotificationRef.value?.showSystemError(message);
+    },
+});
 
 // 导航链接配置
 const navigationLinks = [
@@ -97,14 +97,14 @@ const toggleLeftDrawer = () => {
     height: 100vh;
     min-height: 100vh;
 
+    // 为固定的顶部导航栏留出空间
+    padding-top: 64px;
+
     // 处理内容溢出
     overflow: auto;
 
     // 确保内容不会超出视窗
     max-width: 100vw;
-
-    // 为内容添加适当的内边距
-    padding: 0;
 
     // 确保子元素正确布局
     display: flex;
@@ -206,10 +206,13 @@ const toggleLeftDrawer = () => {
 // 处理移动端适配
 @media (max-width: 768px) {
     .main-page-container {
+        // 移动端保持相同的顶部边距
+        padding-top: 64px;
+
         // 移动端减少内边距
         :deep(.q-page) {
             padding: 0.5rem;
-            min-height: calc(100vh - 56px); // 移动端头部通常稍高
+            min-height: calc(100vh - 64px); // 减去固定导航栏高度
         }
     }
 }

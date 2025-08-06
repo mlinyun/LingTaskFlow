@@ -8,7 +8,10 @@
         :maximized="false"
         class="confirm-dialog-wrapper"
     >
-        <q-card class="confirm-dialog" :class="[`confirm-dialog--${type}`, { 'confirm-dialog--danger': isDanger }]">
+        <q-card
+            class="confirm-dialog"
+            :class="[`confirm-dialog--${type}`, { 'confirm-dialog--danger': isDanger }]"
+        >
             <!-- 科技感背景装饰 -->
             <div class="confirm-dialog__background">
                 <div class="tech-grid"></div>
@@ -24,11 +27,7 @@
             <q-card-section class="confirm-dialog__header">
                 <div class="confirm-dialog__icon-wrapper">
                     <div class="icon-container" :class="`icon-container--${type}`">
-                        <q-icon
-                            :name="iconName"
-                            :size="iconSize"
-                            :class="`text-${iconColor}`"
-                        />
+                        <q-icon :name="iconName" :size="iconSize" :class="`text-${iconColor}`" />
                         <div class="icon-pulse"></div>
                     </div>
                 </div>
@@ -121,24 +120,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 // 定义确认对话框类型
-export type ConfirmDialogType = 'info' | 'warning' | 'danger' | 'success'
+export type ConfirmDialogType = 'info' | 'warning' | 'danger' | 'success';
 
 export interface ConfirmDialogProps {
-    modelValue: boolean
-    type?: ConfirmDialogType
-    title: string
-    message: string
-    details?: string | undefined
-    warningText?: string | undefined
-    confirmText?: string
-    cancelText?: string
-    confirmIcon?: string
-    persistent?: boolean
-    loading?: boolean
-    loadingText?: string
+    modelValue: boolean;
+    type?: ConfirmDialogType;
+    title: string;
+    message: string;
+    details?: string | undefined;
+    warningText?: string | undefined;
+    confirmText?: string;
+    cancelText?: string;
+    confirmIcon?: string;
+    persistent?: boolean;
+    loading?: boolean;
+    loadingText?: string;
 }
 
 const props = withDefaults(defineProps<ConfirmDialogProps>(), {
@@ -148,69 +147,69 @@ const props = withDefaults(defineProps<ConfirmDialogProps>(), {
     confirmIcon: 'check',
     persistent: false,
     loading: false,
-    loadingText: '处理中...'
-})
+    loadingText: '处理中...',
+});
 
 const emit = defineEmits<{
-    'update:modelValue': [value: boolean]
-    'confirm': []
-    'cancel': []
-}>()
+    'update:modelValue': [value: boolean];
+    confirm: [];
+    cancel: [];
+}>();
 
 // 对话框显示状态
 const isVisible = computed({
     get: () => props.modelValue,
-    set: (value: boolean) => emit('update:modelValue', value)
-})
+    set: (value: boolean) => emit('update:modelValue', value),
+});
 
 // 样式计算属性
-const isDanger = computed(() => props.type === 'danger')
+const isDanger = computed(() => props.type === 'danger');
 
 const iconName = computed(() => {
     const iconMap: Record<ConfirmDialogType, string> = {
         info: 'info',
         warning: 'warning',
         danger: 'dangerous',
-        success: 'check_circle'
-    }
-    return iconMap[props.type]
-})
+        success: 'check_circle',
+    };
+    return iconMap[props.type];
+});
 
-const iconSize = computed(() => '32px')
+const iconSize = computed(() => '32px');
 
 const iconColor = computed(() => {
     const colorMap: Record<ConfirmDialogType, string> = {
         info: 'blue',
         warning: 'orange',
         danger: 'red',
-        success: 'green'
-    }
-    return colorMap[props.type]
-})
+        success: 'green',
+    };
+    return colorMap[props.type];
+});
 
 const confirmColor = computed(() => {
     const colorMap: Record<ConfirmDialogType, string> = {
         info: 'primary',
         warning: 'warning',
         danger: 'negative',
-        success: 'positive'
-    }
-    return colorMap[props.type]
-})
+        success: 'positive',
+    };
+    return colorMap[props.type];
+});
 
-const cancelColor = computed(() => 'grey-6')
+const cancelColor = computed(() => 'grey-6');
 
 // 事件处理
 const handleConfirm = () => {
-    emit('confirm')
-}
+    emit('confirm');
+};
 
 const handleCancel = () => {
-    emit('cancel')
+    emit('cancel');
     if (!props.persistent) {
-        isVisible.value = false
+        isVisible.value = false;
     }
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -566,7 +565,8 @@ const handleCancel = () => {
 }
 
 @keyframes particle-float {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0) rotate(0deg);
         opacity: 0.3;
     }
@@ -577,7 +577,8 @@ const handleCancel = () => {
 }
 
 @keyframes glow-pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 0.5;
         transform: scale(1);
     }

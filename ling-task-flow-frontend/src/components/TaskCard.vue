@@ -372,8 +372,8 @@ const handleDeleteTask = async () => {
                 details: '任务删除后将移至回收站，可在30天内恢复。',
                 warningText: '删除后的任务可以在回收站中找到',
                 confirmText: '删除',
-                confirmIcon: 'delete'
-            }
+                confirmIcon: 'delete',
+            },
         );
 
         if (confirmed) {

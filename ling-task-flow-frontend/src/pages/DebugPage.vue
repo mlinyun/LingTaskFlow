@@ -20,27 +20,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useAuthStore } from 'stores/auth'
-import { LocalStorage } from 'quasar'
+import { ref, onMounted } from 'vue';
+import { useAuthStore } from 'stores/auth';
+import { LocalStorage } from 'quasar';
 
-const authStore = useAuthStore()
-const tokenExists = ref(false)
-const accessToken = ref('')
-const userInfo = ref('')
+const authStore = useAuthStore();
+const tokenExists = ref(false);
+const accessToken = ref('');
+const userInfo = ref('');
 
 onMounted(() => {
-    accessToken.value = LocalStorage.getItem('access_token') || 'null'
-    userInfo.value = JSON.stringify(LocalStorage.getItem('user_info')) || 'null'
-    tokenExists.value = !!LocalStorage.getItem('access_token')
-})
+    accessToken.value = LocalStorage.getItem('access_token') || 'null';
+    userInfo.value = JSON.stringify(LocalStorage.getItem('user_info')) || 'null';
+    tokenExists.value = !!LocalStorage.getItem('access_token');
+});
 
 const clearStorage = () => {
-    LocalStorage.clear()
-    location.reload()
-}
+    LocalStorage.clear();
+    location.reload();
+};
 
 const refreshPage = () => {
-    location.reload()
-}
+    location.reload();
+};
 </script>

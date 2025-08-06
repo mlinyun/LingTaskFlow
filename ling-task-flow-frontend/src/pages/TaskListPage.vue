@@ -807,8 +807,8 @@ const handleDeleteTask = async (task: Task) => {
                 details: '任务删除后将移至回收站，可在30天内恢复。',
                 warningText: '删除后可以在回收站中找到',
                 confirmText: '删除',
-                confirmIcon: 'delete'
-            }
+                confirmIcon: 'delete',
+            },
         );
 
         if (confirmed) {
@@ -900,8 +900,8 @@ const batchDelete = async () => {
                 details: '任务删除后将移至回收站，可在30天内恢复。',
                 warningText: '删除后可以在回收站中找到',
                 confirmText: '批量删除',
-                confirmIcon: 'delete'
-            }
+                confirmIcon: 'delete',
+            },
         );
 
         if (confirmed) {

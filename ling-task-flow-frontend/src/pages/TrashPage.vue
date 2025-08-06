@@ -541,8 +541,8 @@ const permanentDeleteTask = async (task: Task) => {
                 warningText: '此操作不可撤销，数据将永久丢失',
                 confirmText: '永久删除',
                 confirmIcon: 'delete_forever',
-                persistent: true
-            }
+                persistent: true,
+            },
         );
 
         if (confirmed) {
@@ -609,8 +609,8 @@ const batchPermanentDelete = async () => {
                 warningText: '此操作不可撤销，所有数据将永久丢失',
                 confirmText: '批量永久删除',
                 confirmIcon: 'delete_forever',
-                persistent: true
-            }
+                persistent: true,
+            },
         );
 
         if (confirmed) {
@@ -655,8 +655,8 @@ const handleEmptyTrash = async () => {
                 warningText: '此操作不可撤销，所有数据将永久丢失',
                 confirmText: '清空回收站',
                 confirmIcon: 'delete_forever',
-                persistent: true
-            }
+                persistent: true,
+            },
         );
 
         if (confirmed) {

@@ -87,140 +87,142 @@
                         </q-chip>
                     </div>
 
-                <div class="metrics-grid">
-                    <!-- 主要指标卡片 -->
-                    <div class="metric-card primary">
-                        <StatsCard
-                            icon="assignment"
-                            title="总任务数"
-                            :value="taskStats?.basic_stats?.total_tasks || 0"
-                            color="blue"
-                            :trend="getTrend('total')"
-                            @click="goToTasks()"
-                        />
-                    </div>
-
-                    <div class="metric-card primary">
-                        <StatsCard
-                            icon="done_all"
-                            title="已完成"
-                            :value="taskStats?.basic_stats?.completed_tasks || 0"
-                            color="green"
-                            :trend="getTrend('completed')"
-                            @click="goToTasks({ status: 'COMPLETED' })"
-                        />
-                    </div>
-
-                    <div class="metric-card primary">
-                        <StatsCard
-                            icon="schedule"
-                            title="进行中"
-                            :value="taskStats?.workload_stats?.total_active_tasks || 0"
-                            color="orange"
-                            :trend="getTrend('active')"
-                            @click="goToTasks({ status: 'IN_PROGRESS' })"
-                        />
-                    </div>
-
-                    <div class="metric-card primary">
-                        <StatsCard
-                            icon="trending_up"
-                            title="完成率"
-                            :value="`${taskStats?.basic_stats?.completion_rate?.toFixed(1) || 0}%`"
-                            color="purple"
-                            :trend="getTrend('completion_rate')"
-                            @click="goToTasks()"
-                        />
-                    </div>
-
-                    <!-- 次要指标卡片 -->
-                    <div class="metric-card secondary">
-                        <StatsCard
-                            icon="schedule_send"
-                            title="逾期任务"
-                            :value="taskStats?.overdue_analysis?.total_overdue || 0"
-                            color="red"
-                            :trend="getTrend('overdue')"
-                            @click="goToTasks()"
-                        />
-                    </div>
-
-                    <div class="metric-card secondary">
-                        <StatsCard
-                            icon="timeline"
-                            title="平均进度"
-                            :value="`${taskStats?.basic_stats?.average_progress?.toFixed(1) || 0}%`"
-                            color="blue"
-                            :trend="getTrend('progress')"
-                            @click="goToTasks()"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <!-- 右侧：图表和分析 -->
-            <div class="analytics-panel">
-                <!-- 状态分布图表 -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <div class="chart-title">
-                            <q-icon name="pie_chart" size="20px" />
-                            <span>任务状态分布</span>
+                    <div class="metrics-grid">
+                        <!-- 主要指标卡片 -->
+                        <div class="metric-card primary">
+                            <StatsCard
+                                icon="assignment"
+                                title="总任务数"
+                                :value="taskStats?.basic_stats?.total_tasks || 0"
+                                color="blue"
+                                :trend="getTrend('total')"
+                                @click="goToTasks()"
+                            />
                         </div>
-                        <q-btn icon="more_vert" flat round size="sm" />
-                    </div>
-                    <div class="chart-content">
-                        <StatusDistributionChart
-                            :data="statusChartData"
-                            @status-click="handleStatusClick"
-                        />
-                    </div>
-                </div>
 
-                <!-- 优先级分布图表 -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <div class="chart-title">
-                            <q-icon name="bar_chart" size="20px" />
-                            <span>优先级分布</span>
+                        <div class="metric-card primary">
+                            <StatsCard
+                                icon="done_all"
+                                title="已完成"
+                                :value="taskStats?.basic_stats?.completed_tasks || 0"
+                                color="green"
+                                :trend="getTrend('completed')"
+                                @click="goToTasks({ status: 'COMPLETED' })"
+                            />
                         </div>
-                        <q-btn icon="more_vert" flat round size="sm" />
+
+                        <div class="metric-card primary">
+                            <StatsCard
+                                icon="schedule"
+                                title="进行中"
+                                :value="taskStats?.workload_stats?.total_active_tasks || 0"
+                                color="orange"
+                                :trend="getTrend('active')"
+                                @click="goToTasks({ status: 'IN_PROGRESS' })"
+                            />
+                        </div>
+
+                        <div class="metric-card primary">
+                            <StatsCard
+                                icon="trending_up"
+                                title="完成率"
+                                :value="`${taskStats?.basic_stats?.completion_rate?.toFixed(1) || 0}%`"
+                                color="purple"
+                                :trend="getTrend('completion_rate')"
+                                @click="goToTasks()"
+                            />
+                        </div>
+
+                        <!-- 次要指标卡片 -->
+                        <div class="metric-card secondary">
+                            <StatsCard
+                                icon="schedule_send"
+                                title="逾期任务"
+                                :value="taskStats?.overdue_analysis?.total_overdue || 0"
+                                color="red"
+                                :trend="getTrend('overdue')"
+                                @click="goToTasks()"
+                            />
+                        </div>
+
+                        <div class="metric-card secondary">
+                            <StatsCard
+                                icon="timeline"
+                                title="平均进度"
+                                :value="`${taskStats?.basic_stats?.average_progress?.toFixed(1) || 0}%`"
+                                color="blue"
+                                :trend="getTrend('progress')"
+                                @click="goToTasks()"
+                            />
+                        </div>
                     </div>
-                    <div class="chart-content">
-                        <PriorityDistributionChart
-                            :data="priorityChartData"
-                            @priority-click="handlePriorityClick"
+                </div>
+
+                <!-- 右侧：图表和分析 -->
+                <div class="analytics-panel">
+                    <!-- 状态分布图表 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <q-icon name="pie_chart" size="20px" />
+                                <span>任务状态分布</span>
+                            </div>
+                            <q-btn icon="more_vert" flat round size="sm" />
+                        </div>
+                        <div class="chart-content">
+                            <StatusDistributionChart
+                                :data="statusChartData"
+                                @status-click="handleStatusClick"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- 优先级分布图表 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <q-icon name="bar_chart" size="20px" />
+                                <span>优先级分布</span>
+                            </div>
+                            <q-btn icon="more_vert" flat round size="sm" />
+                        </div>
+                        <div class="chart-content">
+                            <PriorityDistributionChart
+                                :data="priorityChartData"
+                                @priority-click="handlePriorityClick"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部：详细信息面板 -->
+                <div class="details-section">
+                    <div class="details-grid">
+                        <!-- 标签统计 -->
+                        <StatisticCard
+                            title="标签统计"
+                            icon="category"
+                            :items="categoryStatItems"
+                            type="category"
+                            no-data-text="暂无标签数据"
+                            @item-click="handleCategoryClick"
+                        />
+
+                        <!-- 进度分析 -->
+                        <StatisticCard
+                            title="进度分析"
+                            icon="analytics"
+                            :items="progressStatItems"
+                            type="progress"
+                            no-data-text="暂无进度数据"
+                            @item-click="handleProgressClick"
                         />
                     </div>
                 </div>
             </div>
-
-            <!-- 底部：详细信息面板 -->
-            <div class="details-section">
-                <div class="details-grid">
-                    <!-- 标签统计 -->
-                    <StatisticCard
-                        title="标签统计"
-                        icon="category"
-                        :items="categoryStatItems"
-                        type="category"
-                        no-data-text="暂无标签数据"
-                        @item-click="handleCategoryClick"
-                    />
-
-                    <!-- 进度分析 -->
-                    <StatisticCard
-                        title="进度分析"
-                        icon="analytics"
-                        :items="progressStatItems"
-                        type="progress"
-                        no-data-text="暂无进度数据"
-                        @item-click="handleProgressClick"
-                    />
-                </div>
-            </div>
-        </div> <!-- 关闭 content-grid -->
-        </div> <!-- 关闭 content-container -->
+            <!-- 关闭 content-grid -->
+        </div>
+        <!-- 关闭 content-container -->
 
         <!-- 加载状态 -->
         <q-inner-loading :showing="loading" color="primary" />

@@ -3,13 +3,5 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useAuthStore } from 'stores/auth';
-
-const authStore = useAuthStore();
-
-// 应用启动时初始化认证状态
-onMounted(() => {
-    authStore.initAuth();
-});
+// 认证初始化现在在 boot/auth.ts 中处理
 </script>

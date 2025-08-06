@@ -420,10 +420,12 @@ import { useTaskStore } from 'stores/task';
 import type { Task, TrashStats } from '../types';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { useGlobalConfirm } from '../composables/useGlobalConfirm';
 
 // 依赖注入
 const $q = useQuasar();
 const taskStore = useTaskStore();
+const confirmDialog = useGlobalConfirm();
 
 // 响应式数据
 const loading = ref(false);
@@ -529,23 +531,22 @@ const restoreTask = async (task: Task) => {
     }
 };
 
-const permanentDeleteTask = (task: Task) => {
-    $q.dialog({
-        title: '永久删除确认',
-        message: `确定要永久删除任务"${task.title}"吗？此操作无法撤销。`,
-        cancel: {
-            label: '取消',
-            flat: true,
-            color: 'grey-7',
-        },
-        ok: {
-            label: '永久删除',
-            color: 'negative',
-            icon: 'delete_forever',
-        },
-        persistent: true,
-    }).onOk(() => {
-        void (async () => {
+const permanentDeleteTask = async (task: Task) => {
+    try {
+        const confirmed = await confirmDialog.confirmDanger(
+            '永久删除任务',
+            `确定要永久删除任务"${task.title}"吗？`,
+            {
+                details: '永久删除后将无法恢复，请谨慎操作。',
+                warningText: '此操作不可撤销，数据将永久丢失',
+                confirmText: '永久删除',
+                confirmIcon: 'delete_forever',
+                persistent: true
+            }
+        );
+
+        if (confirmed) {
+            confirmDialog.setLoading(true, '正在删除任务...');
             try {
                 await taskStore.permanentDeleteTask(task.id);
                 $q.notify({
@@ -561,9 +562,13 @@ const permanentDeleteTask = (task: Task) => {
                     message: '永久删除任务失败',
                     position: 'top',
                 });
+            } finally {
+                confirmDialog.setLoading(false);
             }
-        })();
-    });
+        }
+    } catch (error) {
+        console.error('删除任务失败:', error);
+    }
 };
 
 const batchRestore = async () => {
@@ -591,28 +596,27 @@ const batchRestore = async () => {
     }
 };
 
-const batchPermanentDelete = () => {
+const batchPermanentDelete = async () => {
     if (selectedTasks.value.length === 0) return;
 
     const taskCount = selectedTasks.value.length;
-    $q.dialog({
-        title: '批量永久删除确认',
-        message: `确定要永久删除选中的 ${taskCount} 个任务吗？此操作无法撤销。`,
-        cancel: {
-            label: '取消',
-            flat: true,
-            color: 'grey-7',
-        },
-        ok: {
-            label: '永久删除',
-            color: 'negative',
-            icon: 'delete_forever',
-        },
-        persistent: true,
-    }).onOk(() => {
-        void (async () => {
+    try {
+        const confirmed = await confirmDialog.confirmDanger(
+            '批量永久删除任务',
+            `确定要永久删除选中的 ${taskCount} 个任务吗？`,
+            {
+                details: '所有选中的任务都将被永久删除。',
+                warningText: '此操作不可撤销，所有数据将永久丢失',
+                confirmText: '批量永久删除',
+                confirmIcon: 'delete_forever',
+                persistent: true
+            }
+        );
+
+        if (confirmed) {
+            confirmDialog.setLoading(true, '正在删除任务...');
+            batchDeleting.value = true;
             try {
-                batchDeleting.value = true;
                 await taskStore.batchPermanentDeleteTasks(selectedTasks.value);
                 $q.notify({
                     type: 'positive',
@@ -620,6 +624,7 @@ const batchPermanentDelete = () => {
                     position: 'top',
                 });
                 await fetchTrashTasks(currentPage.value);
+                selectedTasks.value = [];
             } catch (error) {
                 console.error('批量永久删除失败:', error);
                 $q.notify({
@@ -629,31 +634,33 @@ const batchPermanentDelete = () => {
                 });
             } finally {
                 batchDeleting.value = false;
+                confirmDialog.setLoading(false);
             }
-        })();
-    });
+        }
+    } catch (error) {
+        console.error('批量删除任务失败:', error);
+    }
 };
 
-const handleEmptyTrash = () => {
+const handleEmptyTrash = async () => {
     if (trashTasks.value.length === 0) return;
 
     const taskCount = trashStats.value?.total_deleted_tasks || 0;
-    $q.dialog({
-        title: '清空回收站确认',
-        message: `确定要清空回收站吗？这将永久删除 ${taskCount} 个任务，此操作无法撤销。`,
-        cancel: {
-            label: '取消',
-            flat: true,
-            color: 'grey-7',
-        },
-        ok: {
-            label: '清空回收站',
-            color: 'negative',
-            icon: 'delete_forever',
-        },
-        persistent: true,
-    }).onOk(() => {
-        void (async () => {
+    try {
+        const confirmed = await confirmDialog.confirmDanger(
+            '清空回收站',
+            `确定要清空回收站吗？这将永久删除 ${taskCount} 个任务`,
+            {
+                details: '回收站中的所有任务都将被永久删除。',
+                warningText: '此操作不可撤销，所有数据将永久丢失',
+                confirmText: '清空回收站',
+                confirmIcon: 'delete_forever',
+                persistent: true
+            }
+        );
+
+        if (confirmed) {
+            confirmDialog.setLoading(true, '正在清空回收站...');
             try {
                 await taskStore.emptyTrash(true);
                 $q.notify({
@@ -669,9 +676,13 @@ const handleEmptyTrash = () => {
                     message: '清空回收站失败',
                     position: 'top',
                 });
+            } finally {
+                confirmDialog.setLoading(false);
             }
-        })();
-    });
+        }
+    } catch (error) {
+        console.error('清空回收站失败:', error);
+    }
 };
 
 // 格式化辅助函数

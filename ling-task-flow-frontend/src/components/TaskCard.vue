@@ -61,7 +61,7 @@
                                 <q-item-section>复制</q-item-section>
                             </q-item>
                             <q-separator />
-                            <q-item clickable v-close-popup @click="emit('delete', task)">
+                            <q-item clickable v-close-popup @click="handleDeleteTask">
                                 <q-item-section avatar>
                                     <q-icon name="delete" size="xs" color="negative" />
                                 </q-item-section>
@@ -206,6 +206,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { Task, TaskStatus, TaskPriority } from '../types';
+import { useGlobalConfirm } from '../composables/useGlobalConfirm';
 
 interface Props {
     task: Task;
@@ -224,6 +225,9 @@ interface Emits {
 const props = defineProps<Props>();
 
 const emit = defineEmits<Emits>();
+
+// 使用全局确认对话框
+const confirmDialog = useGlobalConfirm();
 
 // 状态管理
 const statusLoading = ref(false);
@@ -355,6 +359,28 @@ const handleStatusChange = async (newStatus: TaskStatus) => {
         await new Promise(resolve => setTimeout(resolve, 300));
     } finally {
         statusLoading.value = false;
+    }
+};
+
+// 处理删除任务
+const handleDeleteTask = async () => {
+    try {
+        const confirmed = await confirmDialog.confirmDanger(
+            '删除任务',
+            `确定要删除任务"${props.task.title}"吗？`,
+            {
+                details: '任务删除后将移至回收站，可在30天内恢复。',
+                warningText: '删除后的任务可以在回收站中找到',
+                confirmText: '删除',
+                confirmIcon: 'delete'
+            }
+        );
+
+        if (confirmed) {
+            emit('delete', props.task);
+        }
+    } catch (error) {
+        console.error('删除任务失败:', error);
     }
 };
 

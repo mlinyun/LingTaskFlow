@@ -1,7 +1,6 @@
 <template>
-    <q-layout view="hHh Lpr lFf">
-        <!-- 全局错误边界 -->
-        <ErrorBoundary>
+    <ConfirmDialogProvider>
+        <q-layout view="hHh Lpr lFf">
             <!-- 使用独立的 AppHeader 组件 -->
             <app-header @toggleDrawer="toggleLeftDrawer" />
 
@@ -14,16 +13,16 @@
 
             <!-- 全局错误通知 -->
             <ErrorNotification ref="errorNotificationRef" />
-        </ErrorBoundary>
-    </q-layout>
+        </q-layout>
+    </ConfirmDialogProvider>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue';
 import AppHeader from 'components/layout/AppHeader.vue';
 import AppDrawer from 'components/layout/AppDrawer.vue';
-import ErrorBoundary from 'components/common/ErrorBoundary.vue';
 import ErrorNotification from 'components/common/ErrorNotification.vue';
+import ConfirmDialogProvider from 'components/common/ConfirmDialogProvider.vue';
 import { apiErrorHandler } from 'src/utils/errorHandler';
 
 // 响应式数据
@@ -165,7 +164,7 @@ const toggleLeftDrawer = () => {
     overflow-y: auto;
 
     // 为页面内容添加基本内边距
-    padding: 1rem;
+    padding: 1.5rem;
     box-sizing: border-box;
 
     // 确保内容不会超出容器

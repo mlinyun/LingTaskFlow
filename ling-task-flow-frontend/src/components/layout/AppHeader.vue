@@ -11,8 +11,8 @@
             <!-- 用户信息和操作按钮 -->
             <div class="q-gutter-sm row items-center">
                 <q-chip
-                    v-if="authStore.user"
-                    :label="authStore.userDisplayName"
+                    v-if="authStore?.user"
+                    :label="authStore?.userDisplayName"
                     icon="person"
                     color="white"
                     text-color="primary"
@@ -54,6 +54,7 @@
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from 'stores/auth';
+import { useGlobalConfirm } from '../../composables/useGlobalConfirm';
 
 // 定义组件事件
 const emit = defineEmits<{
@@ -64,6 +65,7 @@ const emit = defineEmits<{
 const router = useRouter();
 const $q = useQuasar();
 const authStore = useAuthStore();
+const confirmDialog = useGlobalConfirm();
 
 // 方法
 const handleMenuToggle = () => {
@@ -78,21 +80,59 @@ const handleSettings = () => {
     $q.notify('设置功能开发中...');
 };
 
-const handleLogout = () => {
-    $q.dialog({
-        title: '确认退出',
-        message: '您确定要退出登录吗？',
-        cancel: true,
-        persistent: true,
-    }).onOk(() => {
-        void authStore.logout().then(() => {
-            $q.notify({
-                type: 'positive',
-                message: '已成功退出登录',
-                position: 'top',
-            });
-            void router.push('/login');
-        });
-    });
+const handleLogout = async () => {
+    try {
+        // 尝试使用确认对话框，如果失败则直接执行登出
+        let confirmed = false;
+
+        try {
+            confirmed = await confirmDialog.confirmInfo(
+                '退出登录',
+                '您确定要退出登录吗？',
+                {
+                    details: '退出后需要重新登录才能使用系统。',
+                    confirmText: '退出登录',
+                    confirmIcon: 'logout'
+                }
+            );
+        } catch (dialogError) {
+            // 如果确认对话框不可用，直接确认
+            console.warn('确认对话框不可用，直接执行登出:', dialogError);
+            confirmed = confirm('您确定要退出登录吗？');
+        }
+
+        if (confirmed) {
+            try {
+                confirmDialog.setLoading(true, '正在退出登录...');
+            } catch {
+                // 忽略设置加载状态的错误
+            }
+
+            try {
+                await authStore.logout();
+                $q.notify({
+                    type: 'positive',
+                    message: '已成功退出登录',
+                    position: 'top',
+                });
+                void router.push('/login');
+            } catch (error) {
+                console.error('退出登录失败:', error);
+                $q.notify({
+                    type: 'negative',
+                    message: '退出登录失败',
+                    position: 'top',
+                });
+            } finally {
+                try {
+                    confirmDialog.setLoading(false);
+                } catch {
+                    // 忽略设置加载状态的错误
+                }
+            }
+        }
+    } catch (error) {
+        console.error('退出登录失败:', error);
+    }
 };
 </script>

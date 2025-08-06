@@ -1,5 +1,5 @@
 <template>
-    <q-page padding class="task-list-page">
+    <q-page class="task-list-page">
         <!-- 页面头部 - 科技感重新设计 -->
         <div class="page-header">
             <div class="header-background">
@@ -547,10 +547,12 @@ import TaskViewDialog from 'components/TaskViewDialog.vue';
 import TaskCardSkeleton from 'components/skeletons/TaskCardSkeleton.vue';
 import LoadingState from 'components/skeletons/LoadingState.vue';
 import type { Task, TaskStatus, TaskPriority, TaskSearchParams } from '../types';
+import { useGlobalConfirm } from '../composables/useGlobalConfirm';
 
 const $q = useQuasar();
 const router = useRouter();
 const taskStore = useTaskStore();
+const confirmDialog = useGlobalConfirm();
 
 // 响应式数据
 const searchQuery = ref('');
@@ -776,7 +778,7 @@ const handleEditFromView = (task: Task) => {
 const handleDeleteFromView = (task: Task) => {
     // 关闭查看对话框，执行删除操作
     showViewDialog.value = false;
-    handleDeleteTask(task);
+    void handleDeleteTask(task);
 };
 
 const handleStatusChange = async (taskId: string, status: TaskStatus) => {
@@ -796,23 +798,21 @@ const handleStatusChange = async (taskId: string, status: TaskStatus) => {
     }
 };
 
-const handleDeleteTask = (task: Task) => {
-    $q.dialog({
-        title: '确认删除',
-        message: `确定要删除任务"${task.title}"吗？删除后可以在回收站中恢复。`,
-        cancel: {
-            label: '取消',
-            flat: true,
-            color: 'grey',
-        },
-        ok: {
-            label: '删除',
-            color: 'negative',
-            icon: 'delete',
-        },
-        persistent: true,
-    }).onOk(() => {
-        void (async () => {
+const handleDeleteTask = async (task: Task) => {
+    try {
+        const confirmed = await confirmDialog.confirmWarning(
+            '删除任务',
+            `确定要删除任务"${task.title}"吗？`,
+            {
+                details: '任务删除后将移至回收站，可在30天内恢复。',
+                warningText: '删除后可以在回收站中找到',
+                confirmText: '删除',
+                confirmIcon: 'delete'
+            }
+        );
+
+        if (confirmed) {
+            confirmDialog.setLoading(true, '正在删除任务...');
             try {
                 await taskStore.deleteTask(task.id);
 
@@ -861,9 +861,13 @@ const handleDeleteTask = (task: Task) => {
                     message: '删除任务失败',
                     position: 'top',
                 });
+            } finally {
+                confirmDialog.setLoading(false);
             }
-        })();
-    });
+        }
+    } catch (error) {
+        console.error('删除任务失败:', error);
+    }
 };
 
 const batchMarkComplete = async () => {
@@ -884,26 +888,24 @@ const batchMarkComplete = async () => {
     }
 };
 
-const batchDelete = () => {
+const batchDelete = async () => {
     const selectedCount = taskStore.selectedTasksCount;
     const selectedTaskIds = [...taskStore.selectedTasks]; // 创建副本
 
-    $q.dialog({
-        title: '确认批量删除',
-        message: `确定要删除选中的 ${selectedCount} 个任务吗？删除后可以在回收站中恢复。`,
-        cancel: {
-            label: '取消',
-            flat: true,
-            color: 'grey',
-        },
-        ok: {
-            label: '删除',
-            color: 'negative',
-            icon: 'delete',
-        },
-        persistent: true,
-    }).onOk(() => {
-        void (async () => {
+    try {
+        const confirmed = await confirmDialog.confirmWarning(
+            '批量删除任务',
+            `确定要删除选中的 ${selectedCount} 个任务吗？`,
+            {
+                details: '任务删除后将移至回收站，可在30天内恢复。',
+                warningText: '删除后可以在回收站中找到',
+                confirmText: '批量删除',
+                confirmIcon: 'delete'
+            }
+        );
+
+        if (confirmed) {
+            confirmDialog.setLoading(true, '正在删除任务...');
             try {
                 await taskStore.batchDeleteTasks(selectedTaskIds);
                 taskStore.clearSelection();
@@ -930,9 +932,13 @@ const batchDelete = () => {
                     message: '批量删除失败',
                     position: 'top',
                 });
+            } finally {
+                confirmDialog.setLoading(false);
             }
-        })();
-    });
+        }
+    } catch (error) {
+        console.error('批量删除失败:', error);
+    }
 };
 
 // 对话框操作

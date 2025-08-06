@@ -1,24 +1,58 @@
 <template>
     <q-layout view="hHh Lpr lFf">
-        <!-- 使用独立的 AppHeader 组件 -->
-        <app-header @toggleDrawer="toggleLeftDrawer" />
+        <!-- 全局错误边界 -->
+        <ErrorBoundary>
+            <!-- 使用独立的 AppHeader 组件 -->
+            <app-header @toggleDrawer="toggleLeftDrawer" />
 
-        <!-- 使用独立的 AppDrawer 组件 -->
-        <app-drawer v-model="leftDrawerOpen" :navigation-links="navigationLinks" />
+            <!-- 使用独立的 AppDrawer 组件 -->
+            <app-drawer v-model="leftDrawerOpen" :navigation-links="navigationLinks" />
 
-        <q-page-container class="main-page-container">
-            <router-view />
-        </q-page-container>
+            <q-page-container class="main-page-container">
+                <router-view />
+            </q-page-container>
+
+            <!-- 全局错误通知 -->
+            <ErrorNotification ref="errorNotificationRef" />
+        </ErrorBoundary>
     </q-layout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, provide } from 'vue';
 import AppHeader from 'components/layout/AppHeader.vue';
 import AppDrawer from 'components/layout/AppDrawer.vue';
+import ErrorBoundary from 'components/common/ErrorBoundary.vue';
+import ErrorNotification from 'components/common/ErrorNotification.vue';
+import { apiErrorHandler } from 'src/utils/errorHandler';
 
 // 响应式数据
 const leftDrawerOpen = ref(false);
+const errorNotificationRef = ref<InstanceType<typeof ErrorNotification> | null>(null);
+
+// 初始化错误处理器
+onMounted(() => {
+    apiErrorHandler.init()
+})
+
+// 为子组件提供错误处理方法
+provide('errorHandler', {
+    showNetworkError: (message: string, retryAction?: () => void) => {
+        errorNotificationRef.value?.showNetworkError(message, retryAction)
+    },
+    showApiError: (message: string, retryAction?: () => void) => {
+        errorNotificationRef.value?.showApiError(message, retryAction)
+    },
+    showValidationError: (message: string) => {
+        errorNotificationRef.value?.showValidationError(message)
+    },
+    showPermissionError: (message: string) => {
+        errorNotificationRef.value?.showPermissionError(message)
+    },
+    showSystemError: (message: string) => {
+        errorNotificationRef.value?.showSystemError(message)
+    }
+})
 
 // 导航链接配置
 const navigationLinks = [

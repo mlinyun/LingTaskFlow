@@ -457,13 +457,21 @@
                     class="tasks-content"
                     :class="{ 'no-padding': viewMode === 'grid' }"
                 >
-                    <div v-if="taskStore.loading" class="loading-state">
-                        <div class="loading-container">
-                            <q-spinner-dots size="40px" color="primary" />
-                            <p>加载任务中...</p>
-                        </div>
+                    <!-- 加载状态 - 使用骨架屏 -->
+                    <div v-if="taskStore.loadingStates.fetchingTasks" class="tasks-loading">
+                        <TaskCardSkeleton v-for="i in taskStore.pageSize" :key="`skeleton-${i}`" />
                     </div>
 
+                    <!-- 一般加载状态 -->
+                    <LoadingState
+                        v-else-if="taskStore.loading"
+                        variant="centered"
+                        message="加载任务中..."
+                        spinner="dots"
+                        color="primary"
+                    />
+
+                    <!-- 空状态 -->
                     <div v-else-if="taskStore.activeTasks.length === 0" class="empty-state">
                         <div class="empty-container">
                             <q-icon name="assignment" size="80px" color="grey-4" />
@@ -480,6 +488,7 @@
                         </div>
                     </div>
 
+                    <!-- 任务列表 -->
                     <div v-else class="tasks-list" :class="`view-${viewMode}`">
                         <TaskCard
                             v-for="task in taskStore.activeTasks"
@@ -535,6 +544,8 @@ import { useTaskStore } from 'stores/task';
 import TaskCard from 'components/TaskCard.vue';
 import TaskDialog from 'components/TaskDialog.vue';
 import TaskViewDialog from 'components/TaskViewDialog.vue';
+import TaskCardSkeleton from 'components/skeletons/TaskCardSkeleton.vue';
+import LoadingState from 'components/skeletons/LoadingState.vue';
 import type { Task, TaskStatus, TaskPriority, TaskSearchParams } from '../types';
 
 const $q = useQuasar();

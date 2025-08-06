@@ -2,127 +2,158 @@
 
 ## Architecture Overview
 
-LingTaskFlow is a full-stack task management system with:
+LingTaskFlow (凌云智能任务管理平台) is a full-stack task management system designed for individual users:
 
-- **Backend**: Django 5.2 REST API (`ling-task-flow-backend/`) running in Conda environment
-- **Frontend**: Vue 3 + Quasar Framework SPA (`ling-task-flow-frontend/`) using Node.js v22
-- **Database**: SQLite (development), designed for individual users
-- **Environment**: Anaconda Python environment for backend isolation
+- **Backend**: Django 5.2 REST API with JWT authentication, SQLite database
+- **Frontend**: Vue 3 + Quasar Framework SPA with TypeScript and Vite
+- **Environment**: Conda environment for backend, Node.js v22+ for frontend
+- **API Documentation**: Auto-generated OpenAPI 3.0 docs via drf-spectacular
 
-## Project Structure & Key Files
+## Tech Stack & Dependencies
 
 ### Backend (`ling-task-flow-backend/`)
 
-- **Main app**: `LingTaskFlow/` - Core task management logic
-- **Settings**: `ling_task_flow_backend/settings.py` - Django configuration
-- **Entry point**: `manage.py` - Standard Django management commands
-- **Templates**: `templates/` - Django template directory (likely for admin/docs)
+- **Framework**: Django 5.2.4 + Django REST Framework 3.16.0
+- **Authentication**: JWT via `djangorestframework-simplejwt` 
+- **Database**: SQLite (dev), PostgreSQL-ready (production)
+- **Features**: CORS support, filtering, pagination, caching, media uploads
+- **Documentation**: DRF Spectacular for OpenAPI schema generation
+- **Key Dependencies**: django-cors-headers, django-filter, Pillow, redis
 
 ### Frontend (`ling-task-flow-frontend/`)
 
-- **Framework**: Quasar 2.x + Vue 3 + TypeScript + Vite
-- **Layout**: `src/layouts/MainLayout.vue` - Standard drawer + toolbar layout
-- **Routing**: Hash-based routing (`quasar.config.ts` line 44)
-- **State**: Pinia stores in `src/stores/`
-- **Styling**: SCSS with Quasar variables
+- **Framework**: Vue 3.4+ + Quasar 2.16+ + TypeScript 5.5+
+- **Build Tool**: Vite + @quasar/app-vite
+- **State Management**: Pinia 3.0+ with Composition API
+- **HTTP Client**: Axios 1.2+ with interceptors for JWT
+- **Routing**: Vue Router 4+ with history mode
+- **Styling**: SCSS + Material Icons + Roboto font
 
-## Development Workflows
+## Project Structure & Architecture
 
-### Backend Development (Conda Environment)
+### Backend Structure
 
-```bash
-# Activate conda environment
-conda activate ling-task-flow-backend
-
-# Navigate to backend directory
-cd ling-task-flow-backend
-
-# Django management commands
-python manage.py runserver          # Start Django dev server
-python manage.py makemigrations     # Create DB migrations
-python manage.py migrate            # Apply migrations
-python manage.py createsuperuser    # Create admin user
+```
+ling-task-flow-backend/
+├── LingTaskFlow/              # Main Django app
+│   ├── models.py             # User, Task models with UUID primary keys
+│   ├── serializers.py        # DRF serializers with validation
+│   ├── views.py              # ViewSets with permissions & filtering
+│   ├── urls.py               # API routing patterns
+│   ├── permissions.py        # Custom permission classes
+│   ├── exceptions.py         # Custom exception handling
+│   ├── filters.py            # Django-filter backends
+│   └── utils.py              # Utilities and pagination classes
+├── ling_task_flow_backend/
+│   ├── settings.py           # Django configuration with DRF & JWT
+│   └── urls.py               # Root URL patterns with API docs
+└── templates/                # Django templates for admin/docs
 ```
 
-### Frontend Development (Node.js v22)
+### Frontend Structure
 
-```bash
-cd ling-task-flow-frontend
-npm install                         # Install dependencies
-npm run dev                         # Start Quasar dev server with HMR
-npm run build                       # Production build
-npm run lint                        # ESLint with Vue/TypeScript support
-npm run format                      # Prettier formatting
+```
+ling-task-flow-frontend/src/
+├── boot/                     # App initialization plugins
+│   ├── axios.ts             # API client with JWT interceptors
+│   ├── auth.ts              # Authentication guards
+│   └── i18n.ts              # Internationalization setup
+├── components/               # Reusable Vue components
+│   ├── dashboard/           # Dashboard-specific components
+│   ├── layout/              # Layout components (header, drawer)
+│   └── TaskCard.vue         # Core task display component
+├── stores/                   # Pinia state management
+│   └── auth.ts              # Authentication store with JWT handling
+├── types/                    # TypeScript type definitions
+├── layouts/MainLayout.vue    # Main app layout with drawer navigation
+├── pages/                    # Route components (Login, Dashboard, etc.)
+└── router/routes.ts          # Vue Router configuration
 ```
 
-## Project-Specific Conventions
+## Development Patterns & Conventions
 
-### Django App Structure
+### Backend API Patterns
 
-- Main Django app is named `LingTaskFlow` (capitalized)
-- App config: `'LingTaskFlow.apps.LingtaskflowConfig'` in INSTALLED_APPS
-- Templates directory at project root level (not app level)
+- **Models**: Use UUID primary keys, soft delete patterns, timestamp tracking
+- **Serializers**: Nested serialization for related models, custom validation
+- **Views**: Class-based ViewSets with filtering, searching, ordering
+- **Permissions**: Custom permissions inheriting from DRF base classes
+- **URLs**: RESTful patterns with `/api/` prefix, versioning-ready
+- **Authentication**: JWT with access/refresh token rotation
 
-### Frontend Patterns
+### Frontend Development Patterns
 
-- **Boot files**: `src/boot/` for global plugins (axios, i18n)
-- **Components**: Use Composition API with `<script setup lang="ts">`
-- **Routing**: Lazy-loaded components with `() => import()`
-- **Store**: Pinia with HMR support pattern in stores
-- **Styling**: Material Icons + Roboto font from Quasar extras
+- **Components**: Composition API with `<script setup lang="ts">`
+- **State**: Pinia stores with computed properties and async actions
+- **API Calls**: Centralized via axios with automatic token management
+- **Routing**: Protected routes with authentication guards
+- **Styling**: Quasar components with custom SCSS variables
+- **Types**: Strict TypeScript with comprehensive type definitions
 
-### TypeScript Configuration
+### Configuration Details
 
-- Strict TypeScript enabled (`quasar.config.ts`)
-- Vue shims enabled for `.vue` file support
-- Target: ES2022, Node 22+
+- **Backend Port**: 8000 (Django dev server)
+- **Frontend Port**: 9000 (Quasar dev server) 
+- **CORS**: Configured for localhost:9000 in Django settings
+- **API Base URL**: `http://localhost:8000/api/`
+- **Documentation**: Available at `http://127.0.0.1:8000/api/docs/`
 
-## Integration Points
-
-### Cross-Origin Setup
-
-- Frontend runs on Quasar dev server (typically :9000)
-- Backend runs on Django dev server (:8000)
-- Axios configured in `src/boot/axios.ts` for API communication
-
-### Build Targets
-
-- Browser: ES2022, Firefox 115+, Chrome 115+, Safari 14+
-- Node: v22 (see `package.json` engines)
-
-## Environment Setup
+## Environment & Dependencies
 
 ### Backend Environment
 
-- **Anaconda Path**: `D:\Software\anaconda3`
-- **Conda Environment**: `ling-task-flow-backend`
+- **Python Environment**: Conda environment `ling-task-flow-backend`
+- **Python Version**: 3.11+
 - **Activation**: `conda activate ling-task-flow-backend`
+- **Key Commands**:
+  ```bash
+  python manage.py runserver    # Start dev server
+  python manage.py migrate      # Apply database migrations
+  python manage.py createsuperuser  # Create admin user
+  ```
 
 ### Frontend Environment
 
-- **Node.js**: v22
-- **Package Manager**: npm (not yarn)
-- **Dev Server**: Typically runs on port 9000
+- **Node.js**: v22+ (multi-version support: v18, v20, v22)
+- **Package Manager**: npm (preferred) or yarn
+- **Key Commands**:
+  ```bash
+  npm run dev      # Start development server with HMR
+  npm run build    # Production build
+  npm run lint     # ESLint with Vue/TypeScript rules
+  npm run format   # Prettier code formatting
+  ```
 
-## Getting Started Checklist
+## Integration & API Communication
 
-1. **Backend**: Activate conda environment (`conda activate ling-task-flow-backend`), run migrations, create superuser
-2. **Frontend**: Install dependencies (`npm install`), start dev server
-3. **Database**: SQLite file will be created automatically
-4. **API**: Currently no API endpoints defined - add to `LingTaskFlow/views.py` and `urls.py`
+### Authentication Flow
 
-## Common Patterns to Follow
+- JWT-based authentication with access/refresh tokens
+- Token storage in LocalStorage via Quasar's LocalStorage API
+- Automatic token refresh via axios interceptors
+- Protected routes with navigation guards
 
-- **Models**: Define in `LingTaskFlow/models.py`
-- **Views**: Use Django REST Framework patterns when adding API endpoints
-- **Frontend Components**: Use Quasar components with TypeScript
-- **State Management**: Pinia stores with composition API style
-- **Internationalization**: i18n setup ready in `src/i18n/`
+### API Integration
 
-提醒的内容：
+- RESTful API design with consistent response format
+- Standardized error handling with custom exception handler
+- Request/response interceptors for token management
+- TypeScript interfaces for API contracts
 
-1.  后端已经集成了 API 文档自动生成(drf-spectacular)，如果前端开发过程中需要调用后端的接口，可以查阅 API 文档地址：http://127.0.0.1:8000/api/docs/
-2.  每一次任务完成后都需要确认该任务已完成并在任务列表中打勾 ✅
-3.  在完成每一次任务之后，请你根据你的判断是否将报告写入 `report` 文件夹中
-4.  汇总已经开发完成的任务，然后你需要给出下一次的任务，并询问用户是否继续
-5.  项目的前后端已经启动，你不需要调用命令再次启动
+### Cross-Origin Configuration
+
+- Frontend (Quasar): localhost:9000
+- Backend (Django): localhost:8000
+- CORS middleware configured for development environment
+- Production-ready CORS settings available
+
+## Development Workflow
+
+1. **Environment Setup**: Activate conda environment for backend
+2. **Database**: Migrations auto-applied, admin user creation as needed
+3. **API Development**: Use DRF patterns with automatic documentation
+4. **Frontend Development**: Component-driven with TypeScript strict mode
+5. **Testing**: API testing via generated documentation interface
+6. **Build**: Separate build processes for backend (collectstatic) and frontend (Quasar build)
+
+This architecture supports rapid development while maintaining production readiness with proper separation of concerns, comprehensive type safety, and automated API documentation.

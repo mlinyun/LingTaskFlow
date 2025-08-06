@@ -63,15 +63,29 @@
         </div>
 
         <!-- 主要内容区域 -->
-        <div class="content-grid">
-            <!-- 左侧：关键指标卡片 -->
-            <div class="metrics-panel">
-                <div class="panel-header">
-                    <h3>关键指标</h3>
-                    <q-chip icon="trending_up" color="positive" text-color="white" size="sm">
-                        实时更新
-                    </q-chip>
-                </div>
+        <div class="content-container">
+            <!-- 加载状态 - 使用仪表板骨架屏 -->
+            <DashboardSkeleton v-if="taskStore.loadingStates.fetchingStats || loading" />
+
+            <!-- 一般加载状态 -->
+            <LoadingState
+                v-else-if="taskStore.loading"
+                variant="centered"
+                message="加载仪表板数据..."
+                spinner="gears"
+                color="primary"
+            />
+
+            <!-- 仪表板内容 -->
+            <div v-else class="content-grid">
+                <!-- 左侧：关键指标卡片 -->
+                <div class="metrics-panel">
+                    <div class="panel-header">
+                        <h3>关键指标</h3>
+                        <q-chip icon="trending_up" color="positive" text-color="white" size="sm">
+                            实时更新
+                        </q-chip>
+                    </div>
 
                 <div class="metrics-grid">
                     <!-- 主要指标卡片 -->
@@ -180,32 +194,33 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 底部：详细信息面板 -->
-        <div class="details-section">
-            <div class="details-grid">
-                <!-- 标签统计 -->
-                <StatisticCard
-                    title="标签统计"
-                    icon="category"
-                    :items="categoryStatItems"
-                    type="category"
-                    no-data-text="暂无标签数据"
-                    @item-click="handleCategoryClick"
-                />
+            <!-- 底部：详细信息面板 -->
+            <div class="details-section">
+                <div class="details-grid">
+                    <!-- 标签统计 -->
+                    <StatisticCard
+                        title="标签统计"
+                        icon="category"
+                        :items="categoryStatItems"
+                        type="category"
+                        no-data-text="暂无标签数据"
+                        @item-click="handleCategoryClick"
+                    />
 
-                <!-- 进度分析 -->
-                <StatisticCard
-                    title="进度分析"
-                    icon="analytics"
-                    :items="progressStatItems"
-                    type="progress"
-                    no-data-text="暂无进度数据"
-                    @item-click="handleProgressClick"
-                />
+                    <!-- 进度分析 -->
+                    <StatisticCard
+                        title="进度分析"
+                        icon="analytics"
+                        :items="progressStatItems"
+                        type="progress"
+                        no-data-text="暂无进度数据"
+                        @item-click="handleProgressClick"
+                    />
+                </div>
             </div>
-        </div>
+        </div> <!-- 关闭 content-grid -->
+        </div> <!-- 关闭 content-container -->
 
         <!-- 加载状态 -->
         <q-inner-loading :showing="loading" color="primary" />
@@ -221,6 +236,8 @@ import StatsCard from '../components/dashboard/StatsCard.vue';
 import StatusDistributionChart from '../components/dashboard/StatusDistributionChart.vue';
 import PriorityDistributionChart from '../components/dashboard/PriorityDistributionChart.vue';
 import StatisticCard from '../components/dashboard/StatisticCard.vue';
+import DashboardSkeleton from '../components/skeletons/DashboardSkeleton.vue';
+import LoadingState from '../components/skeletons/LoadingState.vue';
 import { Notify } from 'quasar';
 
 const router = useRouter();

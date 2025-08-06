@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from 'boot/axios';
+import { handleApiError } from 'src/utils/errorHandler';
 import type {
     Task,
     TaskCreateData,
@@ -23,6 +24,17 @@ export const useTaskStore = defineStore('task', () => {
     const searchParams = ref<TaskSearchParams>({});
     const selectedTasks = ref<string[]>([]);
     const taskStats = ref<TaskStats | null>(null);
+
+    // 细粒度加载状态
+    const loadingStates = ref({
+        fetchingTasks: false,
+        fetchingStats: false,
+        creatingTask: false,
+        updatingTask: false,
+        deletingTask: false,
+        restoringTask: false,
+        fetchingTrash: false,
+    });
 
     // 计算属性
     const totalPages = computed(() => Math.ceil(totalTasks.value / pageSize.value));
@@ -58,6 +70,7 @@ export const useTaskStore = defineStore('task', () => {
      */
     const fetchTasks = async (params: TaskSearchParams = {}) => {
         loading.value = true;
+        loadingStates.value.fetchingTasks = true;
         try {
             const queryParams = {
                 page: currentPage.value,
@@ -109,9 +122,18 @@ export const useTaskStore = defineStore('task', () => {
             };
         } catch (error) {
             console.error('获取任务列表失败:', error);
+
+            // 使用统一的错误处理
+            handleApiError(error as Error & { response?: { status: number; data?: Record<string, unknown> } }, {
+                showNotification: true,
+                autoRetry: true,
+                maxRetries: 2
+            });
+
             throw error;
         } finally {
             loading.value = false;
+            loadingStates.value.fetchingTasks = false;
         }
     };
 
@@ -429,6 +451,7 @@ export const useTaskStore = defineStore('task', () => {
      * 获取任务统计数据
      */
     const fetchTaskStats = async (): Promise<TaskStats> => {
+        loadingStates.value.fetchingStats = true;
         try {
             const response = await api.get('/tasks/stats/');
 
@@ -439,6 +462,8 @@ export const useTaskStore = defineStore('task', () => {
         } catch (error) {
             console.error('获取任务统计失败:', error);
             throw error;
+        } finally {
+            loadingStates.value.fetchingStats = false;
         }
     };
 
@@ -590,6 +615,7 @@ export const useTaskStore = defineStore('task', () => {
         currentPage,
         pageSize,
         loading,
+        loadingStates,
         searchParams,
         selectedTasks,
         taskStats,

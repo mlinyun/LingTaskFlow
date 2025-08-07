@@ -42,7 +42,7 @@ export default defineConfigWithVueTs(
         },
     },
     // https://github.com/vuejs/eslint-config-typescript
-    vueTsConfigs.recommendedTypeChecked,
+    vueTsConfigs.recommended,
 
     {
         languageOptions: {

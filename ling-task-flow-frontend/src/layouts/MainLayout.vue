@@ -1,20 +1,22 @@
 <template>
-    <ConfirmDialogProvider>
-        <q-layout view="hHh Lpr lFf">
-            <!-- 使用独立的 AppHeader 组件 -->
-            <app-header @toggleDrawer="toggleLeftDrawer" />
+    <ConfirmationDialogProvider>
+        <ShortcutProvider>
+            <q-layout view="hHh Lpr lFf">
+                <!-- 使用独立的 AppHeader 组件 -->
+                <app-header @toggleDrawer="toggleLeftDrawer" />
 
-            <!-- 使用独立的 AppDrawer 组件 -->
-            <app-drawer v-model="leftDrawerOpen" :navigation-links="navigationLinks" />
+                <!-- 使用独立的 AppDrawer 组件 -->
+                <app-drawer v-model="leftDrawerOpen" :navigation-links="navigationLinks" />
 
-            <q-page-container class="main-page-container">
-                <router-view />
-            </q-page-container>
+                <q-page-container class="main-page-container">
+                    <router-view />
+                </q-page-container>
 
-            <!-- 全局错误通知 -->
-            <ErrorNotification ref="errorNotificationRef" />
-        </q-layout>
-    </ConfirmDialogProvider>
+                <!-- 全局错误通知 -->
+                <ErrorNotification ref="errorNotificationRef" />
+            </q-layout>
+        </ShortcutProvider>
+    </ConfirmationDialogProvider>
 </template>
 
 <script setup lang="ts">
@@ -22,7 +24,8 @@ import { ref, onMounted, provide } from 'vue';
 import AppHeader from 'components/layout/AppHeader.vue';
 import AppDrawer from 'components/layout/AppDrawer.vue';
 import ErrorNotification from 'components/common/ErrorNotification.vue';
-import ConfirmDialogProvider from 'components/common/ConfirmDialogProvider.vue';
+import ConfirmationDialogProvider from 'components/common/ConfirmationDialogProvider.vue';
+import ShortcutProvider from 'components/common/ShortcutProvider.vue';
 import { apiErrorHandler } from 'src/utils/errorHandler';
 
 // 响应式数据

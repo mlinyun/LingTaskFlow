@@ -1,511 +1,88 @@
 <template>
     <q-page class="task-list-page">
-        <!-- 页面头部 - 科技感重新设计 -->
-        <div class="page-header">
-            <div class="header-background">
-                <div class="tech-grid"></div>
-                <div class="floating-particles">
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                </div>
-            </div>
+        <!-- 页面头部组件 -->
+        <PageHeader
+            title-primary="任务管理"
+            title-accent="系统"
+            subtitle="智能化任务管理，提升工作效率与团队协作"
+            :primary-action="{
+                icon: 'add',
+                label: '新建任务',
+                tooltip: '创建新的任务项目 (Ctrl+N)',
+            }"
+            :secondary-actions="[
+                {
+                    name: 'refresh',
+                    icon: 'refresh',
+                    tooltip: '刷新任务列表 (Ctrl+R)',
+                    class: 'refresh-btn',
+                },
+                {
+                    name: 'filter',
+                    icon: 'filter_list',
+                    tooltip: '快速筛选 (Ctrl+F)',
+                    class: 'filter-toggle-btn',
+                },
+            ]"
+            @primary-action="openCreateDialog"
+            @secondary-action="handleSecondaryAction"
+        />
 
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="title-container">
-                        <div class="icon-wrapper">
-                            <q-icon name="assignment" size="32px" class="title-icon" />
-                            <div class="icon-glow"></div>
-                        </div>
-                        <div class="title-text">
-                            <h1 class="page-title">
-                                <span class="title-primary">任务管理</span>
-                                <span class="title-accent">系统</span>
-                            </h1>
-                            <p class="page-subtitle">
-                                <q-icon name="trending_up" size="14px" class="q-mr-xs" />
-                                智能化任务管理，提升工作效率与团队协作
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <!-- 任务筛选面板组件 -->
+        <TaskFilterPanel
+            v-model:search-query="searchQuery"
+            v-model:status-filter="statusFilter"
+            v-model:priority-filter="priorityFilter"
+            v-model:sort-by="sortBy"
+            @filter-change="handleFilterChange"
+            @clear-filters="clearFilters"
+        />
 
-                <div class="action-section">
-                    <div class="action-buttons">
-                        <!-- 主要操作按钮 -->
-                        <q-btn
-                            color="primary"
-                            icon="add"
-                            label="新建任务"
-                            unelevated
-                            rounded
-                            size="md"
-                            class="create-btn"
-                            @click="openCreateDialog"
-                        >
-                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
-                                创建新的任务项目
-                            </q-tooltip>
-                        </q-btn>
+        <!-- 任务统计组件 -->
+        <TaskStatistics
+            :total-tasks="taskStore.totalTasks"
+            :active-tasks="taskStore.activeTasks.length"
+            :completed-tasks="completedTasks"
+            :selected-tasks="taskStore.selectedTasksCount"
+        />
 
-                        <!-- 次要操作按钮 -->
-                        <q-btn
-                            flat
-                            round
-                            icon="refresh"
-                            color="primary"
-                            size="md"
-                            class="refresh-btn"
-                            @click="loadTasks"
-                        >
-                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
-                                刷新任务列表
-                            </q-tooltip>
-                        </q-btn>
+        <!-- 任务操作按钮组件 -->
+        <TaskActionButtons
+            :selected-count="taskStore.selectedTasksCount"
+            @mark-complete="batchMarkComplete"
+            @batch-delete="batchDelete"
+            @clear-selection="taskStore.clearSelection"
+        />
 
-                        <q-btn
-                            flat
-                            round
-                            icon="filter_list"
-                            color="primary"
-                            size="md"
-                            class="filter-toggle-btn"
-                        >
-                            <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 8]">
-                                快速筛选
-                            </q-tooltip>
-                        </q-btn>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 底部装饰线 - 重新设计 -->
-            <div class="header-decoration">
-                <div class="deco-border-glow"></div>
-                <div class="deco-particles">
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                </div>
-                <div class="deco-pulse-line"></div>
-            </div>
-        </div>
-
-        <!-- 任务统计卡片 -->
-        <div class="stats-section">
-            <div class="stats-grid">
-                <q-card flat bordered class="stat-card stat-total">
-                    <q-card-section>
-                        <div class="stat-content">
-                            <div class="stat-icon">
-                                <q-icon name="assignment" size="24px" color="blue-6" />
-                            </div>
-                            <div class="stat-info">
-                                <div class="stat-value">{{ taskStore.totalTasks }}</div>
-                                <div class="stat-label">总任务数</div>
-                            </div>
-                        </div>
-                    </q-card-section>
-                </q-card>
-
-                <q-card flat bordered class="stat-card stat-pending">
-                    <q-card-section>
-                        <div class="stat-content">
-                            <div class="stat-icon">
-                                <q-icon name="schedule" size="24px" color="orange-6" />
-                            </div>
-                            <div class="stat-info">
-                                <div class="stat-value">{{ getPendingTasksCount() }}</div>
-                                <div class="stat-label">待处理</div>
-                            </div>
-                        </div>
-                    </q-card-section>
-                </q-card>
-
-                <q-card flat bordered class="stat-card stat-progress">
-                    <q-card-section>
-                        <div class="stat-content">
-                            <div class="stat-icon">
-                                <q-icon name="play_arrow" size="24px" color="blue-6" />
-                            </div>
-                            <div class="stat-info">
-                                <div class="stat-value">{{ getInProgressTasksCount() }}</div>
-                                <div class="stat-label">进行中</div>
-                            </div>
-                        </div>
-                    </q-card-section>
-                </q-card>
-
-                <q-card flat bordered class="stat-card stat-completed">
-                    <q-card-section>
-                        <div class="stat-content">
-                            <div class="stat-icon">
-                                <q-icon name="check_circle" size="24px" color="green-6" />
-                            </div>
-                            <div class="stat-info">
-                                <div class="stat-value">{{ getCompletedTasksCount() }}</div>
-                                <div class="stat-label">已完成</div>
-                            </div>
-                        </div>
-                    </q-card-section>
-                </q-card>
-            </div>
-        </div>
-
-        <!-- 美化的筛选和搜索区域 -->
-        <q-card flat bordered class="filters-card">
-            <q-card-section class="filters-header">
-                <div class="filters-title">
-                    <q-icon name="filter_list" size="20px" color="primary" class="q-mr-sm" />
-                    <span class="text-subtitle1 text-weight-medium">筛选和搜索</span>
-                </div>
-            </q-card-section>
-
-            <q-separator />
-
-            <q-card-section class="filters-content">
-                <div class="filters-row">
-                    <!-- 搜索框 - 更大更突出 -->
-                    <div class="search-container">
-                        <q-input
-                            v-model="searchQuery"
-                            placeholder="搜索任务标题、描述或标签..."
-                            outlined
-                            rounded
-                            clearable
-                            class="search-input"
-                            @update:model-value="handleSearch"
-                            debounce="500"
-                        >
-                            <template #prepend>
-                                <q-icon name="search" color="primary" />
-                            </template>
-                        </q-input>
-                    </div>
-                </div>
-
-                <div class="filters-row">
-                    <!-- 状态筛选 - 美化样式 -->
-                    <div class="filter-group">
-                        <div class="filter-label">
-                            <q-icon name="flag" size="16px" color="blue-6" />
-                            <span>状态筛选</span>
-                        </div>
-                        <q-select
-                            v-model="statusFilter"
-                            :options="statusOptions"
-                            outlined
-                            rounded
-                            clearable
-                            emit-value
-                            map-options
-                            placeholder="选择状态"
-                            class="filter-select"
-                            @update:model-value="handleFilterChange"
-                        >
-                            <template v-slot:option="{ itemProps, opt }">
-                                <q-item v-bind="itemProps">
-                                    <q-item-section avatar>
-                                        <q-icon
-                                            :name="getStatusIcon(opt.value)"
-                                            :color="getStatusColor(opt.value)"
-                                            size="sm"
-                                        />
-                                    </q-item-section>
-                                    <q-item-section>
-                                        <q-item-label>{{ opt.label }}</q-item-label>
-                                    </q-item-section>
-                                </q-item>
-                            </template>
-                            <template v-slot:selected-item v-if="statusFilter">
-                                <q-chip
-                                    :color="getStatusColor(statusFilter)"
-                                    text-color="white"
-                                    size="sm"
-                                    :icon="getStatusIcon(statusFilter)"
-                                >
-                                    {{ getStatusLabel(statusFilter) }}
-                                </q-chip>
-                            </template>
-                        </q-select>
-                    </div>
-
-                    <!-- 优先级筛选 - 美化样式 -->
-                    <div class="filter-group">
-                        <div class="filter-label">
-                            <q-icon name="priority_high" size="16px" color="red-6" />
-                            <span>优先级筛选</span>
-                        </div>
-                        <q-select
-                            v-model="priorityFilter"
-                            :options="priorityOptions"
-                            outlined
-                            rounded
-                            clearable
-                            emit-value
-                            map-options
-                            placeholder="选择优先级"
-                            class="filter-select"
-                            @update:model-value="handleFilterChange"
-                        >
-                            <template v-slot:option="{ itemProps, opt }">
-                                <q-item v-bind="itemProps">
-                                    <q-item-section avatar>
-                                        <q-icon
-                                            :name="getPriorityIcon(opt.value)"
-                                            :color="getPriorityColor(opt.value)"
-                                            size="sm"
-                                        />
-                                    </q-item-section>
-                                    <q-item-section>
-                                        <q-item-label
-                                            :class="`text-${getPriorityColor(opt.value)}`"
-                                        >
-                                            {{ opt.label }}
-                                        </q-item-label>
-                                    </q-item-section>
-                                </q-item>
-                            </template>
-                            <template v-slot:selected-item v-if="priorityFilter">
-                                <q-chip
-                                    :color="getPriorityColor(priorityFilter)"
-                                    text-color="white"
-                                    size="sm"
-                                    :icon="getPriorityIcon(priorityFilter)"
-                                >
-                                    {{ getPriorityLabel(priorityFilter) }}
-                                </q-chip>
-                            </template>
-                        </q-select>
-                    </div>
-
-                    <!-- 排序选择 - 美化样式 -->
-                    <div class="filter-group">
-                        <div class="filter-label">
-                            <q-icon name="sort" size="16px" color="green-6" />
-                            <span>排序方式</span>
-                        </div>
-                        <q-select
-                            v-model="sortBy"
-                            :options="sortOptions"
-                            outlined
-                            rounded
-                            emit-value
-                            map-options
-                            placeholder="选择排序"
-                            class="filter-select"
-                            @update:model-value="handleSortChange"
-                        >
-                            <template v-slot:option="{ itemProps, opt }">
-                                <q-item v-bind="itemProps">
-                                    <q-item-section avatar>
-                                        <q-icon
-                                            :name="getSortIcon(opt.value)"
-                                            color="green-6"
-                                            size="sm"
-                                        />
-                                    </q-item-section>
-                                    <q-item-section>
-                                        <q-item-label>{{ opt.label }}</q-item-label>
-                                    </q-item-section>
-                                </q-item>
-                            </template>
-                        </q-select>
-                    </div>
-
-                    <!-- 操作按钮组 -->
-                    <div class="action-buttons">
-                        <q-btn
-                            unelevated
-                            rounded
-                            color="negative"
-                            icon="clear_all"
-                            label="清空筛选"
-                            class="clear-filter-btn"
-                            @click="clearFilters"
-                            :disable="!hasActiveFilters"
-                        />
-                    </div>
-                </div>
-
-                <!-- 活动筛选器展示 -->
-                <div v-if="hasActiveFilters" class="active-filters-section">
-                    <q-separator class="q-my-md" />
-                    <div class="active-filters-header">
-                        <span class="text-subtitle2 text-weight-medium">当前筛选条件</span>
-                        <q-btn
-                            flat
-                            dense
-                            round
-                            icon="close"
-                            size="sm"
-                            color="grey-6"
-                            @click="clearFilters"
-                        />
-                    </div>
-                    <div class="active-filters-chips">
-                        <q-chip
-                            v-if="searchQuery"
-                            removable
-                            color="blue"
-                            text-color="white"
-                            icon="search"
-                            @remove="
-                                () => {
-                                    searchQuery = '';
-                                    nextTick(() => handleSearch());
-                                }
-                            "
-                        >
-                            搜索: {{ searchQuery }}
-                        </q-chip>
-                        <q-chip
-                            v-if="statusFilter"
-                            removable
-                            :color="getStatusColor(statusFilter)"
-                            text-color="white"
-                            :icon="getStatusIcon(statusFilter)"
-                            @remove="
-                                () => {
-                                    statusFilter = null;
-                                    nextTick(() => handleFilterChange());
-                                }
-                            "
-                        >
-                            状态: {{ getStatusLabel(statusFilter) }}
-                        </q-chip>
-                        <q-chip
-                            v-if="priorityFilter"
-                            removable
-                            :color="getPriorityColor(priorityFilter)"
-                            text-color="white"
-                            :icon="getPriorityIcon(priorityFilter)"
-                            @remove="
-                                () => {
-                                    priorityFilter = null;
-                                    nextTick(() => handleFilterChange());
-                                }
-                            "
-                        >
-                            优先级: {{ getPriorityLabel(priorityFilter) }}
-                        </q-chip>
-                    </div>
-                </div>
-            </q-card-section>
-        </q-card>
-
-        <!-- 批量操作栏 -->
-        <div v-if="taskStore.selectedTasksCount > 0" class="batch-actions">
-            <div class="selected-info">
-                <q-icon name="check_circle" color="primary" />
-                <span>已选择 {{ taskStore.selectedTasksCount }} 个任务</span>
-            </div>
-            <div class="batch-buttons">
-                <q-btn
-                    flat
-                    icon="done_all"
-                    label="标记完成"
-                    color="positive"
-                    @click="batchMarkComplete"
+        <!-- 科技感任务控制台组件 -->
+        <TaskConsole
+            :total-tasks="taskStore.totalTasks"
+            :active-tasks="taskStore.activeTasks.length"
+            :selected-tasks="taskStore.selectedTasksCount"
+            :select-all="selectAll"
+            :indeterminate="indeterminate"
+            :view-mode="viewMode"
+            :loading="taskStore.loadingStates.fetchingTasks"
+            @select-all="handleSelectAll"
+            @toggle-view-mode="toggleViewMode"
+            @create-task="openCreateDialog"
+        >
+            <template #task-cards>
+                <!-- 任务卡片 -->
+                <CyberTaskCard
+                    v-for="(task, index) in taskStore.activeTasks"
+                    :key="task.id"
+                    :task="task"
+                    :is-selected="taskStore.selectedTasks.includes(task.id)"
+                    :view-mode="viewMode"
+                    :data-index="index"
+                    @view="handleViewTask"
+                    @edit="handleEditTask"
+                    @delete="handleDeleteTask"
+                    @selection-change="(taskId, selected) => taskStore.toggleTaskSelection(taskId)"
                 />
-                <q-btn flat icon="delete" label="批量删除" color="negative" @click="batchDelete" />
-                <q-btn
-                    flat
-                    icon="close"
-                    label="取消选择"
-                    color="grey-7"
-                    @click="taskStore.clearSelection"
-                />
-            </div>
-        </div>
-
-        <!-- 任务列表 -->
-        <div class="tasks-section">
-            <q-card flat bordered class="tasks-container">
-                <!-- 列表头部 -->
-                <q-card-section class="tasks-header">
-                    <div class="header-left">
-                        <q-checkbox
-                            v-model="selectAll"
-                            :indeterminate="indeterminate"
-                            @update:model-value="handleSelectAll"
-                        />
-                        <span class="tasks-count"> 共 {{ taskStore.totalTasks }} 个任务 </span>
-                    </div>
-                    <div class="header-right">
-                        <q-btn
-                            flat
-                            dense
-                            :icon="viewMode === 'list' ? 'view_module' : 'view_list'"
-                            @click="toggleViewMode"
-                        >
-                            <q-tooltip>
-                                {{ viewMode === 'list' ? '网格视图' : '列表视图' }}
-                            </q-tooltip>
-                        </q-btn>
-                    </div>
-                </q-card-section>
-
-                <q-separator />
-
-                <!-- 任务列表内容 -->
-                <q-card-section
-                    class="tasks-content"
-                    :class="{ 'no-padding': viewMode === 'grid' }"
-                >
-                    <!-- 加载状态 - 使用骨架屏 -->
-                    <div v-if="taskStore.loadingStates.fetchingTasks" class="tasks-loading">
-                        <TaskCardSkeleton v-for="i in taskStore.pageSize" :key="`skeleton-${i}`" />
-                    </div>
-
-                    <!-- 一般加载状态 -->
-                    <LoadingState
-                        v-else-if="taskStore.loading"
-                        variant="centered"
-                        message="加载任务中..."
-                        spinner="dots"
-                        color="primary"
-                    />
-
-                    <!-- 空状态 -->
-                    <div v-else-if="taskStore.activeTasks.length === 0" class="empty-state">
-                        <div class="empty-container">
-                            <q-icon name="assignment" size="80px" color="grey-4" />
-                            <h3>暂无任务</h3>
-                            <p>创建您的第一个任务开始管理工作吧！</p>
-                            <q-btn
-                                color="primary"
-                                icon="add"
-                                label="创建任务"
-                                unelevated
-                                rounded
-                                @click="openCreateDialog"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- 任务列表 -->
-                    <div v-else class="tasks-list" :class="`view-${viewMode}`">
-                        <TaskCard
-                            v-for="task in taskStore.activeTasks"
-                            :key="task.id"
-                            :task="task"
-                            :selected="taskStore.selectedTasks.includes(task.id)"
-                            @toggle-selection="taskStore.toggleTaskSelection"
-                            @edit="handleEditTask"
-                            @delete="handleDeleteTask"
-                            @duplicate="handleDuplicateTask"
-                            @view="handleViewTask"
-                            @status-change="handleStatusChange"
-                        />
-                    </div>
-                </q-card-section>
-            </q-card>
-        </div>
+            </template>
+        </TaskConsole>
 
         <!-- 分页 -->
         <div v-if="taskStore.totalPages > 1" class="pagination-section">
@@ -523,7 +100,7 @@
         </div>
 
         <!-- 任务创建/编辑对话框 -->
-        <TaskDialog v-model="showTaskDialog" :task="selectedTask" @saved="onTaskSaved" />
+        <TaskDialogForm v-model="showTaskDialog" :task="selectedTask" @saved="onTaskSaved" />
 
         <!-- 任务查看对话框 -->
         <TaskViewDialog
@@ -537,22 +114,62 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useTaskStore } from 'stores/task';
-import TaskCard from 'components/TaskCard.vue';
-import TaskDialog from 'components/TaskDialog.vue';
-import TaskViewDialog from 'components/TaskViewDialog.vue';
-import TaskCardSkeleton from 'components/skeletons/TaskCardSkeleton.vue';
-import LoadingState from 'components/skeletons/LoadingState.vue';
+import TaskDialogForm from 'components/task-list/TaskDialogForm.vue';
+import TaskViewDialog from 'components/task-list/TaskViewDialog.vue';
 import type { Task, TaskStatus, TaskPriority, TaskSearchParams } from '../types';
 import { useGlobalConfirm } from '../composables/useGlobalConfirm';
+import { useComponentShortcuts } from '../composables/useComponentShortcuts';
+import CyberTaskCard from 'components/task-list/CyberTaskCard.vue';
+import TaskConsole from 'components/task-list/TaskConsole.vue';
+import TaskFilterPanel from 'components/task-list/TaskFilterPanel.vue';
+import TaskStatistics from 'components/task-list/TaskStatistics.vue';
+import TaskActionButtons from 'components/task-list/TaskActionButtons.vue';
+import PageHeader from 'components/task-list/PageHeader.vue';
 
 const $q = useQuasar();
 const router = useRouter();
 const taskStore = useTaskStore();
 const confirmDialog = useGlobalConfirm();
+
+// 快捷键管理
+useComponentShortcuts({
+    context: 'task-list',
+    shortcuts: {
+        'create-task': {
+            key: 'n',
+            ctrl: true,
+            description: '创建新任务',
+            action: () => openCreateDialog(),
+        },
+        refresh: {
+            key: 'r',
+            ctrl: true,
+            description: '刷新任务列表',
+            action: () => {
+                loadTasks().catch(console.error);
+            },
+        },
+        search: {
+            key: 'f',
+            ctrl: true,
+            description: '搜索任务',
+            action: () => {
+                // 聚焦到搜索框
+                const searchInput = document.querySelector(
+                    'input[placeholder*="搜索"]',
+                ) as HTMLInputElement;
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            },
+        },
+    },
+});
 
 // 响应式数据
 const searchQuery = ref('');
@@ -565,31 +182,6 @@ const selectedTask = ref<Task | null>(null);
 const showViewDialog = ref(false);
 const viewingTask = ref<Task | null>(null);
 const currentSearchParams = ref<Partial<TaskSearchParams>>({});
-
-// 筛选选项
-const statusOptions = [
-    { label: '待处理', value: 'PENDING' },
-    { label: '进行中', value: 'IN_PROGRESS' },
-    { label: '已完成', value: 'COMPLETED' },
-    { label: '已取消', value: 'CANCELLED' },
-    { label: '暂停', value: 'ON_HOLD' },
-];
-
-const priorityOptions = [
-    { label: '低', value: 'LOW' },
-    { label: '中', value: 'MEDIUM' },
-    { label: '高', value: 'HIGH' },
-    { label: '紧急', value: 'URGENT' },
-];
-
-const sortOptions = [
-    { label: '创建时间（最新）', value: '-created_at' },
-    { label: '创建时间（最早）', value: 'created_at' },
-    { label: '更新时间（最新）', value: '-updated_at' },
-    { label: '优先级（高到低）', value: '-priority' },
-    { label: '优先级（低到高）', value: 'priority' },
-    { label: '到期时间', value: 'due_date' },
-];
 
 // 计算属性
 const selectAll = computed({
@@ -612,18 +204,10 @@ const indeterminate = computed(() => {
     return selectedCount > 0 && selectedCount < totalCount;
 });
 
-// 统计方法
-const getPendingTasksCount = () => {
-    return taskStore.tasks.filter((task: Task) => task.status === 'PENDING').length;
-};
-
-const getInProgressTasksCount = () => {
-    return taskStore.tasks.filter((task: Task) => task.status === 'IN_PROGRESS').length;
-};
-
-const getCompletedTasksCount = () => {
-    return taskStore.tasks.filter((task: Task) => task.status === 'COMPLETED').length;
-};
+// 已完成任务数量
+const completedTasks = computed(() => {
+    return taskStore.activeTasks.filter(task => task.status === 'COMPLETED').length;
+});
 
 // 方法
 const loadTasks = async () => {
@@ -638,15 +222,7 @@ const loadTasks = async () => {
     }
 };
 
-const handleSearch = () => {
-    updateSearchParams();
-};
-
 const handleFilterChange = () => {
-    updateSearchParams();
-};
-
-const handleSortChange = () => {
     updateSearchParams();
 };
 
@@ -687,58 +263,6 @@ const clearFilters = () => {
     void loadTasks();
 };
 
-// 活动筛选器状态
-const hasActiveFilters = computed(() => {
-    return !!(searchQuery.value || statusFilter.value || priorityFilter.value);
-});
-
-// 状态相关函数
-const getStatusIcon = (status: TaskStatus): string => {
-    const icons: Record<TaskStatus, string> = {
-        PENDING: 'schedule',
-        IN_PROGRESS: 'play_arrow',
-        COMPLETED: 'check_circle',
-        CANCELLED: 'cancel',
-        ON_HOLD: 'pause_circle',
-    };
-    return icons[status] || 'help';
-};
-
-const getStatusColor = (status: TaskStatus): string => {
-    const colors: Record<TaskStatus, string> = {
-        PENDING: 'orange',
-        IN_PROGRESS: 'blue',
-        COMPLETED: 'green',
-        CANCELLED: 'red',
-        ON_HOLD: 'grey',
-    };
-    return colors[status] || 'grey';
-};
-
-const getStatusLabel = (status: TaskStatus): string => {
-    const labels: Record<TaskStatus, string> = {
-        PENDING: '待处理',
-        IN_PROGRESS: '进行中',
-        COMPLETED: '已完成',
-        CANCELLED: '已取消',
-        ON_HOLD: '暂停',
-    };
-    return labels[status] || '未知';
-};
-
-// 排序相关函数
-const getSortIcon = (sortValue: string): string => {
-    const icons: Record<string, string> = {
-        '-created_at': 'schedule',
-        created_at: 'schedule',
-        '-updated_at': 'update',
-        '-priority': 'keyboard_arrow_up',
-        priority: 'keyboard_arrow_down',
-        due_date: 'event',
-    };
-    return icons[sortValue] || 'sort';
-};
-
 const handleSelectAll = () => {
     taskStore.toggleAllTasksSelection();
 };
@@ -754,14 +278,6 @@ const handlePageChange = (page: number) => {
 
 const handleEditTask = (task: Task) => {
     openEditDialog(task);
-};
-
-const handleDuplicateTask = (task: Task) => {
-    $q.notify({
-        type: 'info',
-        message: `复制任务"${task.title}"功能正在开发中...`,
-        position: 'top',
-    });
 };
 
 const handleViewTask = (task: Task) => {
@@ -947,6 +463,21 @@ const openCreateDialog = () => {
     showTaskDialog.value = true;
 };
 
+// 处理次要操作
+const handleSecondaryAction = (actionName: string) => {
+    switch (actionName) {
+        case 'refresh':
+            loadTasks();
+            break;
+        case 'filter':
+            // 这里可以添加快速筛选逻辑
+            console.log('Quick filter action');
+            break;
+        default:
+            console.log('Unknown action:', actionName);
+    }
+};
+
 const openEditDialog = (task: Task) => {
     selectedTask.value = task;
     showTaskDialog.value = true;
@@ -958,37 +489,6 @@ const onTaskSaved = (task: Task) => {
     console.log('任务已保存:', task.title);
 };
 
-// 优先级工具函数
-const getPriorityColor = (priority: TaskPriority): string => {
-    const colors: Record<TaskPriority, string> = {
-        LOW: 'green',
-        MEDIUM: 'blue',
-        HIGH: 'orange',
-        URGENT: 'red',
-    };
-    return colors[priority] || 'blue';
-};
-
-const getPriorityLabel = (priority: TaskPriority): string => {
-    const labels: Record<TaskPriority, string> = {
-        LOW: '低',
-        MEDIUM: '中',
-        HIGH: '高',
-        URGENT: '紧急',
-    };
-    return labels[priority] || '中';
-};
-
-const getPriorityIcon = (priority: TaskPriority): string => {
-    const icons: Record<TaskPriority, string> = {
-        LOW: 'keyboard_arrow_down',
-        MEDIUM: 'remove',
-        HIGH: 'keyboard_arrow_up',
-        URGENT: 'priority_high',
-    };
-    return icons[priority] || 'remove';
-};
-
 // 组件挂载时加载数据
 onMounted(() => {
     void loadTasks();
@@ -998,7 +498,7 @@ onMounted(() => {
 <style scoped lang="scss">
 // 页面整体样式 - 统一科技感设计
 .task-list-page {
-    background: #ffffff;
+    background: #f8fafc;
     min-height: calc(100vh - 50px);
     position: relative;
     padding: 1.5rem;
@@ -1208,7 +708,7 @@ onMounted(() => {
                 .create-btn {
                     background: linear-gradient(135deg, #3b82f6, #2563eb);
                     color: white;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border: 1px solid rgba(226, 232, 240, 0.5);
                     box-shadow:
                         0 8px 24px rgba(59, 130, 246, 0.25),
                         inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -1450,352 +950,6 @@ onMounted(() => {
     }
 }
 
-.stats-section {
-    margin-bottom: 1.5rem;
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-
-        .stat-card {
-            // 科技感卡片设计 - 与仪表板一致
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 20px;
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            box-shadow:
-                0 8px 32px rgba(14, 165, 233, 0.08),
-                0 2px 8px rgba(59, 130, 246, 0.05),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-
-            // 科技感边框发光
-            &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                border-radius: 20px;
-                padding: 1px;
-                background: linear-gradient(
-                    135deg,
-                    rgba(59, 130, 246, 0.2) 0%,
-                    rgba(14, 165, 233, 0.1) 50%,
-                    rgba(2, 132, 199, 0.2) 100%
-                );
-                mask:
-                    linear-gradient(#fff 0 0) content-box,
-                    linear-gradient(#fff 0 0);
-                mask-composite: exclude;
-                pointer-events: none;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            }
-
-            &:hover {
-                transform: translateY(-6px) scale(1.02);
-                box-shadow:
-                    0 20px 60px rgba(14, 165, 233, 0.15),
-                    0 8px 24px rgba(59, 130, 246, 0.1),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-                border-color: rgba(59, 130, 246, 0.2);
-
-                &::before {
-                    opacity: 1;
-                }
-            }
-
-            .stat-content {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-
-                .stat-icon {
-                    flex-shrink: 0;
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: rgba(59, 130, 246, 0.15);
-                    border: 2px solid rgba(59, 130, 246, 0.2);
-                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-                }
-
-                .stat-info {
-                    flex: 1;
-
-                    .stat-value {
-                        font-size: 1.5rem;
-                        font-weight: 700;
-                        color: #1e40af;
-                        line-height: 1.2;
-                    }
-
-                    .stat-label {
-                        font-size: 0.875rem;
-                        color: #64748b;
-                        margin-top: 0.25rem;
-                        font-weight: 500;
-                    }
-                }
-            }
-
-            // 统一使用蓝色系图标背景
-            &.stat-pending .stat-icon {
-                background: rgba(14, 165, 233, 0.15);
-                border-color: rgba(14, 165, 233, 0.2);
-                box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
-            }
-
-            &.stat-progress .stat-icon {
-                background: rgba(59, 130, 246, 0.15);
-                border-color: rgba(59, 130, 246, 0.2);
-                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-            }
-
-            &.stat-completed .stat-icon {
-                background: rgba(34, 197, 94, 0.1);
-            }
-        }
-    }
-}
-
-// 紧凑的筛选卡片样式
-.filters-card {
-    margin-bottom: 1.5rem;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    border-radius: 8px;
-    overflow: hidden;
-
-    .filters-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 0.75rem 1rem;
-
-        .filters-title {
-            display: flex;
-            align-items: center;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-    }
-
-    .filters-content {
-        padding: 1rem;
-
-        .filters-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: flex-end;
-
-            &:first-child {
-                margin-bottom: 1rem;
-            }
-
-            .search-container {
-                flex: 1;
-                min-width: 250px;
-
-                .search-input {
-                    font-size: 0.875rem;
-
-                    :deep(.q-field__control) {
-                        height: 36px;
-                        min-height: 36px;
-                        padding: 0 12px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    :deep(.q-field__native) {
-                        padding: 0;
-                        line-height: 36px;
-                        min-height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    // 确保输入框内容对齐
-                    :deep(.q-field__input) {
-                        padding: 0;
-                        margin: 0;
-                        line-height: 36px;
-                        min-height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    // 确保前缀图标对齐
-                    :deep(.q-field__marginal) {
-                        height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    // 确保控制容器对齐
-                    :deep(.q-field__control-container) {
-                        display: flex;
-                        align-items: center;
-                        min-height: 36px;
-                    }
-                }
-            }
-
-            .filter-group {
-                flex: 1;
-                min-width: 160px;
-
-                .filter-label {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.375rem;
-                    margin-bottom: 0.375rem;
-                    color: #6b7280;
-                    font-size: 0.75rem;
-                    font-weight: 500;
-                }
-
-                .filter-select {
-                    width: 100%;
-
-                    :deep(.q-field__control) {
-                        height: 36px;
-                        min-height: 36px;
-                        font-size: 0.875rem;
-                        padding: 0 12px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    :deep(.q-field__native) {
-                        padding: 0;
-                        line-height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    // 确保选中状态下芯片不会改变高度并居中
-                    :deep(.q-chip) {
-                        height: 22px;
-                        max-height: 22px;
-                        font-size: 0.7rem;
-                        margin: 0;
-                        align-self: center;
-                    }
-
-                    // 确保选中项容器高度一致并居中
-                    :deep(.q-field__control-container) {
-                        padding: 0;
-                        min-height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    // 确保占位符文本对齐
-                    :deep(.q-field__marginal) {
-                        height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    // 选中项对齐 - 关键修复
-                    :deep(.q-field__input) {
-                        padding: 0;
-                        margin: 0;
-                        line-height: 36px;
-                        min-height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    // 确保选中项内容垂直居中
-                    :deep(.q-field__input .q-chip) {
-                        margin: 0;
-                        align-self: center;
-                    }
-
-                    // 修复选择器下拉箭头对齐
-                    :deep(.q-field__append) {
-                        height: 36px;
-                        display: flex;
-                        align-items: center;
-                    }
-                }
-            }
-
-            .action-buttons {
-                display: flex;
-                gap: 0.75rem;
-                flex-shrink: 0;
-
-                .clear-filter-btn {
-                    height: 36px;
-                    min-height: 36px;
-                    padding: 0 16px;
-                    font-size: 0.875rem;
-                    font-weight: 500;
-
-                    :deep(.q-btn__content) {
-                        display: flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                    }
-                }
-            }
-        }
-
-        .active-filters-section {
-            .active-filters-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 0.75rem;
-                color: #374151;
-                font-size: 0.8rem;
-            }
-
-            .active-filters-chips {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-        }
-    }
-}
-
-.batch-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f8fafc;
-    padding: 0.75rem;
-    border-radius: 6px;
-    margin-bottom: 0.75rem;
-    border: 1px solid #e2e8f0;
-
-    .selected-info {
-        display: flex;
-        align-items: center;
-        gap: 0.375rem;
-        font-weight: 500;
-        color: #374151;
-        font-size: 0.875rem;
-    }
-
-    .batch-buttons {
-        display: flex;
-        gap: 0.375rem;
-    }
-}
-
 .tasks-section {
     margin-bottom: 1.5rem;
 
@@ -1942,56 +1096,6 @@ onMounted(() => {
         }
     }
 
-    .filters-card {
-        .filters-content {
-            padding: 1rem;
-
-            .filters-row {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 1rem;
-
-                .search-container {
-                    min-width: auto;
-                    width: 100%;
-                }
-
-                .filter-group {
-                    min-width: auto;
-                    width: 100%;
-                }
-
-                .action-buttons {
-                    flex-direction: column;
-                    width: 100%;
-
-                    .q-btn {
-                        width: 100%;
-                    }
-                }
-            }
-
-            .active-filters-chips {
-                flex-direction: column;
-                gap: 0.5rem;
-
-                .q-chip {
-                    justify-content: center;
-                }
-            }
-        }
-    }
-
-    .batch-actions {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-
-        .batch-buttons {
-            justify-content: center;
-        }
-    }
-
     .tasks-section {
         .tasks-container {
             .tasks-content {
@@ -2062,13 +1166,539 @@ onMounted(() => {
             }
         }
     }
+}
 
-    .filters-card {
-        .filters-header {
-            padding: 0.75rem 1rem;
+// 科技感任务列表样式
+.tasks-section {
+    .tasks-container.modern-tech-style {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        border-radius: 16px;
+        box-shadow:
+            0 20px 60px rgba(14, 165, 233, 0.08),
+            0 8px 24px rgba(59, 130, 246, 0.06),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        overflow: hidden;
+        position: relative;
 
-            .filters-title {
-                font-size: 0.9rem;
+        // 科技感头部
+        .tasks-header.tech-header {
+            background: linear-gradient(
+                135deg,
+                rgba(59, 130, 246, 0.05) 0%,
+                rgba(14, 165, 233, 0.03) 50%,
+                rgba(6, 182, 212, 0.05) 100%
+            );
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 1.5rem 2rem;
+            position: relative;
+            overflow: hidden;
+
+            // 背景装饰
+            .header-bg-pattern {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                pointer-events: none;
+
+                .circuit-lines {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-image:
+                        linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(59, 130, 246, 0.08) 1px, transparent 1px);
+                    background-size: 20px 20px;
+                    animation: circuitFlow 15s linear infinite;
+                }
+
+                .data-flow {
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: linear-gradient(
+                        90deg,
+                        transparent 0%,
+                        rgba(59, 130, 246, 0.3) 20%,
+                        rgba(14, 165, 233, 0.6) 50%,
+                        rgba(59, 130, 246, 0.3) 80%,
+                        transparent 100%
+                    );
+                    animation: dataFlow 3s ease-in-out infinite;
+                }
+            }
+
+            .header-content {
+                position: relative;
+                z-index: 2;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                .header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 2rem;
+
+                    .select-all-wrapper {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+
+                        .tech-checkbox {
+                            border: 2px solid rgba(59, 130, 246, 0.3);
+                            border-radius: 4px;
+                            background: rgba(59, 130, 246, 0.05);
+                        }
+
+                        .checkbox-glow {
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            width: 24px;
+                            height: 24px;
+                            background: radial-gradient(
+                                circle,
+                                rgba(59, 130, 246, 0.2) 0%,
+                                transparent 70%
+                            );
+                            border-radius: 50%;
+                            animation: checkboxGlow 2s ease-in-out infinite;
+                        }
+                    }
+
+                    .tasks-counter {
+                        .counter-display {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.25rem;
+
+                            .counter-label {
+                                font-size: 0.75rem;
+                                color: #64748b;
+                                font-weight: 500;
+                                text-transform: uppercase;
+                                letter-spacing: 0.05em;
+                            }
+
+                            .counter-value {
+                                display: flex;
+                                align-items: baseline;
+                                gap: 0.25rem;
+                                font-family: 'Roboto Mono', monospace;
+
+                                .count-number {
+                                    font-size: 1.25rem;
+                                    font-weight: 700;
+                                    color: #3b82f6;
+                                }
+
+                                .count-separator {
+                                    font-size: 1rem;
+                                    color: #94a3b8;
+                                }
+
+                                .count-total {
+                                    font-size: 1rem;
+                                    color: #64748b;
+                                    font-weight: 500;
+                                }
+                            }
+                        }
+
+                        .counter-indicator {
+                            margin-top: 0.5rem;
+                            width: 80px;
+                            height: 3px;
+                            background: rgba(59, 130, 246, 0.1);
+                            border-radius: 2px;
+                            overflow: hidden;
+
+                            .indicator-bar {
+                                height: 100%;
+                                background: linear-gradient(90deg, #3b82f6, #06b6d4);
+                                border-radius: 2px;
+                                transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                                position: relative;
+
+                                &::after {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    right: 0;
+                                    bottom: 0;
+                                    background: linear-gradient(
+                                        90deg,
+                                        transparent 0%,
+                                        rgba(255, 255, 255, 0.3) 50%,
+                                        transparent 100%
+                                    );
+                                    animation: indicatorShine 2s ease-in-out infinite;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .header-right {
+                    display: flex;
+                    align-items: center;
+                    gap: 1.5rem;
+
+                    .view-controls {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+
+                        .tech-view-btn {
+                            position: relative;
+                            width: 40px;
+                            height: 40px;
+                            background: rgba(59, 130, 246, 0.08);
+                            border: 1px solid rgba(59, 130, 246, 0.2);
+                            border-radius: 8px;
+                            color: #3b82f6;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+                            &:hover {
+                                background: rgba(59, 130, 246, 0.15);
+                                border-color: rgba(59, 130, 246, 0.3);
+                                transform: translateY(-1px);
+                            }
+
+                            .btn-glow {
+                                position: absolute;
+                                top: -2px;
+                                left: -2px;
+                                right: -2px;
+                                bottom: -2px;
+                                background: linear-gradient(
+                                    45deg,
+                                    transparent,
+                                    rgba(59, 130, 246, 0.1),
+                                    transparent
+                                );
+                                border-radius: 10px;
+                                opacity: 0;
+                                transition: opacity 0.3s ease;
+                            }
+
+                            &:hover .btn-glow {
+                                opacity: 1;
+                            }
+                        }
+
+                        .drag-indicator {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.5rem 1rem;
+                            background: rgba(6, 182, 212, 0.08);
+                            border: 1px solid rgba(6, 182, 212, 0.2);
+                            border-radius: 20px;
+                            color: #0891b2;
+                            font-size: 0.8rem;
+                            font-weight: 500;
+
+                            .drag-hint {
+                                white-space: nowrap;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 科技感内容区域
+        .tasks-content.tech-content {
+            padding: 2rem;
+            position: relative;
+            min-height: 400px;
+
+            // 科技感拖拽网格
+            .tasks-grid.tech-grid {
+                position: relative;
+                z-index: 2;
+
+                .drag-container {
+                    position: relative;
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+                    gap: 1.5rem;
+
+                    // 拖拽项目包装器
+                    .task-item-wrapper {
+                        position: relative;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        cursor: grab;
+
+                        &:hover {
+                            transform: translateY(-2px);
+                        }
+
+                        &.dragging {
+                            opacity: 0.7;
+                            transform: rotate(5deg) scale(1.05);
+                            cursor: grabbing;
+                            z-index: 1000;
+                        }
+
+                        &.selected {
+                            .task-tech-border {
+                                border-color: rgba(59, 130, 246, 0.4);
+
+                                .border-scan {
+                                    opacity: 1;
+                                }
+                            }
+                        }
+
+                        // 拖拽手柄
+                        .drag-handle {
+                            position: absolute;
+                            top: 50%;
+                            left: -12px;
+                            transform: translateY(-50%);
+                            width: 8px;
+                            height: 32px;
+                            background: rgba(59, 130, 246, 0.1);
+                            border-radius: 4px;
+                            cursor: grab;
+                            opacity: 0;
+                            transition: all 0.3s ease;
+                            z-index: 5;
+
+                            .handle-dots {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 2px;
+
+                                .dot {
+                                    width: 2px;
+                                    height: 2px;
+                                    background: #3b82f6;
+                                    border-radius: 50%;
+                                }
+                            }
+
+                            .handle-glow {
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                background: linear-gradient(
+                                    180deg,
+                                    rgba(59, 130, 246, 0.2),
+                                    rgba(14, 165, 233, 0.2)
+                                );
+                                border-radius: inherit;
+                                opacity: 0;
+                                animation: handleGlow 2s ease-in-out infinite;
+                            }
+
+                            &:hover {
+                                background: rgba(59, 130, 246, 0.2);
+                                cursor: grabbing;
+
+                                .handle-glow {
+                                    opacity: 1;
+                                }
+                            }
+                        }
+
+                        &:hover .drag-handle {
+                            opacity: 1;
+                            left: -16px;
+                        }
+
+                        // 科技感边框
+                        .task-tech-border {
+                            position: absolute;
+                            top: -1px;
+                            left: -1px;
+                            right: -1px;
+                            bottom: -1px;
+                            border: 1px solid rgba(59, 130, 246, 0.15);
+                            border-radius: 12px;
+                            pointer-events: none;
+                            z-index: 1;
+
+                            // 边框角落装饰
+                            .border-corner {
+                                position: absolute;
+                                width: 12px;
+                                height: 12px;
+                                border: 2px solid rgba(59, 130, 246, 0.3);
+
+                                &.tl {
+                                    top: -1px;
+                                    left: -1px;
+                                    border-right: none;
+                                    border-bottom: none;
+                                    border-radius: 12px 0 0 0;
+                                }
+
+                                &.tr {
+                                    top: -1px;
+                                    right: -1px;
+                                    border-left: none;
+                                    border-bottom: none;
+                                    border-radius: 0 12px 0 0;
+                                }
+
+                                &.bl {
+                                    bottom: -1px;
+                                    left: -1px;
+                                    border-right: none;
+                                    border-top: none;
+                                    border-radius: 0 0 0 12px;
+                                }
+
+                                &.br {
+                                    bottom: -1px;
+                                    right: -1px;
+                                    border-left: none;
+                                    border-top: none;
+                                    border-radius: 0 0 12px 0;
+                                }
+                            }
+
+                            // 扫描效果
+                            .border-scan {
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                border: 1px solid transparent;
+                                border-radius: 12px;
+                                background: linear-gradient(
+                                    45deg,
+                                    transparent,
+                                    rgba(59, 130, 246, 0.1),
+                                    transparent
+                                );
+                                opacity: 0;
+                                animation: borderScan 3s ease-in-out infinite;
+                            }
+                        }
+
+                        // 任务卡片样式
+                        .tech-task-card {
+                            position: relative;
+                            z-index: 2;
+                            border: none;
+                            box-shadow: none;
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(10px);
+                        }
+
+                        // 选中状态指示器
+                        .selection-indicator {
+                            position: absolute;
+                            top: -2px;
+                            left: -2px;
+                            right: -2px;
+                            bottom: -2px;
+                            border-radius: 14px;
+                            pointer-events: none;
+                            z-index: 0;
+
+                            .selection-glow {
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                background: linear-gradient(
+                                    45deg,
+                                    rgba(59, 130, 246, 0.1),
+                                    rgba(14, 165, 233, 0.1)
+                                );
+                                border-radius: inherit;
+                                animation: selectionGlow 2s ease-in-out infinite;
+                            }
+
+                            .selection-pulse {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                width: 20px;
+                                height: 20px;
+                                background: radial-gradient(
+                                    circle,
+                                    rgba(59, 130, 246, 0.3) 0%,
+                                    transparent 70%
+                                );
+                                border-radius: 50%;
+                                animation: selectionPulse 1.5s ease-in-out infinite;
+                            }
+                        }
+
+                        // 拖拽占位符
+                        .drag-placeholder {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: rgba(6, 182, 212, 0.05);
+                            border: 2px dashed rgba(6, 182, 212, 0.3);
+                            border-radius: 12px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            opacity: 0;
+                            transform: scale(0.95);
+                            transition: all 0.3s ease;
+                            z-index: 0;
+
+                            &.active {
+                                opacity: 1;
+                                transform: scale(1);
+                            }
+
+                            .placeholder-content {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                gap: 0.5rem;
+                                color: #0891b2;
+                                font-weight: 500;
+                                font-size: 0.9rem;
+                            }
+                        }
+                    }
+                }
+
+                // 网格视图特殊样式
+                &.view-grid {
+                    .drag-container {
+                        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                        gap: 1rem;
+                    }
+
+                    .task-item-wrapper {
+                        .tech-task-card {
+                            min-height: 200px;
+                        }
+                    }
+                }
             }
         }
     }

@@ -398,8 +398,8 @@
 import { ref, computed, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useTaskStore } from 'stores/task';
-import type { Task, TaskCreateData, TaskUpdateData, TaskStatus, TaskPriority } from '../types';
-import { useComponentShortcuts } from '../composables/useComponentShortcuts';
+import type { Task, TaskCreateData, TaskUpdateData, TaskStatus, TaskPriority } from 'src/types';
+import { useComponentShortcuts } from 'src/composables/useComponentShortcuts';
 
 interface Props {
     modelValue: boolean;
@@ -902,6 +902,8 @@ watch(
             }
 
             .form-group {
+                margin-bottom: 1.5rem;
+
                 &:last-child {
                     margin-bottom: 0;
                 }

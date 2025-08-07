@@ -153,9 +153,10 @@ export function useKeyboardShortcuts() {
     // 获取当前上下文的快捷键
     const getContextShortcuts = computed(() => {
         return Array.from(shortcuts.value.entries())
-            .filter(([, config]) => 
-                !config.disabled && 
-                (config.context === 'global' || config.context === currentContext.value)
+            .filter(
+                ([, config]) =>
+                    !config.disabled &&
+                    (config.context === 'global' || config.context === currentContext.value),
             )
             .map(([id, config]) => ({ id, ...config }));
     });
@@ -163,29 +164,29 @@ export function useKeyboardShortcuts() {
     // 格式化快捷键显示文本
     const formatShortcut = (config: ShortcutConfig): string => {
         const parts: string[] = [];
-        
+
         // 根据操作系统显示不同的修饰键符号
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        
+
         if (config.ctrl) parts.push(isMac ? '⌘' : 'Ctrl');
         if (config.alt) parts.push(isMac ? '⌥' : 'Alt');
         if (config.shift) parts.push(isMac ? '⇧' : 'Shift');
         if (config.meta) parts.push(isMac ? '⌘' : 'Win');
-        
+
         // 特殊按键映射
         const keyMap: Record<string, string> = {
-            'Escape': 'Esc',
-            'Delete': 'Del',
-            'ArrowUp': '↑',
-            'ArrowDown': '↓',
-            'ArrowLeft': '←',
-            'ArrowRight': '→',
+            Escape: 'Esc',
+            Delete: 'Del',
+            ArrowUp: '↑',
+            ArrowDown: '↓',
+            ArrowLeft: '←',
+            ArrowRight: '→',
             ' ': 'Space',
         };
-        
+
         const displayKey = keyMap[config.key] || config.key.toUpperCase();
         parts.push(displayKey);
-        
+
         return parts.join(isMac ? '' : '+');
     };
 
@@ -195,11 +196,11 @@ export function useKeyboardShortcuts() {
 
         // 如果焦点在输入框中，跳过某些快捷键
         const activeElement = document.activeElement;
-        const isInputFocused = activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA' ||
-            (activeElement as HTMLElement).contentEditable === 'true'
-        );
+        const isInputFocused =
+            activeElement &&
+            (activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                (activeElement as HTMLElement).contentEditable === 'true');
 
         const combo = getKeyComboFromEvent(event);
         const shortcutKey = getShortcutKey(combo);
@@ -207,7 +208,7 @@ export function useKeyboardShortcuts() {
         // 查找匹配的快捷键
         for (const [id, config] of shortcuts.value.entries()) {
             if (config.disabled) continue;
-            
+
             const configCombo = {
                 key: config.key,
                 ctrl: config.ctrl || false,
@@ -215,29 +216,36 @@ export function useKeyboardShortcuts() {
                 shift: config.shift || false,
                 meta: config.meta || false,
             };
-            
+
             const configKey = getShortcutKey(configCombo);
-            
+
             if (configKey === shortcutKey) {
                 // 检查上下文
-                if (config.context && config.context !== 'global' && config.context !== currentContext.value) {
+                if (
+                    config.context &&
+                    config.context !== 'global' &&
+                    config.context !== currentContext.value
+                ) {
                     continue;
                 }
-                
+
                 // 对于某些快捷键，在输入框中不响应
-                if (isInputFocused && ['ctrl+a', 'ctrl+c', 'ctrl+v', 'ctrl+x', 'ctrl+z'].includes(shortcutKey)) {
+                if (
+                    isInputFocused &&
+                    ['ctrl+a', 'ctrl+c', 'ctrl+v', 'ctrl+x', 'ctrl+z'].includes(shortcutKey)
+                ) {
                     continue;
                 }
-                
+
                 event.preventDefault();
                 event.stopPropagation();
-                
+
                 try {
                     config.action();
                 } catch (error) {
                     console.error(`Error executing shortcut ${id}:`, error);
                 }
-                
+
                 break;
             }
         }
@@ -280,10 +288,10 @@ export function useKeyboardShortcuts() {
         shortcuts: shortcuts.value,
         isEnabled,
         currentContext,
-        
+
         // 计算属性
         contextShortcuts: getContextShortcuts,
-        
+
         // 方法
         registerShortcut,
         unregisterShortcut,
@@ -294,7 +302,7 @@ export function useKeyboardShortcuts() {
         clearShortcuts,
         registerShortcuts,
         formatShortcut,
-        
+
         // 实用工具
         DEFAULT_SHORTCUTS,
     };

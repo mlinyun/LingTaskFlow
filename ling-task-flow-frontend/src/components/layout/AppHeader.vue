@@ -20,7 +20,7 @@
                         class="menu-btn"
                     >
                         <q-tooltip anchor="bottom middle" self="top middle" :delay="800">
-                            导航菜单
+                            导航菜单 (Ctrl+B)
                         </q-tooltip>
                     </q-btn>
 
@@ -69,6 +69,20 @@
                         <q-badge color="red" floating>3</q-badge>
                         <q-tooltip anchor="bottom middle" self="top middle" :delay="800">
                             通知消息
+                        </q-tooltip>
+                    </q-btn>
+
+                    <!-- 快捷键帮助按钮 -->
+                    <q-btn
+                        flat
+                        dense
+                        round
+                        icon="help"
+                        class="action-btn"
+                        @click="showShortcutHelp = true"
+                    >
+                        <q-tooltip anchor="bottom middle" self="top middle" :delay="800">
+                            快捷键帮助 (F1)
                         </q-tooltip>
                     </q-btn>
 
@@ -245,6 +259,9 @@
                 </div>
             </div>
         </q-toolbar>
+
+        <!-- 快捷键帮助对话框 -->
+        <ShortcutHelpDialog v-model="showShortcutHelp" />
     </q-header>
 </template>
 
@@ -254,6 +271,7 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from 'stores/auth';
 import { useGlobalConfirm } from '../../composables/useGlobalConfirm';
+import ShortcutHelpDialog from '../common/ShortcutHelpDialog.vue';
 
 // 定义组件事件
 const emit = defineEmits<{
@@ -262,6 +280,7 @@ const emit = defineEmits<{
 
 // 响应式数据
 const userMenuVisible = ref(false);
+const showShortcutHelp = ref(false);
 let menuTimer: NodeJS.Timeout | null = null;
 
 // 依赖注入

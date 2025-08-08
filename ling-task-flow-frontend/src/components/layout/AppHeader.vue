@@ -153,7 +153,7 @@
                                     <q-item
                                         clickable
                                         @click="
-                                            handleProfile;
+                                            handleProfile();
                                             userMenuVisible = false;
                                         "
                                         class="dropdown-item"
@@ -295,7 +295,7 @@ const handleMenuToggle = () => {
 };
 
 const handleProfile = () => {
-    $q.notify('个人资料功能开发中...');
+    router.push('/profile');
 };
 
 const handleSettings = () => {

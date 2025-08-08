@@ -400,6 +400,7 @@ import { useQuasar } from 'quasar';
 import { useTaskStore } from 'stores/task';
 import type { Task, TaskCreateData, TaskUpdateData, TaskStatus, TaskPriority } from 'src/types';
 import { useComponentShortcuts } from 'src/composables/useComponentShortcuts';
+import { parseTagsString, formatTagsArray } from 'src/utils/tagUtils';
 
 interface Props {
     modelValue: boolean;
@@ -559,7 +560,7 @@ const loadTaskData = (task: Task) => {
         status: task.status,
         due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '',
         // 解析tags字符串为数组
-        tags: task.tags ? task.tags.split(',').filter(tag => tag.trim()) : [],
+        tags: parseTagsString(task.tags),
     };
 
     console.log('formData after loading:', formData.value);
@@ -577,7 +578,7 @@ const onSubmit = async () => {
             description: formData.value.description,
             priority: formData.value.priority,
             status: formData.value.status,
-            tags: formData.value.tags.join(','), // 将数组转换为逗号分隔的字符串
+            tags: formatTagsArray(formData.value.tags), // 将数组转换为逗号分隔的字符串
             ...(formData.value.due_date && {
                 due_date: new Date(formData.value.due_date).toISOString(),
             }),

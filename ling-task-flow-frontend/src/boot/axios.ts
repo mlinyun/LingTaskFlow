@@ -18,7 +18,7 @@ declare module 'vue' {
 
 // LingTaskFlow API 基础配置
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api',
+    baseURL: 'http://127.0.0.1:8000/api',
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ api.interceptors.response.use(
                 try {
                     // 尝试刷新Token
                     const refreshResponse = await axios.post(
-                        'http://localhost:8000/api/auth/token/refresh/',
+                        'http://127.0.0.1:8000/api/auth/token/refresh/',
                         {
                             refresh: refreshToken,
                         },

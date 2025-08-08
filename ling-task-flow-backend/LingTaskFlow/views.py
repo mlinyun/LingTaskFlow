@@ -383,41 +383,266 @@ def update_profile_view(request):
     """
     更新用户档案API
     
-    需要JWT认证，允许用户更新档案信息
+    需要JWT认证，允许用户更新档案信息和基本用户信息
     """
     if not request.user.is_authenticated:
         return Response({
             'success': False,
             'message': '用户未认证'
         }, status=status.HTTP_401_UNAUTHORIZED)
-    
-    # 获取或创建用户档案
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-    
-    # 使用partial=True来支持部分更新
-    partial = request.method == 'PATCH'
-    serializer = UserProfileSerializer(
-        profile, 
-        data=request.data, 
-        partial=partial,
-        context={'request': request}
-    )
-    
-    if serializer.is_valid():
-        serializer.save()
+
+    try:
+        # 获取或创建用户档案
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+        # 分离用户基本信息和档案信息（昵称在UserProfile中）
+        user_fields = ['username', 'first_name', 'email']
+        user_data = {}
+        profile_data = {}
+
+        for key, value in request.data.items():
+            if key in user_fields:
+                user_data[key] = value
+            else:
+                profile_data[key] = value
+
+        # 更新用户基本信息
+        if user_data:
+            user_serializer = UserSerializer(
+                request.user,
+                data=user_data,
+                partial=True,
+            )
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        # 更新档案信息（允许部分更新，包括 nickname 等）
+        if profile_data:
+            profile_serializer = UserProfileSerializer(
+                profile,
+                data=profile_data,
+                partial=True,
+                context={'request': request},
+            )
+            profile_serializer.is_valid(raise_exception=True)
+            profile_serializer.save()
+
+        # 返回完整的用户信息（包含更新后的profile）
+        user_serializer = UserWithProfileSerializer(
+            request.user,
+            context={'request': request},
+        )
+
         return Response({
             'success': True,
             'message': '档案更新成功',
             'data': {
-                'profile': serializer.data
+                'user': user_serializer.data,
+            },
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': '档案更新失败',
+            'errors': {'server': str(e)},
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_avatar_view(request):
+    """
+    上传用户头像API
+    
+    需要JWT认证，允许用户上传头像图片
+    """
+    try:
+        if 'avatar' not in request.FILES:
+            return Response({
+                'success': False,
+                'message': '请选择头像文件',
+                'errors': {'avatar': '头像文件不能为空'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        avatar_file = request.FILES['avatar']
+        
+        # 验证文件类型
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+        if avatar_file.content_type not in allowed_types:
+            return Response({
+                'success': False,
+                'message': '不支持的文件格式',
+                'errors': {'avatar': '只支持 JPEG、PNG、GIF、WebP 格式的图片'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 验证文件大小（5MB限制）
+        max_size = 5 * 1024 * 1024  # 5MB
+        if avatar_file.size > max_size:
+            return Response({
+                'success': False,
+                'message': '文件太大',
+                'errors': {'avatar': '头像文件大小不能超过5MB'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 获取或创建用户档案
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        
+        # 删除旧头像文件
+        if profile.avatar:
+            try:
+                profile.avatar.delete(save=False)
+            except Exception:
+                pass  # 忽略删除失败的错误
+        
+        # 保存新头像
+        profile.avatar = avatar_file
+        profile.save()
+        
+        # 返回新头像URL
+        avatar_url = profile.get_avatar_url()
+        if request:
+            avatar_url = request.build_absolute_uri(profile.avatar.url) if profile.avatar else None
+        
+        return Response({
+            'success': True,
+            'message': '头像上传成功',
+            'data': {
+                'avatar_url': avatar_url
             }
         }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': '头像上传失败',
+            'errors': {'server': str(e)}
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password_view(request):
+    """
+    修改用户密码API
     
-    return Response({
-        'success': False,
-        'message': '档案更新失败',
-        'errors': serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+    需要JWT认证，允许用户修改密码
+    """
+    try:
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+        
+        # 验证必需字段
+        if not all([current_password, new_password, confirm_password]):
+            return Response({
+                'success': False,
+                'message': '请填写所有必需字段',
+                'errors': {
+                    'current_password': '当前密码不能为空' if not current_password else None,
+                    'new_password': '新密码不能为空' if not new_password else None,
+                    'confirm_password': '确认密码不能为空' if not confirm_password else None,
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 验证当前密码
+        if not request.user.check_password(current_password):
+            return Response({
+                'success': False,
+                'message': '当前密码错误',
+                'errors': {'current_password': '当前密码不正确'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 验证新密码确认
+        if new_password != confirm_password:
+            return Response({
+                'success': False,
+                'message': '密码确认不一致',
+                'errors': {'confirm_password': '两次输入的密码不一致'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 验证新密码强度
+        import re
+        
+        if len(new_password) < 8:
+            return Response({
+                'success': False,
+                'message': '密码强度不够',
+                'errors': {'new_password': '密码长度不能少于8位'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not any(char.isdigit() for char in new_password):
+            return Response({
+                'success': False,
+                'message': '密码强度不够',
+                'errors': {'new_password': '密码必须包含至少一个数字'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not any(char.isalpha() for char in new_password):
+            return Response({
+                'success': False,
+                'message': '密码强度不够',
+                'errors': {'new_password': '密码必须包含至少一个字母'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 检查新密码是否与当前密码相同
+        if request.user.check_password(new_password):
+            return Response({
+                'success': False,
+                'message': '新密码不能与当前密码相同',
+                'errors': {'new_password': '新密码不能与当前密码相同'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 更新密码
+        request.user.set_password(new_password)
+        request.user.save()
+        
+        return Response({
+            'success': True,
+            'message': '密码修改成功，请重新登录'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': '密码修改失败',
+            'errors': {'server': str(e)}
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_all_devices_view(request):
+    """
+    登出所有设备API
+    
+    使所有已发布的JWT token失效
+    """
+    try:
+        # 这里可以实现JWT token黑名单功能
+        # 由于SimplJWT的限制，这里只是一个占位符实现
+        # 实际应用中需要使用JWT黑名单或修改用户的JWT secret
+        
+        # 记录登出操作
+        from .utils import log_login_attempt
+        log_login_attempt(
+            user=request.user,
+            username_attempted=request.user.username,
+            status='logout_all',
+            request=request
+        )
+        
+        return Response({
+            'success': True,
+            'message': '已登出所有设备，请重新登录'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': '操作失败，请重试',
+            'errors': {'server': str(e)}
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

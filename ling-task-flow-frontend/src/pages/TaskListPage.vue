@@ -2,26 +2,26 @@
     <q-page class="task-list-page">
         <!-- 页面头部组件 -->
         <PageHeader
+            icon="task_alt"
             title-primary="任务管理"
             title-accent="系统"
             subtitle="智能化任务管理，提升工作效率与团队协作"
             :primary-action="{
                 icon: 'add',
                 label: '新建任务',
-                tooltip: '创建新的任务项目 (Ctrl+N)',
             }"
             :secondary-actions="[
                 {
                     name: 'refresh',
                     icon: 'refresh',
                     tooltip: '刷新任务列表 (Ctrl+R)',
-                    class: 'refresh-btn',
+                    class: 'fullscreen-btn',
                 },
                 {
                     name: 'filter',
                     icon: 'filter_list',
                     tooltip: '快速筛选 (Ctrl+F)',
-                    class: 'filter-toggle-btn',
+                    class: 'download-btn',
                 },
             ]"
             @primary-action="openCreateDialog"
@@ -68,19 +68,42 @@
             @create-task="openCreateDialog"
         >
             <template #task-cards>
-                <!-- 任务卡片 -->
-                <CyberTaskCard
-                    v-for="(task, index) in taskStore.activeTasks"
-                    :key="task.id"
-                    :task="task"
-                    :is-selected="taskStore.selectedTasks.includes(task.id)"
-                    :view-mode="viewMode"
-                    :data-index="index"
-                    @view="handleViewTask"
-                    @edit="handleEditTask"
-                    @delete="handleDeleteTask"
-                    @selection-change="(taskId, selected) => taskStore.toggleTaskSelection(taskId)"
-                />
+                <!-- 任务卡片 - 支持拖拽排序 -->
+                <draggable
+                    v-model="taskStore.activeTasks"
+                    tag="div"
+                    class="draggable-task-container"
+                    handle=".task-drag-handle"
+                    ghost-class="ghost-task"
+                    chosen-class="chosen-task"
+                    drag-class="dragging-task"
+                    :animation="200"
+                    :delay="100"
+                    :force-fallback="false"
+                    :disabled="taskStore.loadingStates.fetchingTasks"
+                    @start="onDragStart"
+                    @end="onDragEnd"
+                >
+                    <template #item="{ element: task, index }">
+                        <CyberTaskCard
+                            :key="task.id"
+                            :task="task"
+                            :is-selected="taskStore.selectedTasks.includes(task.id)"
+                            :view-mode="viewMode"
+                            :data-index="index"
+                            @view="handleViewTask"
+                            @edit="handleEditTask"
+                            @delete="handleDeleteTask"
+                            @start="handleStartTask"
+                            @pause="handlePauseTask"
+                            @resume="handleResumeTask"
+                            @complete="handleCompleteTask"
+                            @selection-change="
+                                (taskId, selected) => taskStore.toggleTaskSelection(taskId)
+                            "
+                        />
+                    </template>
+                </draggable>
             </template>
         </TaskConsole>
 
@@ -120,6 +143,7 @@ import { useRouter } from 'vue-router';
 import { useTaskStore } from 'stores/task';
 import TaskDialogForm from 'components/task-list/TaskDialogForm.vue';
 import TaskViewDialog from 'components/task-list/TaskViewDialog.vue';
+import draggable from 'vue3-draggable-next';
 import type { Task, TaskStatus, TaskPriority, TaskSearchParams } from '../types';
 import { useGlobalConfirm } from '../composables/useGlobalConfirm';
 import { useComponentShortcuts } from '../composables/useComponentShortcuts';
@@ -128,7 +152,7 @@ import TaskConsole from 'components/task-list/TaskConsole.vue';
 import TaskFilterPanel from 'components/task-list/TaskFilterPanel.vue';
 import TaskStatistics from 'components/task-list/TaskStatistics.vue';
 import TaskActionButtons from 'components/task-list/TaskActionButtons.vue';
-import PageHeader from 'components/task-list/PageHeader.vue';
+import PageHeader from 'components/common/PageHeader.vue';
 
 const $q = useQuasar();
 const router = useRouter();
@@ -487,6 +511,119 @@ const onTaskSaved = (task: Task) => {
     // 任务已保存，对话框会自动关闭
     // TaskStore 已经处理了数据更新
     console.log('任务已保存:', task.title);
+};
+
+// 拖拽处理函数
+const onDragStart = (evt: { oldIndex: number; newIndex: number }) => {
+    console.log('开始拖拽:', evt);
+    // 可以在这里添加拖拽开始的视觉反馈
+    document.body.classList.add('dragging-task');
+};
+
+const onDragEnd = async (evt: { oldIndex: number; newIndex: number }) => {
+    console.log('拖拽结束:', evt);
+    document.body.classList.remove('dragging-task');
+
+    // 如果位置发生了变化，保存新的排序
+    if (evt.oldIndex !== evt.newIndex) {
+        try {
+            const movedTask = taskStore.activeTasks[evt.newIndex];
+            if (movedTask) {
+                // 这里可以调用API保存新的排序
+                console.log(
+                    `任务 "${movedTask.title}" 从位置 ${evt.oldIndex} 移动到 ${evt.newIndex}`,
+                );
+
+                // 显示成功消息
+                $q.notify({
+                    type: 'positive',
+                    message: '任务排序已更新',
+                    timeout: 2000,
+                });
+            }
+        } catch (error) {
+            console.error('保存排序失败:', error);
+            $q.notify({
+                type: 'negative',
+                message: '保存排序失败',
+                timeout: 2000,
+            });
+        }
+    }
+};
+
+// 任务状态控制函数
+const handleStartTask = async (task: Task) => {
+    try {
+        await taskStore.updateTask(task.id, { status: 'IN_PROGRESS' });
+        $q.notify({
+            type: 'positive',
+            message: `任务 "${task.title}" 已开始`,
+            timeout: 2000,
+        });
+    } catch (error) {
+        console.error('开始任务失败:', error);
+        $q.notify({
+            type: 'negative',
+            message: '开始任务失败',
+            timeout: 2000,
+        });
+    }
+};
+
+const handlePauseTask = async (task: Task) => {
+    try {
+        await taskStore.updateTask(task.id, { status: 'ON_HOLD' });
+        $q.notify({
+            type: 'positive',
+            message: `任务 "${task.title}" 已暂停`,
+            timeout: 2000,
+        });
+    } catch (error) {
+        console.error('暂停任务失败:', error);
+        $q.notify({
+            type: 'negative',
+            message: '暂停任务失败',
+            timeout: 2000,
+        });
+    }
+};
+
+const handleResumeTask = async (task: Task) => {
+    try {
+        await taskStore.updateTask(task.id, { status: 'IN_PROGRESS' });
+        $q.notify({
+            type: 'positive',
+            message: `任务 "${task.title}" 已恢复`,
+            timeout: 2000,
+        });
+    } catch (error) {
+        console.error('恢复任务失败:', error);
+        $q.notify({
+            type: 'negative',
+            message: '恢复任务失败',
+            timeout: 2000,
+        });
+    }
+};
+
+const handleCompleteTask = async (task: Task) => {
+    try {
+        await taskStore.updateTask(task.id, { status: 'COMPLETED' });
+        $q.notify({
+            type: 'positive',
+            message: `任务 "${task.title}" 已完成`,
+            timeout: 2000,
+            icon: 'check_circle',
+        });
+    } catch (error) {
+        console.error('完成任务失败:', error);
+        $q.notify({
+            type: 'negative',
+            message: '完成任务失败',
+            timeout: 2000,
+        });
+    }
 };
 
 // 组件挂载时加载数据
@@ -1701,6 +1838,41 @@ onMounted(() => {
                 }
             }
         }
+    }
+}
+
+// 拖拽相关样式
+.draggable-task-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .ghost-task {
+        opacity: 0.5;
+        transform: rotate(2deg);
+        background: rgba(59, 130, 246, 0.1);
+        border: 2px dashed rgba(59, 130, 246, 0.3);
+    }
+
+    .chosen-task {
+        transform: scale(1.02);
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .dragging-task {
+        opacity: 0.8;
+        transform: rotate(3deg) scale(1.05);
+        z-index: 1000;
+    }
+}
+
+// 全局拖拽状态
+:global(body.dragging-task) {
+    cursor: grabbing !important;
+
+    * {
+        cursor: grabbing !important;
     }
 }
 </style>

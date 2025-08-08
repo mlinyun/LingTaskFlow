@@ -50,7 +50,7 @@
                         <q-icon name="check_circle" size="24px" />
                     </div>
                     <div class="stat-content">
-                        <span class="stat-label">COMPLETED</span>
+                        <span class="stat-label">已完成</span>
                         <span class="stat-value">{{ formatNumber(props.completedTasks) }}</span>
                         <div class="stat-indicator">
                             <div

@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useKeyboardShortcuts } from '../../composables/useKeyboardShortcuts';
+import { useGlobalShortcuts } from '../../composables/useKeyboardShortcuts';
 
 // 类型定义
 interface ShortcutConfig {
@@ -128,7 +128,7 @@ interface ShortcutGroup {
     title: string;
     icon: string;
     order: number;
-    shortcuts: ShortcutConfig[];
+    shortcuts: ShortcutWithId[];
 }
 
 // Props
@@ -139,18 +139,18 @@ interface Props {
 const props = defineProps<Props>();
 
 // Emits
-defineEmits<{
+const emit = defineEmits<{
     'update:modelValue': [value: boolean];
 }>();
 
-// 快捷键管理
-const shortcuts = useKeyboardShortcuts();
+// 快捷键管理（使用全局实例）
+const shortcuts = useGlobalShortcuts();
 
 // 响应式状态
 const isVisible = computed({
     get: () => props.modelValue,
-    set: () => {
-        // 通过emit更新
+    set: (value: boolean) => {
+        emit('update:modelValue', value);
     },
 });
 
@@ -175,23 +175,23 @@ const contextConfig: Record<
     },
     dialog: {
         title: '对话框',
-        icon: 'dialog',
+        icon: 'chat',
         order: 3,
     },
 };
 
 // 按上下文分组快捷键
+// 为带有 id 的快捷键定义类型
+type ShortcutWithId = ShortcutConfig & { id: string };
+
 const shortcutGroups = computed(() => {
     const groups: Record<string, ShortcutGroup> = {};
 
-    // 获取所有快捷键
-    const allShortcuts = Array.from(shortcuts.shortcuts.entries()).map(([id, config]) => ({
-        id,
-        ...config,
-    })) as ShortcutConfig[];
+    // 使用响应式数组，动态注册/移除能触发更新
+    const allShortcuts: ShortcutWithId[] = shortcuts.shortcutItems.value as ShortcutWithId[];
 
     // 按上下文分组
-    allShortcuts.forEach((shortcut: ShortcutConfig) => {
+    allShortcuts.forEach((shortcut: ShortcutWithId) => {
         const context = shortcut.context || 'global';
         if (!groups[context]) {
             const config = contextConfig[context] || {
@@ -215,7 +215,7 @@ const shortcutGroups = computed(() => {
         .sort((a, b) => a.order - b.order)
         .map(group => ({
             ...group,
-            shortcuts: group.shortcuts.sort((a: ShortcutConfig, b: ShortcutConfig) => {
+            shortcuts: group.shortcuts.sort((a: ShortcutWithId, b: ShortcutWithId) => {
                 return a.description.localeCompare(b.description);
             }),
         }));

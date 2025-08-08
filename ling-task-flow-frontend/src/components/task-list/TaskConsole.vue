@@ -10,20 +10,20 @@
                         <div class="indicator-dot"></div>
                         <div class="indicator-dot"></div>
                     </div>
-                    <h2 class="title-text">TASK_MATRIX_CONSOLE</h2>
+                    <h2 class="title-text">任务智能控制台</h2>
                     <div class="title-underline"></div>
                 </div>
                 <div class="console-stats">
                     <div class="stat-item">
-                        <span class="stat-label">TOTAL</span>
+                        <span class="stat-label">总计</span>
                         <span class="stat-value">{{ String(totalTasks).padStart(3, '0') }}</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">ACTIVE</span>
+                        <span class="stat-label">活跃</span>
                         <span class="stat-value">{{ String(activeTasks).padStart(3, '0') }}</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">SELECTED</span>
+                        <span class="stat-label">已选</span>
                         <span class="stat-value">{{ String(selectedTasks).padStart(3, '0') }}</span>
                     </div>
                 </div>
@@ -35,7 +35,7 @@
                             @update:model-value="$emit('select-all')"
                             class="cyber-checkbox"
                         />
-                        <span class="control-label">SELECT_ALL</span>
+                        <span class="control-label">全选</span>
                     </div>
                     <div class="view-switch">
                         <q-btn
@@ -46,7 +46,7 @@
                             class="cyber-btn"
                         >
                             <q-tooltip>{{
-                                viewMode === 'list' ? 'GRID_VIEW' : 'LIST_VIEW'
+                                viewMode === 'list' ? '网格视图' : '列表视图'
                             }}</q-tooltip>
                         </q-btn>
                     </div>
@@ -74,7 +74,7 @@
                     <div class="loading-spinner">
                         <div class="spinner-ring" v-for="i in 3" :key="i"></div>
                     </div>
-                    <div class="loading-text">LOADING_TASK_MATRIX...</div>
+                    <div class="loading-text">正在加载任务矩阵...</div>
                     <div class="loading-progress">
                         <div class="progress-bar"></div>
                     </div>
@@ -90,7 +90,7 @@
                             <div class="dot yellow"></div>
                             <div class="dot green"></div>
                         </div>
-                        <div class="terminal-title">TASK_TERMINAL</div>
+                        <div class="terminal-title">任务终端</div>
                     </div>
                     <div class="terminal-content">
                         <div class="terminal-lines">
@@ -103,10 +103,10 @@
                             </div>
                             <div class="line">
                                 <span class="prompt">root@system:~$</span>
-                                <span class="command">echo "NO_TASKS_FOUND"</span>
+                                <span class="command">echo "未找到任务"</span>
                             </div>
                             <div class="line">
-                                <span class="output error">NO_TASKS_FOUND</span>
+                                <span class="output error">未找到任务</span>
                             </div>
                             <div class="line">
                                 <span class="prompt">root@system:~$</span>
@@ -116,7 +116,7 @@
                         <q-btn
                             color="primary"
                             icon="add_circle_outline"
-                            label="INITIALIZE_TASK_MATRIX"
+                            label="初始化任务矩阵"
                             unelevated
                             class="cyber-create-btn"
                             @click="$emit('create-task')"

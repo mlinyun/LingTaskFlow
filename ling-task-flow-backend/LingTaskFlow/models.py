@@ -32,6 +32,29 @@ class UserProfile(models.Model):
         help_text='用户头像图片'
     )
     
+    phone = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name='联系电话',
+        help_text='用户联系电话'
+    )
+    
+    bio = models.TextField(
+        max_length=500,
+        null=True,
+        blank=True,
+        verbose_name='个人简介',
+        help_text='用户个人简介描述'
+    )
+
+    nickname = models.CharField(
+        max_length=50,
+        default='新用户',
+        verbose_name='昵称',
+        help_text='用户在系统中显示的昵称'
+    )
+    
     timezone = models.CharField(
         max_length=50,
         default='Asia/Shanghai',
@@ -63,6 +86,17 @@ class UserProfile(models.Model):
         default='auto',
         verbose_name='主题偏好',
         help_text='用户界面主题偏好'
+    )
+    
+    language = models.CharField(
+        max_length=10,
+        choices=[
+            ('zh-CN', '简体中文'),
+            ('en-US', 'English'),
+        ],
+        default='zh-CN',
+        verbose_name='语言偏好',
+        help_text='用户界面语言偏好'
     )
     
     email_notifications = models.BooleanField(
@@ -135,7 +169,8 @@ def create_user_profile(sender, instance, created, **kwargs):
     信号处理器，确保每个用户都有对应的扩展信息
     """
     if created:
-        UserProfile.objects.create(user=instance)
+        # 创建用户扩展信息并将昵称默认设置为用户名
+        UserProfile.objects.create(user=instance, nickname=instance.username or '新用户')
 
 
 @receiver(post_save, sender=User)

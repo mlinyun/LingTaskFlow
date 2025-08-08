@@ -8,6 +8,8 @@ export interface User {
     id: number;
     username: string;
     email: string;
+    first_name?: string;
+    last_name?: string;
     date_joined?: string;
     last_login?: string;
     profile?: UserProfile;
@@ -18,11 +20,15 @@ export interface UserProfile {
     user?: User;
     avatar?: string;
     avatar_url?: string;
+    phone?: string;
+    bio?: string;
+    nickname?: string;
     timezone: string;
     task_count: number;
     completed_task_count: number;
     completion_rate: number;
     theme_preference: string;
+    language?: string;
     email_notifications: boolean;
     created_at?: string;
     updated_at?: string;

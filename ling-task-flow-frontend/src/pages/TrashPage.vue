@@ -1,78 +1,33 @@
 <template>
     <q-page class="trash-page">
-        <!-- 页面头部 - 科技风格设计 -->
-        <div class="page-header">
-            <div class="header-background">
-                <div class="tech-grid"></div>
-                <div class="floating-particles">
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                </div>
-            </div>
-
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="title-container">
-                        <div class="icon-wrapper">
-                            <q-icon name="delete" size="24px" class="title-icon" />
-                            <div class="icon-glow"></div>
-                        </div>
-                        <div class="title-text">
-                            <h1 class="page-title">
-                                <span class="title-primary">回收站</span>
-                                <span class="title-accent">管理中心</span>
-                            </h1>
-                            <p class="page-subtitle">
-                                <q-icon name="restore" size="14px" class="q-mr-xs" />
-                                {{ formatDate(new Date()) }} 安全管理已删除的任务，支持智能恢复
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="action-section">
-                    <div class="action-buttons">
-                        <q-btn
-                            icon="refresh"
-                            label="刷新数据"
-                            class="refresh-btn"
-                            rounded
-                            :loading="loading"
-                            @click="refreshTrash"
-                        />
-                        <q-btn
-                            :icon="showBulkOperations ? 'close' : 'checklist'"
-                            class="fullscreen-btn"
-                            flat
-                            round
-                            @click="showBulkOperations = !showBulkOperations"
-                        />
-                        <q-btn
-                            icon="settings"
-                            class="download-btn"
-                            flat
-                            round
-                            @click="showSettings = true"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <!-- 底部装饰线 - 重新设计为更科技感的效果 -->
-            <div class="header-decoration">
-                <div class="deco-border-glow"></div>
-                <div class="deco-particles">
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                </div>
-                <div class="deco-pulse-line"></div>
-            </div>
-        </div>
+        <!-- 页面头部组件 -->
+        <PageHeader
+            icon="delete"
+            title-primary="回收站"
+            title-accent="管理中心"
+            subtitle="安全管理已删除的任务，支持智能恢复"
+            :primary-action="{
+                icon: 'refresh',
+                label: '刷新数据',
+                loading: loading,
+            }"
+            :secondary-actions="[
+                {
+                    name: 'bulk-operations',
+                    icon: showBulkOperations ? 'close' : 'checklist',
+                    tooltip: showBulkOperations ? '关闭批量操作' : '批量操作',
+                    class: 'fullscreen-btn',
+                },
+                {
+                    name: 'clear-all',
+                    icon: 'delete_forever',
+                    tooltip: '彻底清空回收站',
+                    class: 'download-btn',
+                },
+            ]"
+            @primary-action="refreshTrash"
+            @secondary-action="handleSecondaryAction"
+        />
 
         <!-- 统计信息面板 - 与数据概览统一的现代化设计 -->
         <div class="stats-section">
@@ -342,9 +297,19 @@
                                 {{ task.description }}
                             </p>
 
-                            <div class="task-tags" v-if="task.tags">
+                            <div class="task-tags" v-if="getTaskTags(task.tags).length > 0">
                                 <q-icon name="label" class="tags-icon" />
-                                <span class="tags-text">{{ task.tags }}</span>
+                                <div class="tags-list">
+                                    <span
+                                        v-for="tag in getTaskTags(task.tags).slice(0, 3)"
+                                        :key="tag"
+                                        class="tag"
+                                        >#{{ tag }}</span
+                                    >
+                                    <span v-if="getTaskTags(task.tags).length > 3" class="tag-more"
+                                        >+{{ getTaskTags(task.tags).length - 3 }}</span
+                                    >
+                                </div>
                             </div>
 
                             <div class="task-delete-info">
@@ -421,6 +386,8 @@ import type { Task, TrashStats } from '../types';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useGlobalConfirm } from '../composables/useGlobalConfirm';
+import PageHeader from 'components/common/PageHeader.vue';
+import { getTaskTags } from '../utils/tagUtils';
 
 // 依赖注入
 const $q = useQuasar();
@@ -438,7 +405,6 @@ const selectedTasks = ref<string[]>([]);
 const batchRestoring = ref(false);
 const batchDeleting = ref(false);
 const showBulkOperations = ref(false);
-const showSettings = ref(false);
 
 // 计算属性
 const totalPages = computed(() => Math.ceil(totalTasks.value / pageSize.value));
@@ -489,6 +455,20 @@ const fetchTrashTasks = async (page = 1) => {
 
 const refreshTrash = () => {
     void fetchTrashTasks(currentPage.value);
+};
+
+// 处理头部次要操作
+const handleSecondaryAction = (actionName: string) => {
+    switch (actionName) {
+        case 'bulk-operations':
+            showBulkOperations.value = !showBulkOperations.value;
+            break;
+        case 'clear-all':
+            handleEmptyTrash();
+            break;
+        default:
+            console.log(`未知操作: ${actionName}`);
+    }
 };
 
 const onPageChange = (page: number) => {
@@ -686,15 +666,6 @@ const handleEmptyTrash = async () => {
 };
 
 // 格式化辅助函数
-const formatDate = (date: Date) => {
-    return date.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long',
-    });
-};
-
 const formatDeleteTime = (deletedAt: string | undefined): string => {
     if (!deletedAt) return '未知时间';
     try {

@@ -1,66 +1,23 @@
 <template>
     <q-page class="dashboard-page">
-        <!-- 页面头部 - 科技感设计 -->
-        <div class="page-header">
-            <div class="header-background">
-                <div class="tech-grid"></div>
-                <div class="floating-particles">
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                </div>
-            </div>
-
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="title-container">
-                        <div class="icon-wrapper">
-                            <q-icon name="analytics" size="24px" class="title-icon" />
-                            <div class="icon-glow"></div>
-                        </div>
-                        <div class="title-text">
-                            <h1 class="page-title">
-                                <span class="title-primary">数据概览</span>
-                                <span class="title-accent">仪表盘</span>
-                            </h1>
-                            <p class="page-subtitle">
-                                <q-icon name="insights" size="14px" class="q-mr-xs" />
-                                {{ formatDate(new Date()) }} 实时数据监控与智能分析
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="action-section">
-                    <div class="action-buttons">
-                        <q-btn
-                            icon="refresh"
-                            label="刷新数据"
-                            class="refresh-btn"
-                            rounded
-                            :loading="loading"
-                            @click="refreshData"
-                        />
-                        <q-btn icon="settings" class="fullscreen-btn" flat round />
-                        <q-btn icon="fullscreen" class="download-btn" flat round />
-                    </div>
-                </div>
-            </div>
-
-            <!-- 底部装饰线 - 重新设计为更科技感的效果 -->
-            <div class="header-decoration">
-                <div class="deco-border-glow"></div>
-                <div class="deco-particles">
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                    <div class="deco-particle"></div>
-                </div>
-                <div class="deco-pulse-line"></div>
-            </div>
-        </div>
+        <!-- 页面头部 - 使用公共组件 -->
+        <PageHeader
+            icon="analytics"
+            title-primary="数据概览"
+            title-accent="仪表盘"
+            subtitle="实时数据监控与智能分析"
+            :primary-action="{
+                icon: 'refresh',
+                label: '刷新数据',
+                loading: loading,
+            }"
+            :secondary-actions="[
+                { name: 'settings', icon: 'settings', tooltip: '设置', class: 'fullscreen-btn' },
+                { name: 'fullscreen', icon: 'fullscreen', tooltip: '全屏', class: 'download-btn' },
+            ]"
+            @primary-action="refreshData"
+            @secondary-action="handleSecondaryAction"
+        />
 
         <!-- 主要内容区域 -->
         <div class="content-container">
@@ -234,6 +191,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTaskStore } from 'src/stores/task';
 import type { TaskStats, TaskSearchParams, TaskStatus, TaskPriority } from 'src/types';
+import PageHeader from '../components/common/PageHeader.vue';
 import StatsCard from '../components/dashboard/StatsCard.vue';
 import StatusDistributionChart from '../components/dashboard/StatusDistributionChart.vue';
 import PriorityDistributionChart from '../components/dashboard/PriorityDistributionChart.vue';
@@ -330,16 +288,6 @@ const refreshData = async () => {
     });
 };
 
-// 日期格式化函数
-const formatDate = (date: Date) => {
-    return date.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long',
-    });
-};
-
 // 趋势计算（简化实现，实际应该从后端获取）
 const getTrend = (type: string) => {
     // 这里应该从后端获取趋势数据，暂时返回模拟数据
@@ -427,6 +375,28 @@ const handleProgressClick = (item: StatisticItem) => {
         position: 'top',
     });
     // 未来可以添加：await goToTasks({ progressRange: item.range });
+};
+
+// 处理头部次要操作
+const handleSecondaryAction = (actionName: string) => {
+    switch (actionName) {
+        case 'settings':
+            Notify.create({
+                type: 'info',
+                message: '设置功能开发中...',
+                position: 'top',
+            });
+            break;
+        case 'fullscreen':
+            Notify.create({
+                type: 'info',
+                message: '全屏功能开发中...',
+                position: 'top',
+            });
+            break;
+        default:
+            console.log(`未知操作: ${actionName}`);
+    }
 };
 </script>
 

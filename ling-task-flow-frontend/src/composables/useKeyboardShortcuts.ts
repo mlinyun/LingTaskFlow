@@ -128,17 +128,17 @@ export function useKeyboardShortcuts() {
     };
 
     // 注册快捷键
-    const registerShortcut = (id: string, config: ShortcutConfig) => {
+    const registerShortcut = (id: string, config: ShortcutConfig): void => {
         shortcuts.value.set(id, config);
     };
 
     // 取消注册快捷键
-    const unregisterShortcut = (id: string) => {
+    const unregisterShortcut = (id: string): void => {
         shortcuts.value.delete(id);
     };
 
     // 禁用/启用快捷键
-    const setShortcutEnabled = (id: string, enabled: boolean) => {
+    const setShortcutEnabled = (id: string, enabled: boolean): void => {
         const shortcut = shortcuts.value.get(id);
         if (shortcut) {
             shortcut.disabled = !enabled;
@@ -146,12 +146,12 @@ export function useKeyboardShortcuts() {
     };
 
     // 设置当前上下文
-    const setContext = (context: string) => {
+    const setContext = (context: string): void => {
         currentContext.value = context;
     };
 
     // 获取当前上下文的快捷键
-    const getContextShortcuts = computed(() => {
+    const getContextShortcuts = computed((): Array<ShortcutConfig & { id: string }> => {
         return Array.from(shortcuts.value.entries())
             .filter(
                 ([, config]) =>
@@ -191,7 +191,7 @@ export function useKeyboardShortcuts() {
     };
 
     // 键盘事件处理器
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
         if (!isEnabled.value) return;
 
         // 如果焦点在输入框中，跳过某些快捷键
@@ -252,22 +252,22 @@ export function useKeyboardShortcuts() {
     };
 
     // 全局启用/禁用快捷键
-    const setEnabled = (enabled: boolean) => {
+    const setEnabled = (enabled: boolean): void => {
         isEnabled.value = enabled;
     };
 
     // 获取快捷键配置
-    const getShortcut = (id: string) => {
+    const getShortcut = (id: string): ShortcutConfig | undefined => {
         return shortcuts.value.get(id);
     };
 
     // 清除所有快捷键
-    const clearShortcuts = () => {
+    const clearShortcuts = (): void => {
         shortcuts.value.clear();
     };
 
     // 批量注册快捷键
-    const registerShortcuts = (configs: Record<string, ShortcutConfig>) => {
+    const registerShortcuts = (configs: Record<string, ShortcutConfig>): void => {
         Object.entries(configs).forEach(([id, config]) => {
             registerShortcut(id, config);
         });
@@ -285,12 +285,16 @@ export function useKeyboardShortcuts() {
 
     return {
         // 状态
-        shortcuts: shortcuts.value,
+        shortcuts: computed(() => shortcuts.value).value,
         isEnabled,
         currentContext,
 
         // 计算属性
         contextShortcuts: getContextShortcuts,
+        shortcutItems: computed(
+            (): Array<ShortcutConfig & { id: string }> =>
+                Array.from(shortcuts.value.entries()).map(([id, config]) => ({ id, ...config })),
+        ),
 
         // 方法
         registerShortcut,

@@ -45,6 +45,12 @@ const routes: RouteRecordRaw[] = [
                 name: 'TrashPage',
                 component: () => import('pages/TrashPage.vue'),
             },
+            // 个人资料
+            {
+                path: 'profile',
+                name: 'ProfilePage',
+                component: () => import('pages/ProfilePage.vue'),
+            },
         ],
     },
 

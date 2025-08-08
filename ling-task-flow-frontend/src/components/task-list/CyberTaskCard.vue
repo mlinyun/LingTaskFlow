@@ -17,7 +17,7 @@
         </div>
 
         <!-- 拖拽手柄 -->
-        <div class="drag-handle">
+        <div class="drag-handle task-drag-handle">
             <div class="handle-lines">
                 <div class="line"></div>
                 <div class="line"></div>
@@ -45,7 +45,7 @@
                             :key="i"
                         ></div>
                     </div>
-                    <span class="priority-text">{{ task.priority }}</span>
+                    <span class="priority-text">{{ getPriorityLabel(task.priority) }}</span>
                 </div>
                 <div
                     class="status-indicator"
@@ -63,9 +63,13 @@
             <div class="task-description" v-if="task.description">
                 {{ task.description.slice(0, 100) }}{{ task.description.length > 100 ? '...' : '' }}
             </div>
-            <div class="task-tags" v-if="task.tags && task.tags.length > 0">
-                <div class="tag" v-for="tag in task.tags.slice(0, 3)" :key="tag">#{{ tag }}</div>
-                <div class="tag-more" v-if="task.tags.length > 3">+{{ task.tags.length - 3 }}</div>
+            <div class="task-tags" v-if="getTaskTags(task.tags).length > 0">
+                <div class="tag" v-for="tag in getTaskTags(task.tags).slice(0, 3)" :key="tag">
+                    #{{ tag }}
+                </div>
+                <div class="tag-more" v-if="getTaskTags(task.tags).length > 3">
+                    +{{ getTaskTags(task.tags).length - 3 }}
+                </div>
             </div>
         </div>
 
@@ -85,6 +89,63 @@
             </div>
             <div class="footer-right">
                 <div class="action-buttons">
+                    <!-- 状态控制按钮 -->
+                    <q-btn
+                        v-if="task.status === 'PENDING'"
+                        flat
+                        dense
+                        round
+                        icon="play_arrow"
+                        size="sm"
+                        class="action-btn start"
+                        @click="$emit('start', task)"
+                    >
+                        <q-tooltip>开始任务</q-tooltip>
+                    </q-btn>
+
+                    <q-btn
+                        v-if="task.status === 'IN_PROGRESS'"
+                        flat
+                        dense
+                        round
+                        icon="pause"
+                        size="sm"
+                        class="action-btn pause"
+                        @click="$emit('pause', task)"
+                    >
+                        <q-tooltip>暂停任务</q-tooltip>
+                    </q-btn>
+
+                    <q-btn
+                        v-if="task.status === 'ON_HOLD'"
+                        flat
+                        dense
+                        round
+                        icon="play_arrow"
+                        size="sm"
+                        class="action-btn resume"
+                        @click="$emit('resume', task)"
+                    >
+                        <q-tooltip>恢复任务</q-tooltip>
+                    </q-btn>
+
+                    <q-btn
+                        v-if="task.status !== 'COMPLETED' && task.status !== 'CANCELLED'"
+                        flat
+                        dense
+                        round
+                        icon="check_circle"
+                        size="sm"
+                        class="action-btn complete"
+                        @click="$emit('complete', task)"
+                    >
+                        <q-tooltip>完成任务</q-tooltip>
+                    </q-btn>
+
+                    <!-- 分隔线 -->
+                    <div class="action-divider"></div>
+
+                    <!-- 基础操作按钮 -->
                     <q-btn
                         flat
                         dense
@@ -134,7 +195,7 @@
         <div class="drag-placeholder" :class="{ active: showDragPlaceholder }">
             <div class="placeholder-content">
                 <q-icon name="swap_vert" size="20px" />
-                <span>DROP_HERE</span>
+                <span>拖拽到此处</span>
             </div>
         </div>
     </div>
@@ -142,6 +203,7 @@
 
 <script setup lang="ts">
 import type { Task, TaskStatus, TaskPriority } from '../../types';
+import { getTaskTags } from '../../utils/tagUtils';
 
 interface Props {
     task: Task;
@@ -155,6 +217,10 @@ interface Emits {
     (e: 'view', task: Task): void;
     (e: 'edit', task: Task): void;
     (e: 'delete', task: Task): void;
+    (e: 'start', task: Task): void;
+    (e: 'pause', task: Task): void;
+    (e: 'resume', task: Task): void;
+    (e: 'complete', task: Task): void;
     (e: 'selection-change', taskId: string, selected: boolean): void;
 }
 
@@ -198,6 +264,16 @@ const getPriorityLevel = (priority: TaskPriority): number => {
         URGENT: 4,
     };
     return levels[priority] || 2;
+};
+
+const getPriorityLabel = (priority: TaskPriority): string => {
+    const labels: Record<TaskPriority, string> = {
+        LOW: '低',
+        MEDIUM: '中',
+        HIGH: '高',
+        URGENT: '紧急',
+    };
+    return labels[priority] || '中';
 };
 
 const formatDate = (dateString: string): string => {
@@ -577,6 +653,47 @@ const handleSelectionChange = (selected: boolean) => {
                             box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
                         }
                     }
+
+                    &.start,
+                    &.resume {
+                        background: rgba(34, 197, 94, 0.1);
+                        color: #22c55e;
+                        border-color: rgba(34, 197, 94, 0.2);
+
+                        &:hover {
+                            background: rgba(34, 197, 94, 0.2);
+                            box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+                        }
+                    }
+
+                    &.pause {
+                        background: rgba(251, 191, 36, 0.1);
+                        color: #fbbf24;
+                        border-color: rgba(251, 191, 36, 0.2);
+
+                        &:hover {
+                            background: rgba(251, 191, 36, 0.2);
+                            box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
+                        }
+                    }
+
+                    &.complete {
+                        background: rgba(168, 85, 247, 0.1);
+                        color: #a855f7;
+                        border-color: rgba(168, 85, 247, 0.2);
+
+                        &:hover {
+                            background: rgba(168, 85, 247, 0.2);
+                            box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+                        }
+                    }
+                }
+
+                .action-divider {
+                    width: 1px;
+                    height: 24px;
+                    background: rgba(59, 130, 246, 0.2);
+                    margin: 0 0.25rem;
                 }
             }
         }
@@ -734,6 +851,37 @@ const handleSelectionChange = (selected: boolean) => {
                 }
             }
         }
+    }
+}
+
+// 拖拽相关样式
+.draggable-task-container {
+    .ghost-task {
+        opacity: 0.5;
+        transform: rotate(2deg);
+        background: rgba(59, 130, 246, 0.1);
+        border: 2px dashed rgba(59, 130, 246, 0.3);
+    }
+
+    .chosen-task {
+        transform: scale(1.02);
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .dragging-task {
+        opacity: 0.8;
+        transform: rotate(3deg) scale(1.05);
+        z-index: 1000;
+    }
+}
+
+// 全局拖拽状态
+:global(body.dragging-task) {
+    cursor: grabbing !important;
+
+    * {
+        cursor: grabbing !important;
     }
 }
 </style>

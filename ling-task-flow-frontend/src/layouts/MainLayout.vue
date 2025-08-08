@@ -86,6 +86,13 @@ const navigationLinks = [
         link: '/trash',
         color: 'warning',
     },
+    {
+        title: '个人资料',
+        caption: '管理个人信息和偏好',
+        icon: 'account_circle',
+        link: '/profile',
+        color: 'positive',
+    },
 ];
 
 // 方法

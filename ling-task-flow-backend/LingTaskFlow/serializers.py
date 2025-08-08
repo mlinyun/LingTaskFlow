@@ -286,9 +286,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = (
-            'user', 'avatar', 'avatar_url', 'timezone', 
+            'user', 'avatar', 'avatar_url', 'phone', 'bio', 'nickname', 'timezone', 
             'task_count', 'completed_task_count', 'completion_rate',
-            'theme_preference', 'email_notifications',
+            'theme_preference', 'language', 'email_notifications',
             'created_at', 'updated_at'
         )
         read_only_fields = (

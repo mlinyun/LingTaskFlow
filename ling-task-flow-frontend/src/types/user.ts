@@ -16,4 +16,5 @@ export interface UserProfile {
     completed_task_count: number;
     bio?: string;
     avatar?: string;
+    nickname?: string;
 }

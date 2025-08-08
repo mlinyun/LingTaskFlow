@@ -20,6 +20,7 @@ desktop.ini
 # 编辑器和IDE
 .vscode/
 .idea/
+.codebuddy/
 *.swp
 *.swo
 *~

@@ -1108,7 +1108,7 @@ onMounted(() => {
 
 // 统计信息面板 - 与数据概览统一的现代化设计
 .stats-section {
-    padding: 0 2rem 2rem;
+    padding: 2rem 0;
     position: relative;
     z-index: 1;
 
@@ -1478,7 +1478,6 @@ onMounted(() => {
 
 // 内容区域
 .content-section {
-    padding: 0 2rem 2rem;
     position: relative;
     z-index: 1;
 }

@@ -24,6 +24,10 @@ export const useTaskStore = defineStore('task', () => {
     const searchParams = ref<TaskSearchParams>({});
     const selectedTasks = ref<string[]>([]);
     const taskStats = ref<TaskStats | null>(null);
+    
+    // 拖拽排序相关状态
+    const isDragging = ref(false);
+    const draggedTask = ref<Task | null>(null);
 
     // 细粒度加载状态
     const loadingStates = ref({
@@ -535,6 +539,33 @@ export const useTaskStore = defineStore('task', () => {
         }
     };
 
+    /**
+     * 批量更新任务排序
+     */
+    const updateTasksOrder = async (tasksWithOrder: Array<{id: string, sort_order: number}>): Promise<void> => {
+        try {
+            const response = await api.patch('/tasks/batch-sort-order/', {
+                tasks: tasksWithOrder
+            });
+
+            // 更新本地任务的排序
+            tasksWithOrder.forEach(({ id, sort_order }) => {
+                const task = tasks.value.find(t => t.id === id);
+                if (task) {
+                    task.order = sort_order;
+                }
+            });
+
+            // 重新排序本地任务列表
+            tasks.value.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            console.log('任务排序更新成功:', response.data);
+        } catch (error) {
+            console.error('批量更新任务排序失败:', error);
+            throw error;
+        }
+    };
+
     // 状态管理方法
 
     /**
@@ -622,6 +653,8 @@ export const useTaskStore = defineStore('task', () => {
         searchParams,
         selectedTasks,
         taskStats,
+        isDragging,
+        draggedTask,
 
         // 计算属性
         totalPages,
@@ -652,6 +685,7 @@ export const useTaskStore = defineStore('task', () => {
         fetchStatusDistribution,
         fetchTagDistribution,
         fetchTimeDistribution,
+        updateTasksOrder,
         setSearchParams,
         clearSearchParams,
         setPage,

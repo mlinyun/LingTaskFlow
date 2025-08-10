@@ -38,7 +38,7 @@ The system combines the robustness of Django's backend architecture with the rea
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/LingTaskFlow.git
+git clone https://github.com/mlinyun/LingTaskFlow.git
 cd LingTaskFlow
 
 # Create virtual environment
@@ -173,8 +173,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/LingTaskFlow/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/LingTaskFlow/discussions)
+- **Issues**: [GitHub Issues](https://github.com/mlinyun/LingTaskFlow/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mlinyun/LingTaskFlow/discussions)
 - **Email**: your.email@example.com
 
 ## 🗺️ Roadmap

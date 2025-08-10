@@ -38,7 +38,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/LingTaskFlow.git
+git clone https://github.com/mlinyun/LingTaskFlow.git
 cd LingTaskFlow
 
 # 创建虚拟环境
@@ -173,8 +173,8 @@ const handleTaskUpdate = (updatedTask: Task) => {
 
 ## 📞 联系方式
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/LingTaskFlow/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/LingTaskFlow/discussions)
+- **Issues**: [GitHub Issues](https://github.com/mlinyun/LingTaskFlow/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mlinyun/LingTaskFlow/discussions)
 - **Email**: your.email@example.com
 
 ## 🗺️ 路线图

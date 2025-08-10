@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Q, Count, Case, When, Value, CharField, Avg, Min, Sum
-from django.db import models
+from django.db import models, transaction
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import UserProfile, Task
@@ -4293,6 +4293,79 @@ class TaskViewSet(viewsets.ModelViewSet):
                     'date_field': request.query_params.get('date_field', 'created_at')
                 }
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['patch'], url_path='batch-sort-order')
+    def batch_update_sort_order(self, request):
+        """
+        批量更新任务排序
+        
+        Request Body:
+        {
+            "tasks": [
+                {"id": "uuid1", "sort_order": 1},
+                {"id": "uuid2", "sort_order": 2},
+                ...
+            ]
+        }
+        """
+        try:
+            tasks_data = request.data.get('tasks', [])
+            
+            if not tasks_data:
+                return Response(
+                    {'error': '请提供要更新的任务列表'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 验证数据格式
+            for task_data in tasks_data:
+                if 'id' not in task_data or 'sort_order' not in task_data:
+                    return Response(
+                        {'error': '每个任务必须包含id和sort_order字段'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # 获取用户的任务
+            task_ids = [task_data['id'] for task_data in tasks_data]
+            tasks = Task.objects.filter(
+                id__in=task_ids,
+                owner=request.user,
+                is_deleted=False
+            )
+            
+            if len(tasks) != len(task_ids):
+                return Response(
+                    {'error': '部分任务不存在或无权限访问'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 批量更新排序
+            updated_count = 0
+            with transaction.atomic():
+                for task_data in tasks_data:
+                    task_id = task_data['id']
+                    sort_order = task_data['sort_order']
+                    
+                    try:
+                        task = tasks.get(id=task_id)
+                        task.order = sort_order
+                        task.save(update_fields=['order', 'updated_at'])
+                        updated_count += 1
+                    except Task.DoesNotExist:
+                        continue
+            
+            return Response({
+                'message': f'成功更新 {updated_count} 个任务的排序',
+                'updated_count': updated_count,
+                'total_count': len(task_ids)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"批量更新任务排序失败: {str(e)}")
+            return Response(
+                {'error': '更新排序失败，请稍后重试'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['get'], url_path='time-distribution')
     def time_distribution(self, request):

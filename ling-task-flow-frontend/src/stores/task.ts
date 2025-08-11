@@ -24,7 +24,7 @@ export const useTaskStore = defineStore('task', () => {
     const searchParams = ref<TaskSearchParams>({});
     const selectedTasks = ref<string[]>([]);
     const taskStats = ref<TaskStats | null>(null);
-    
+
     // 拖拽排序相关状态
     const isDragging = ref(false);
     const draggedTask = ref<Task | null>(null);
@@ -542,10 +542,12 @@ export const useTaskStore = defineStore('task', () => {
     /**
      * 批量更新任务排序
      */
-    const updateTasksOrder = async (tasksWithOrder: Array<{id: string, sort_order: number}>): Promise<void> => {
+    const updateTasksOrder = async (
+        tasksWithOrder: Array<{ id: string; sort_order: number }>,
+    ): Promise<void> => {
         try {
             const response = await api.patch('/tasks/batch-sort-order/', {
-                tasks: tasksWithOrder
+                tasks: tasksWithOrder,
             });
 
             // 更新本地任务的排序

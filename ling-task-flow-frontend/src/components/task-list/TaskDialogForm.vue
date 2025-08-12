@@ -558,7 +558,10 @@ const loadTaskData = (task: Task) => {
         description: task.description || '',
         priority: task.priority,
         status: task.status,
-        due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '',
+        // 将后端 ISO 时间转换为本地 yyyy-MM-ddTHH:mm 字符串供输入控件使用
+        due_date: task.due_date
+            ? new Date(task.due_date).toLocaleString('sv-SE', { hour12: false }).replace(' ', 'T').slice(0, 16)
+            : '',
         // 解析tags字符串为数组
         tags: parseTagsString(task.tags),
     };
@@ -578,30 +581,21 @@ const onSubmit = async () => {
             description: formData.value.description,
             priority: formData.value.priority,
             status: formData.value.status,
-            tags: formatTagsArray(formData.value.tags), // 将数组转换为逗号分隔的字符串
+            tags: formatTagsArray(formData.value.tags),
+            // 将本地 yyyy-MM-ddTHH:mm 视为本地时间，转为 ISO 字符串（含时区）提交
             ...(formData.value.due_date && {
-                due_date: new Date(formData.value.due_date).toISOString(),
+                due_date: new Date(formData.value.due_date.replace(' ', 'T')).toISOString(),
             }),
         };
 
         let savedTask: Task;
 
         if (isEditing.value && props.task) {
-            // 编辑任务
             savedTask = await taskStore.updateTask(props.task.id, baseData as TaskUpdateData);
-            $q.notify({
-                type: 'positive',
-                message: '任务更新成功！',
-                position: 'top',
-            });
+            $q.notify({ type: 'positive', message: '任务更新成功！', position: 'top' });
         } else {
-            // 创建任务
             savedTask = await taskStore.createTask(baseData as TaskCreateData);
-            $q.notify({
-                type: 'positive',
-                message: '任务创建成功！',
-                position: 'top',
-            });
+            $q.notify({ type: 'positive', message: '任务创建成功！', position: 'top' });
         }
 
         emit('saved', savedTask);
@@ -609,11 +603,7 @@ const onSubmit = async () => {
         resetForm();
     } catch (error) {
         console.error('保存任务失败:', error);
-        $q.notify({
-            type: 'negative',
-            message: isEditing.value ? '任务更新失败' : '任务创建失败',
-            position: 'top',
-        });
+        $q.notify({ type: 'negative', message: isEditing.value ? '任务更新失败' : '任务创建失败', position: 'top' });
     } finally {
         loading.value = false;
     }

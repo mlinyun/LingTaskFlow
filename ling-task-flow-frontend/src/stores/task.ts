@@ -12,6 +12,7 @@ import type {
     StatusDistribution,
     TagDistribution,
     TimeDistribution,
+    TaskStatus,
 } from '../types';
 
 export const useTaskStore = defineStore('task', () => {
@@ -25,46 +26,52 @@ export const useTaskStore = defineStore('task', () => {
     const selectedTasks = ref<string[]>([]);
     const taskStats = ref<TaskStats | null>(null);
 
+    // 加载状态定义
+    const loadingStates = ref<{
+        fetchingTasks: boolean;
+        fetchingStats: boolean;
+    }>({
+        fetchingTasks: false,
+        fetchingStats: false,
+    });
+
     // 拖拽排序相关状态
     const isDragging = ref(false);
     const draggedTask = ref<Task | null>(null);
 
-    // 细粒度加载状态
-    const loadingStates = ref({
-        fetchingTasks: false,
-        fetchingStats: false,
-        creatingTask: false,
-        updatingTask: false,
-        deletingTask: false,
-        restoringTask: false,
-        fetchingTrash: false,
-    });
-
     // 计算属性
-    const totalPages = computed(() => Math.ceil(totalTasks.value / pageSize.value));
+    const totalPages = computed(() =>
+        Math.ceil(totalTasks.value / pageSize.value),
+    );
     const hasNextPage = computed(() => currentPage.value < totalPages.value);
     const hasPrevPage = computed(() => currentPage.value > 1);
-    const selectedTasksCount = computed(() => selectedTasks.value.length);
-    const activeTasks = computed(() => tasks.value.filter(task => !task.is_deleted));
-    const deletedTasks = computed(() => tasks.value.filter(task => task.is_deleted));
 
-    // 任务状态统计
+    const selectedTasksCount = computed(() => selectedTasks.value.length);
+
+    // 任务列表筛选
+    const activeTasks = computed(() =>
+        tasks.value.filter(task => !task.deleted_at),
+    );
+    const deletedTasks = computed(() =>
+        tasks.value.filter(task => task.deleted_at),
+    );
+
     const tasksByStatus = computed(() => {
-        const statusMap = new Map<string, number>();
-        activeTasks.value.forEach(task => {
-            const count = statusMap.get(task.status) || 0;
-            statusMap.set(task.status, count + 1);
+        const grouped: Record<string, Task[]> = {};
+        tasks.value.forEach(task => {
+            const key = task.status as unknown as string;
+            (grouped[key] ??= []).push(task);
         });
-        return statusMap;
+        return grouped;
     });
 
     const tasksByPriority = computed(() => {
-        const priorityMap = new Map<string, number>();
-        activeTasks.value.forEach(task => {
-            const count = priorityMap.get(task.priority) || 0;
-            priorityMap.set(task.priority, count + 1);
+        const grouped: Record<string, Task[]> = {};
+        tasks.value.forEach(task => {
+            const key = task.priority as unknown as string;
+            (grouped[key] ??= []).push(task);
         });
-        return priorityMap;
+        return grouped;
     });
 
     // API 调用方法
@@ -315,6 +322,51 @@ export const useTaskStore = defineStore('task', () => {
             }
         } catch (error) {
             console.error('批量恢复任务失败:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * 批量更新任务状态（使用统一批量接口 bulk_action）
+     */
+    const batchUpdateStatus = async (
+        taskIds: string[],
+        newStatus: TaskStatus,
+    ): Promise<{
+        successful: number;
+        failed: number;
+        stats?: Record<string, unknown>;
+        failedItems?: Array<{ id: string; error: unknown }>;
+    }> => {
+        try {
+            const response = await api.post('/tasks/bulk_action/', {
+                action: 'update_status',
+                task_ids: taskIds,
+                status: newStatus,
+            });
+
+            const resp = response.data;
+
+            // 尝试根据成功项更新本地任务列表
+            const successfulItems = (resp?.data?.successful_items || []) as Array<{ data?: Task }>;
+            successfulItems.forEach((item) => {
+                const updated = item?.data as Task | undefined;
+                if (updated && updated.id) {
+                    const idx = tasks.value.findIndex(t => t.id === updated.id);
+                    if (idx !== -1) {
+                        tasks.value[idx] = updated;
+                    }
+                }
+            });
+
+            return {
+                successful: resp?.data?.stats?.successful ?? successfulItems.length,
+                failed: resp?.data?.stats?.failed ?? (resp?.data?.failed_items?.length || 0),
+                stats: resp?.data?.stats,
+                failedItems: resp?.data?.failed_items,
+            };
+        } catch (error) {
+            console.error('批量更新任务状态失败:', error);
             throw error;
         }
     };
@@ -679,6 +731,7 @@ export const useTaskStore = defineStore('task', () => {
         batchUpdateTasks,
         batchDeleteTasks,
         batchRestoreTasks,
+        batchUpdateStatus,
         batchPermanentDeleteTasks,
         searchTasks,
         fetchTrashTasks,

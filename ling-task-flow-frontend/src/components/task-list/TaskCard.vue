@@ -1,5 +1,21 @@
 <template>
-    <div class="task-card" @click="() => emit('view', task)">
+    <div 
+        class="task-card" 
+        :class="{ 'task-selected': selectable && selected }"
+        @click="() => emit('view', task)"
+    >
+        <!-- 拖拽手柄 -->
+        <slot name="drag-handle" />
+        
+        <!-- 选择复选框 -->
+        <div v-if="selectable" class="task-checkbox" @click.stop>
+            <q-checkbox
+                :model-value="selected"
+                @update:model-value="toggleSelect"
+                class="card-checkbox"
+            />
+        </div>
+
         <div class="task-status-indicator" :class="`status-${task.status.toLowerCase()}`" />
 
         <div class="task-content">
@@ -17,7 +33,21 @@
                         outline
                         class="status-badge"
                     />
+                    <!-- 逾期标识移到状态旁边 -->
+                    <q-badge
+                        v-if="isOverdue"
+                        color="red"
+                        text-color="white"
+                        label="已逾期"
+                        class="overdue-badge"
+                    />
                 </div>
+            </div>
+
+            <!-- 截止时间展示 -->
+            <div v-if="task.due_date" class="due-date-info" :class="{ 'overdue': isOverdue }">
+                <q-icon name="event" />
+                <span>截止：{{ formatDueDate(task.due_date) }}</span>
             </div>
 
             <p v-if="task.description" class="task-description">{{ task.description }}</p>
@@ -42,6 +72,44 @@
             </div>
 
             <div class="task-toolbar" @click.stop>
+                <!-- 状态转换按钮 -->
+                <q-btn
+                    v-if="task.status === 'PENDING'"
+                    icon="play_arrow"
+                    color="blue"
+                    round
+                    flat
+                    size="sm"
+                    @click="() => emit('start-task', task)"
+                >
+                    <q-tooltip>开始任务</q-tooltip>
+                </q-btn>
+                
+                <q-btn
+                    v-if="task.status === 'IN_PROGRESS'"
+                    icon="pause"
+                    color="orange"
+                    round
+                    flat
+                    size="sm"
+                    @click="() => emit('pause-task', task)"
+                >
+                    <q-tooltip>暂停任务</q-tooltip>
+                </q-btn>
+                
+                <q-btn
+                    v-if="task.status === 'ON_HOLD'"
+                    icon="play_arrow"
+                    color="blue"
+                    round
+                    flat
+                    size="sm"
+                    @click="() => emit('resume-task', task)"
+                >
+                    <q-tooltip>恢复任务</q-tooltip>
+                </q-btn>
+
+                <!-- 完成/取消完成按钮 -->
                 <q-btn
                     :icon="task.status === 'COMPLETED' ? 'undo' : 'check'"
                     :color="task.status === 'COMPLETED' ? 'orange' : 'green'"
@@ -54,6 +122,8 @@
                         task.status === 'COMPLETED' ? '标记为未完成' : '标记为完成'
                     }}</q-tooltip>
                 </q-btn>
+                
+                <!-- 编辑按钮 -->
                 <q-btn
                     icon="edit"
                     color="primary"
@@ -64,6 +134,8 @@
                 >
                     <q-tooltip>编辑任务</q-tooltip>
                 </q-btn>
+                
+                <!-- 删除按钮 -->
                 <q-btn
                     icon="delete"
                     color="red"
@@ -88,13 +160,39 @@ import { format } from 'date-fns';
 const emit = defineEmits<{
     (e: 'view', task: Task): void;
     (e: 'toggle-status', task: Task): void;
+    (e: 'start-task', task: Task): void;
+    (e: 'pause-task', task: Task): void;
+    (e: 'resume-task', task: Task): void;
     (e: 'edit', task: Task): void;
     (e: 'delete', task: Task): void;
+    (e: 'toggle-select', id: string): void;
 }>();
 
-const props = defineProps<{ task: Task }>();
+const props = defineProps<{ 
+    task: Task,
+    selectable?: boolean,
+    selected?: boolean,
+}>();
+
+const toggleSelect = () => {
+    emit('toggle-select', props.task.id);
+};
 
 const tags = computed(() => getTaskTags(props.task.tags));
+
+// 判断任务是否逾期
+const isOverdue = computed(() => {
+    if (!props.task.due_date) return false;
+    
+    // 已完成或已取消的任务不显示为逾期
+    if (props.task.status === 'COMPLETED' || props.task.status === 'CANCELLED') {
+        return false;
+    }
+    
+    const dueDate = new Date(props.task.due_date);
+    const now = new Date();
+    return dueDate < now;
+});
 
 const formatTimestamp = (ts?: string) => {
     if (!ts) return '';
@@ -102,6 +200,15 @@ const formatTimestamp = (ts?: string) => {
         return format(new Date(ts), 'yyyy-MM-dd HH:mm');
     } catch {
         return ts;
+    }
+};
+
+const formatDueDate = (dateStr: string) => {
+    try {
+        // 统一使用与后端一致的格式化方式
+        return format(new Date(dateStr), 'yyyy-MM-dd HH:mm');
+    } catch {
+        return dateStr;
     }
 };
 
@@ -232,18 +339,31 @@ const getStatusLabel = (status: TaskStatus) =>
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0;
+    align-items: center;
+    flex-wrap: wrap;
 }
-.priority-badge {
+.priority-badge,
+.status-badge,
+.overdue-badge {
     font-size: 0.75rem;
     font-weight: 500;
     padding: 0.25rem 0.5rem;
     border-radius: 8px;
 }
-.status-badge {
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.25rem 0.5rem;
-    border-radius: 8px;
+
+.overdue-badge {
+    background: #ef4444 !important;
+    color: white !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .task-description {
@@ -292,6 +412,20 @@ const getStatusLabel = (status: TaskStatus) =>
     gap: 0.375rem;
 }
 
+/* 截止时间行 */
+.due-date-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 6px;
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+.due-date-info.overdue {
+    color: #dc2626;
+    font-weight: 600;
+}
+
 .task-toolbar {
     position: absolute;
     right: 1rem;
@@ -301,5 +435,19 @@ const getStatusLabel = (status: TaskStatus) =>
     opacity: 1;
     visibility: visible;
     transition: opacity 0.2s ease;
+}
+.task-card.task-selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25), 0 12px 32px rgba(14, 165, 233, 0.15);
+}
+.task-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+}
+.card-checkbox {
+    background: white;
+    border-radius: 8px;
 }
 </style>

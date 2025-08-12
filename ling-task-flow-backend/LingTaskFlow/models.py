@@ -658,6 +658,12 @@ class Task(SoftDeleteModel):
         help_text='用于任务排序的数值'
     )
     
+    overdue_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name='逾期次数',
+        help_text='任务因逾期而被限制操作的次数'
+    )
+
     class Meta:
         db_table = 'tasks'
         verbose_name = '任务'

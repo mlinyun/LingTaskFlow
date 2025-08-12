@@ -179,6 +179,48 @@ onMounted(() => {
         2px 0 12px rgba(59, 130, 246, 0.06),
         inset -1px 0 0 rgba(255, 255, 255, 0.8);
 
+    // 侧边栏滚动条样式 - 与主页一致的柔和蓝白科技风格
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+        border-radius: 4px;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        box-shadow: inset 0 0 2px rgba(148, 163, 184, 0.1);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #94a3b8, #64748b);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow:
+            0 1px 3px rgba(100, 116, 139, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+            background: linear-gradient(135deg, #64748b, #475569);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow:
+                0 2px 4px rgba(100, 116, 139, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        &:active {
+            background: linear-gradient(135deg, #475569, #374151);
+            transform: scale(0.95);
+        }
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 4px;
+    }
+
     // 科技感背景层
     .drawer-background {
         position: absolute;
@@ -258,6 +300,49 @@ onMounted(() => {
         position: relative;
         z-index: 2;
         height: 100%;
+        overflow-y: auto;
+
+        // 内容区域滚动条样式 - 与主页一致的柔和蓝白科技风格
+        &::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+            border-radius: 4px;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            box-shadow: inset 0 0 2px rgba(148, 163, 184, 0.1);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow:
+                0 1px 3px rgba(100, 116, 139, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            &:hover {
+                background: linear-gradient(135deg, #64748b, #475569);
+                border-color: rgba(255, 255, 255, 0.6);
+                box-shadow:
+                    0 2px 4px rgba(100, 116, 139, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+                transform: scale(1.1);
+            }
+
+            &:active {
+                background: linear-gradient(135deg, #475569, #374151);
+                transform: scale(0.95);
+            }
+        }
+
+        &::-webkit-scrollbar-corner {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 4px;
+        }
     }
 }
 

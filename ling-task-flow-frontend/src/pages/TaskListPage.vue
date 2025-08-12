@@ -19,6 +19,12 @@
                     tooltip: showFilters ? '隐藏过滤器' : '显示过滤器',
                     class: 'download-btn',
                 },
+                {
+                    name: 'bulk-operations',
+                    icon: showBulkOperations ? 'check_box' : 'check_box_outline_blank',
+                    tooltip: showBulkOperations ? '退出批量模式' : '进入批量模式',
+                    class: 'download-btn',
+                },
             ]"
             @primary-action="showCreateDialog = true"
             @secondary-action="handleSecondaryAction"
@@ -116,17 +122,109 @@
                         </div>
                     </div>
 
-                    <div class="tasks-grid">
-                        <TaskCard
-                            v-for="task in filteredTasks"
-                            :key="task.id"
-                            :task="task"
-                            @view="viewTask"
-                            @toggle-status="toggleTaskStatus"
-                            @edit="editTask"
-                            @delete="deleteTask"
-                        />
+                    <!-- 批量操作工具栏 -->
+                    <div v-if="showBulkOperations" class="bulk-operations-toolbar">
+                        <div class="toolbar-content">
+                            <div class="selection-info">
+                                <q-checkbox
+                                    v-model="allSelected"
+                                    :indeterminate="someSelected"
+                                    @update:model-value="toggleAllSelection"
+                                    class="all-select-checkbox"
+                                />
+                                <span class="selection-text">
+                                    已选择 {{ taskStore.selectedTasks.length }} / {{ filteredTasks.length }} 个任务
+                                </span>
+                            </div>
+                            <div class="batch-actions">
+                                <q-btn
+                                    class="batch-btn"
+                                    @click="batchUpdateSelectedStatus('IN_PROGRESS')"
+                                    :disable="taskStore.selectedTasks.length === 0"
+                                    icon="play_arrow"
+                                    label="批量进行中"
+                                    no-caps
+                                    unelevated
+                                />
+                                <q-btn
+                                    class="batch-btn"
+                                    @click="batchUpdateSelectedStatus('COMPLETED')"
+                                    :disable="taskStore.selectedTasks.length === 0"
+                                    icon="check"
+                                    label="批量完成"
+                                    color="positive"
+                                    no-caps
+                                    unelevated
+                                />
+                                <q-btn
+                                    class="batch-btn"
+                                    @click="batchUpdateSelectedStatus('PENDING')"
+                                    :disable="taskStore.selectedTasks.length === 0"
+                                    icon="undo"
+                                    label="批量待处理"
+                                    color="warning"
+                                    no-caps
+                                    unelevated
+                                />
+                                <q-btn
+                                    class="clear-btn"
+                                    @click="clearSelection"
+                                    icon="clear"
+                                    label="清空选择"
+                                    flat
+                                    no-caps
+                                />
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- 拖拽提示 -->
+                    <div v-if="sortBy === 'order' && hasActiveFilters" class="drag-info-banner">
+                        <q-icon name="info" />
+                        <span>清除筛选条件后可拖拽排序</span>
+                    </div>
+                    
+                    <!-- 任务列表 -->
+                    <VueDraggableNext
+                        v-model="draggableTasks"
+                        item-key="id"
+                        :disabled="!canDrag"
+                        class="tasks-grid"
+                        :class="{ 'dragging': isDragging, 'drag-disabled': !canDrag }"
+                        ghost-class="task-ghost"
+                        chosen-class="task-chosen"
+                        drag-class="task-drag"
+                        @start="handleDragStart"
+                        @end="handleDragEnd"
+                        :animation="200"
+                        :force-fallback="false"
+                    >
+                        <template #item="{ element: task }">
+                            <TaskCard
+                                :key="task.id"
+                                :task="task"
+                                :selectable="showBulkOperations"
+                                :selected="taskStore.selectedTasks.includes(task.id)"
+                                @toggle-select="toggleTaskSelection"
+                                @view="viewTask"
+                                @edit="editTask"
+                                @delete="deleteTask"
+                                @toggle-status="confirmToggleStatus"
+                                @start-task="startTask"
+                                @pause-task="pauseTask"
+                                @resume-task="resumeTask"
+                            >
+                                <!-- 拖拽手柄 -->
+                                <template #drag-handle>
+                                  <template v-if="canDrag">
+                                    <div class="drag-handle">
+                                      <q-icon name="drag_indicator" />
+                                    </div>
+                                  </template>
+                                </template>
+                            </TaskCard>
+                        </template>
+                    </VueDraggableNext>
                 </div>
             </div>
         </div>
@@ -148,197 +246,492 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useQuasar } from 'quasar';
-import PageHeader from 'components/common/PageHeader.vue';
-import { useTaskStore } from 'src/stores/task';
-import type { Task, TaskStatus, TaskPriority } from 'src/types/task';
-import TaskDialogForm from 'src/components/task-list/TaskDialogForm.vue';
-import TaskViewDialog from 'src/components/task-list/TaskViewDialog.vue';
-import TaskFilterPanel from 'src/components/task-list/TaskFilterPanel.vue';
+import { ref, computed, onMounted, watch } from 'vue'
+import { useQuasar } from 'quasar'
+import VueDraggableNext from 'vue3-draggable-next'
+import PageHeader from 'components/common/PageHeader.vue'
+import TaskCard from 'components/task-list/TaskCard.vue'
+import TaskFilterPanel from 'components/task-list/TaskFilterPanel.vue'
+import TaskDialogForm from 'components/task-list/TaskDialogForm.vue'
+import TaskViewDialog from 'components/task-list/TaskViewDialog.vue'
+import { useTaskStore } from 'src/stores/task'
+import type { Task, TaskStatus, TaskPriority } from 'src/types/task'
+import { useGlobalConfirm } from 'src/composables/useGlobalConfirm'
+import { ConfirmPresets } from 'src/composables/useConfirmDialog'
+import { format } from 'date-fns'
 
-// 任务卡片组件替代原生 DOM 结构
-import TaskCard from 'src/components/task-list/TaskCard.vue';
-const $q = useQuasar();
-const taskStore = useTaskStore();
+const $q = useQuasar()
+const taskStore = useTaskStore()
+const $confirm = useGlobalConfirm()
 
-// 加载与弹窗
-const loading = ref(false);
-const showCreateDialog = ref(false);
-const showViewDialog = ref(false);
-const editingTask = ref<Task | null>(null);
-const viewingTask = ref<Task | null>(null);
+// 基础状态
+const loading = ref(false)
+const showCreateDialog = ref(false)
+const showViewDialog = ref(false)
+const editingTask = ref<Task | null>(null)
+const viewingTask = ref<Task | null>(null)
 
-// 过滤/排序控制
-const showFilters = ref(false);
-const filterStatus = ref<TaskStatus | null>(null);
-const filterPriority = ref<TaskPriority | null>(null);
-const searchQuery = ref('');
-type SortKey = 'created_at' | 'updated_at' | 'priority' | 'title';
-const sortBy = ref<SortKey>('created_at');
+// 过滤和搜索
+const showFilters = ref(false)
+const searchQuery = ref('')
+const filterStatus = ref<TaskStatus | null>(null)
+const filterPriority = ref<TaskPriority | null>(null)
 
-// 移除内置的状态/优先级选项，改由 TaskFilterPanel 提供
-// const statusOptions = [ ... ];
-// const priorityOptions = [ ... ];
+// 排序
+type SortKey = 'created_at' | 'updated_at' | 'priority' | 'title' | 'order'
+const sortBy = ref<SortKey>('created_at')
 const sortOptions: Array<{ label: string; value: SortKey }> = [
-    { label: '创建时间', value: 'created_at' },
-    { label: '更新时间', value: 'updated_at' },
-    { label: '优先级', value: 'priority' },
-    { label: '标题', value: 'title' },
-];
+  { label: '创建时间', value: 'created_at' },
+  { label: '更新时间', value: 'updated_at' },
+  { label: '优先级', value: 'priority' },
+  { label: '标题', value: 'title' },
+  { label: '自定义排序', value: 'order' },
+]
 
-// 选项
+// 批量操作
+const showBulkOperations = ref(false)
 
-// 任务列表与统计
-const allTasks = computed(() => taskStore.tasks);
+// 拖拽状态
+const isDragging = ref(false)
+const dragSnapshot = ref<Task[]>([])
+
+const allTasks = computed(() => taskStore.tasks)
 
 const filteredTasks = computed(() => {
-    let tasks = [...allTasks.value];
+  let tasks = [...allTasks.value]
 
-    // 状态过滤
-    if (filterStatus.value) tasks = tasks.filter(t => t.status === filterStatus.value);
+  // 状态过滤
+  if (filterStatus.value) tasks = tasks.filter(t => t.status === filterStatus.value)
 
-    // 优先级过滤
-    if (filterPriority.value) tasks = tasks.filter(t => t.priority === filterPriority.value);
+  // 优先级过滤
+  if (filterPriority.value) tasks = tasks.filter(t => t.priority === filterPriority.value)
 
-    // 搜索过滤
-    if (searchQuery.value) {
-        const q = searchQuery.value.toLowerCase();
-        tasks = tasks.filter(
-            t =>
-                t.title.toLowerCase().includes(q) ||
-                (t.description ? t.description.toLowerCase().includes(q) : false) ||
-                (t.tags || '').toLowerCase().includes(q),
-        );
+  // 搜索过滤
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    tasks = tasks.filter(
+      t =>
+        t.title.toLowerCase().includes(q) ||
+        (t.description ? t.description.toLowerCase().includes(q) : false) ||
+        (t.tags || '').toLowerCase().includes(q),
+    )
+  }
+
+  // 排序
+  tasks.sort((a, b) => {
+    const priorityOrder: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
+    switch (sortBy.value) {
+      case 'priority': {
+        return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0)
+      }
+      case 'title':
+        return a.title.localeCompare(b.title)
+      case 'updated_at':
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      case 'order':
+        return (a.order || 0) - (b.order || 0)
+      case 'created_at':
+      default:
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     }
+  })
 
-    // 排序
-    tasks.sort((a, b) => {
-        const priorityOrder: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-        switch (sortBy.value) {
-            case 'priority': {
-                return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
-            }
-            case 'title':
-                return a.title.localeCompare(b.title);
-            case 'updated_at':
-                return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-            case 'created_at':
-            default:
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        }
-    });
+  return tasks
+})
 
-    return tasks;
-});
+// 新增：与 Draggable 绑定的可变数组，定义在 filteredTasks 之后
+const draggableTasks = ref<Task[]>([])
 
-// 删除：统计相关计算属性（总数、进行中、完成、待办、完成率）
-// const totalTasks = computed(() => allTasks.value.length);
-// const completedTasks = computed(() => allTasks.value.filter(t => t.status === 'COMPLETED').length);
-// const activeTasks = computed(() => allTasks.value.filter(t => t.status !== 'COMPLETED').length);
-// const todoTasks = computed(() => allTasks.value.filter(t => t.status === 'PENDING').length);
-// const completionRate = computed(() => totalTasks.value ? ((completedTasks.value / totalTasks.value) * 100).toFixed(1) : '0.0');
+// 当筛选/排序变化时，同步 Draggable 数据源
+watch(
+  () => filteredTasks.value,
+  (newVal) => {
+    if (!isDragging.value) {
+      draggableTasks.value = [...newVal]
+    }
+  },
+  { immediate: true }
+)
 
 const hasActiveFilters = computed(
-    () => !!(filterStatus.value || filterPriority.value || searchQuery.value),
-);
+  () => !!(filterStatus.value || filterPriority.value || searchQuery.value),
+)
 
-// 颜色与标签
+// 判断是否可以拖拽（仅在自定义排序且无筛选时允许）
+const canDrag = computed(() => {
+  return sortBy.value === 'order' && !hasActiveFilters.value
+})
 
-// 事件与操作
-const handleSecondaryAction = (name: string) => {
-    switch (name) {
-        case 'refresh':
-            void fetchTasks();
-            break;
-        case 'filter':
-            showFilters.value = !showFilters.value;
-            break;
+// 拖拽处理
+const handleDragStart = () => {
+  isDragging.value = true
+  // 保存拖拽前的快照，用于失败回滚
+  dragSnapshot.value = [...taskStore.tasks]
+}
+
+const handleDragEnd = async (evt: { oldIndex: number; newIndex: number }) => {
+  // 拖拽结束
+  isDragging.value = false
+
+  // 如果位置没有变化，直接返回
+  if (evt.oldIndex === evt.newIndex) {
+    return
+  }
+
+  try {
+    // 基于可变的 draggableTasks 计算新的排序值
+    const tasksWithOrder = draggableTasks.value.map((task, index) => ({
+      id: task.id,
+      sort_order: index + 1,
+    }))
+
+    // 调用后端API更新排序（内部会更新本地 tasks.order 并重新排序）
+    await taskStore.updateTasksOrder(tasksWithOrder)
+
+    $q.notify({
+      type: 'positive',
+      message: '排序已保存',
+      position: 'top',
+      timeout: 2000,
+      icon: 'check_circle',
+    })
+  } catch (error) {
+    console.error('更新任务排序失败:', error)
+
+    // 回滚到拖拽前的全量任务状态
+    if (dragSnapshot.value.length > 0) {
+      taskStore.tasks.splice(0, taskStore.tasks.length, ...dragSnapshot.value)
     }
-};
 
-// 删除：仅用于统计卡片点击的筛选函数
-//
+    $q.notify({
+      type: 'negative',
+      message: '排序保存失败，已回滚',
+      position: 'top',
+      timeout: 3000,
+      icon: 'error',
+    })
+  }
+}
+
+// 过期判断与天数计算（假设已有实现）
+const isOverdue = (task: Task) => {
+  if (!task.due_date) return false
+  const now = new Date()
+  const due = new Date(task.due_date)
+  return task.status !== 'COMPLETED' && due < now
+}
+
+
+
+// 批量选择相关
+const allSelected = computed({
+  get() {
+    return filteredTasks.value.length > 0 && taskStore.selectedTasks.length === filteredTasks.value.length
+  },
+  set(val: boolean) {
+    toggleAllSelection(val)
+  }
+})
+
+const someSelected = computed(() => {
+  return taskStore.selectedTasks.length > 0 && taskStore.selectedTasks.length < filteredTasks.value.length
+})
+
+function toggleAllSelection(val?: boolean) {
+  const shouldSelectAll = typeof val === 'boolean' ? val : !(taskStore.selectedTasks.length === filteredTasks.value.length)
+  if (shouldSelectAll) {
+    taskStore.selectedTasks = filteredTasks.value.map(t => t.id)
+  } else {
+    taskStore.selectedTasks = []
+  }
+}
+
+function toggleTaskSelection(id: string) {
+  const idx = taskStore.selectedTasks.indexOf(id)
+  if (idx === -1) taskStore.selectedTasks.push(id)
+  else taskStore.selectedTasks.splice(idx, 1)
+}
+
+function clearSelection() {
+  taskStore.selectedTasks = []
+}
+
+// 批量状态更新
+async function batchUpdateSelectedStatus(targetStatus: TaskStatus) {
+  const selectedIds = taskStore.selectedTasks.slice()
+  if (selectedIds.length === 0) return
+
+  // 如包含逾期任务，提示确认
+  const hasOverdue = filteredTasks.value.some(t => selectedIds.includes(t.id) && isOverdue(t))
+  if (hasOverdue) {
+    const ok = await $confirm.confirmWarning(
+      '确认批量更新',
+      '所选任务中包含已逾期任务，确定继续批量更新状态吗？',
+      { confirmText: '继续', cancelText: '取消' }
+    )
+    if (!ok) return
+  }
+
+  try {
+    await taskStore.batchUpdateStatus(selectedIds, targetStatus)
+    $q.notify({ type: 'positive', message: '批量更新成功' })
+    clearSelection()
+  } catch (e: unknown) {
+    const msg = (e as { message?: string })?.message || '批量更新失败'
+    $q.notify({ type: 'negative', message: msg })
+  }
+}
+
+// 页面操作方法
+const handleSecondaryAction = (name: string) => {
+  switch (name) {
+    case 'refresh':
+      void fetchTasks()
+      break
+    case 'filter':
+      showFilters.value = !showFilters.value
+      break
+    case 'bulk-operations':
+      showBulkOperations.value = !showBulkOperations.value
+      if (!showBulkOperations.value) clearSelection()
+      break
+  }
+}
 
 const resetFilters = () => {
-    filterStatus.value = null;
-    filterPriority.value = null;
-    searchQuery.value = '';
-};
-// filters reset end
+  filterStatus.value = null
+  filterPriority.value = null
+  searchQuery.value = ''
+}
 
+// 任务操作方法
 const viewTask = (task: Task) => {
-    viewingTask.value = task;
-    showViewDialog.value = true;
-};
+  viewingTask.value = task
+  showViewDialog.value = true
+}
 
 const editTask = (task: Task) => {
-    editingTask.value = task;
-    showCreateDialog.value = true;
-};
+  editingTask.value = task
+  showCreateDialog.value = true
+}
 
 const deleteTask = async (task: Task) => {
-    try {
-        loading.value = true;
-        await taskStore.deleteTask(task.id);
-        $q.notify({ type: 'positive', message: '任务已删除', position: 'top' });
-    } catch (e) {
-        console.error(e);
-        $q.notify({ type: 'negative', message: '删除失败', position: 'top' });
-    } finally {
-        loading.value = false;
-    }
-};
+  // 统一确认弹窗：删除任务
+  const ok = await $confirm.confirm(ConfirmPresets.deleteTask(task.title))
+  if (!ok) return
 
-const toggleTaskStatus = async (task: Task) => {
-    const newStatus: TaskStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
-    try {
-        await taskStore.updateTask(task.id, { status: newStatus });
-        $q.notify({ type: 'positive', message: '任务状态已更新', position: 'top' });
-    } catch (e) {
-        console.error(e);
-        $q.notify({ type: 'negative', message: '更新状态失败', position: 'top' });
+  try {
+    loading.value = true
+    await taskStore.deleteTask(task.id)
+    $q.notify({ type: 'positive', message: '任务已删除' })
+  } catch (e) {
+    console.error(e)
+    $q.notify({ type: 'negative', message: '删除失败' })
+  } finally {
+    loading.value = false
+  }
+}
+
+// 检查是否为逾期任务并提示用户
+const checkOverdueAndConfirm = async (task: Task): Promise<boolean> => {
+  if (isOverdue(task)) {
+    const formatted = task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd HH:ss') : '未设置'
+    return await $confirm.confirmWarning(
+      '逾期任务操作确认',
+      `该任务已逾期（截止时间：${formatted}），继续操作将会记录逾期次数。是否继续？`,
+      { confirmText: '继续操作', cancelText: '取消', persistent: true }
+    )
+  }
+  return true // 非逾期任务直接通过
+}
+
+const confirmToggleStatus = async (task: Task) => {
+  const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
+  
+  // 对于逾期任务，检查是否确认操作；若确认，则引导用户重设截止时间而不是直接改状态
+  if (isOverdue(task) && (newStatus === 'COMPLETED' || newStatus === 'PENDING')) {
+    const confirmed = await checkOverdueAndConfirm(task)
+    if (!confirmed) return
+    // 打开编辑对话框以让用户重新设置截止时间
+    editingTask.value = task
+    showCreateDialog.value = true
+    $q.notify({ type: 'info', message: '请重新设置该任务的截止时间后再更新状态' })
+    return
+  }
+  
+  try {
+    await taskStore.updateTask(task.id, { status: newStatus })
+    $q.notify({ type: 'positive', message: '任务状态已更新' })
+  } catch (e) {
+    console.error(e)
+    // 检查是否是逾期限制错误
+    const error = e as { response?: { data?: { detail?: string } } }
+    if (error.response?.data?.detail?.includes('逾期')) {
+      $q.notify({ 
+        type: 'warning', 
+        message: error.response.data.detail, 
+        timeout: 5000 
+      })
+    } else {
+      $q.notify({ type: 'negative', message: '更新状态失败' })
     }
-};
+  }
+}
+
+// 开始任务：PENDING -> IN_PROGRESS
+const startTask = async (task: Task) => {
+  if (task.status !== 'PENDING') {
+    // 非法状态保护：仅允许待处理任务开始
+    await taskStore.updateTask(task.id, { status: 'IN_PROGRESS' })
+    $q.notify({ type: 'positive', message: '已开始任务' })
+    return
+  }
+  
+  // 对于逾期任务，检查是否确认操作；若确认，则引导用户重设截止时间而不是直接改状态
+  if (isOverdue(task)) {
+    const confirmed = await checkOverdueAndConfirm(task)
+    if (!confirmed) return
+    // 打开编辑对话框以让用户重新设置截止时间
+    editingTask.value = task
+    showCreateDialog.value = true
+    $q.notify({ type: 'info', message: '请重新设置该任务的截止时间后再开始任务' })
+    return
+  }
+  
+  try {
+    await taskStore.updateTask(task.id, { status: 'IN_PROGRESS' })
+    $q.notify({ type: 'positive', message: '已开始任务' })
+  } catch (e) {
+    console.error(e)
+    // 检查是否是逾期限制错误
+    const error = e as { response?: { data?: { detail?: string } } }
+    if (error.response?.data?.detail?.includes('逾期')) {
+      $q.notify({ 
+        type: 'warning', 
+        message: error.response.data.detail, 
+        timeout: 5000 
+      })
+    } else {
+      $q.notify({ type: 'negative', message: '开始任务失败' })
+    }
+  }
+}
+
+// 暂停任务：IN_PROGRESS -> ON_HOLD
+const pauseTask = async (task: Task) => {
+  try {
+    await taskStore.updateTask(task.id, { status: 'ON_HOLD' })
+    $q.notify({ type: 'warning', message: '任务已暂停' })
+  } catch (e) {
+    console.error(e)
+    $q.notify({ type: 'negative', message: '暂停任务失败' })
+  }
+}
+
+// 恢复任务：ON_HOLD -> IN_PROGRESS
+const resumeTask = async (task: Task) => {
+  // 对于逾期任务，检查是否确认操作；若确认，则引导用户重设截止时间而不是直接改状态
+  if (isOverdue(task)) {
+    const confirmed = await checkOverdueAndConfirm(task)
+    if (!confirmed) return
+    editingTask.value = task
+    showCreateDialog.value = true
+    $q.notify({ type: 'info', message: '请重新设置该任务的截止时间后再恢复任务' })
+    return
+  }
+  
+  try {
+    await taskStore.updateTask(task.id, { status: 'IN_PROGRESS' })
+    $q.notify({ type: 'positive', message: '任务已恢复进行' })
+  } catch (e) {
+    console.error(e)
+    // 检查是否是逾期限制错误
+    const error = e as { response?: { data?: { detail?: string } } }
+    if (error.response?.data?.detail?.includes('逾期')) {
+      $q.notify({ 
+        type: 'warning', 
+        message: error.response.data.detail, 
+        timeout: 5000 
+      })
+    } else {
+      $q.notify({ type: 'negative', message: '恢复任务失败' })
+    }
+  }
+}
 
 const handleSaveTask = async (taskData: Partial<Task>) => {
-    try {
-        loading.value = true;
-        if (editingTask.value) {
-            await taskStore.updateTask(editingTask.value.id, taskData);
-        } else {
-            await taskStore.createTask(taskData as Omit<Task, 'id' | 'created_at' | 'updated_at'>);
-        }
-        handleCancelEdit();
-    } catch (error) {
-        console.error('保存任务失败:', error);
-        $q.notify({ type: 'negative', message: '保存任务失败', position: 'top' });
-    } finally {
-        loading.value = false;
+  try {
+    loading.value = true
+    if (editingTask.value) {
+      await taskStore.updateTask(editingTask.value.id, taskData)
+    } else {
+      await taskStore.createTask(taskData as Omit<Task, 'id' | 'created_at' | 'updated_at'>)
     }
-};
+    handleCancelEdit()
+  } catch (error) {
+    console.error('保存任务失败:', error)
+    $q.notify({ type: 'negative', message: '保存任务失败' })
+  } finally {
+    loading.value = false
+  }
+}
 
 const handleCancelEdit = () => {
-    editingTask.value = null;
-    showCreateDialog.value = false;
-};
+  editingTask.value = null
+  showCreateDialog.value = false
+}
 
 const fetchTasks = async () => {
-    try {
-        loading.value = true;
-        await taskStore.fetchTasks();
-    } catch (e) {
-        console.error('获取任务列表失败', e);
-        $q.notify({ type: 'negative', message: '获取任务列表失败', position: 'top' });
-    } finally {
-        loading.value = false;
-    }
-};
+  try {
+    loading.value = true
+    await taskStore.fetchTasks()
+  } catch (e) {
+    console.error('获取任务列表失败', e)
+    $q.notify({ type: 'negative', message: '获取任务列表失败' })
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(() => {
-    void fetchTasks();
-});
+  void fetchTasks()
+})
 </script>
+
+<style scoped>
+.bulk-operations-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--q-color-grey-1);
+  border: 1px solid var(--q-color-grey-4);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.toolbar-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+}
+.selection-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.batch-btn {
+  min-width: 120px;
+}
+.clear-btn {
+  margin-left: 8px;
+}
+</style>
 
 <style scoped lang="scss">
 // 页面整体样式 - 科技感设计
@@ -630,221 +1023,6 @@ onMounted(() => {
     }
 }
 
-// 任务网格
-.tasks-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 1.5rem;
-    padding: 2rem;
-
-    @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-        padding: 1.5rem;
-    }
-}
-
-// 任务卡片
-.task-card {
-    position: relative;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 16px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 16px;
-        padding: 1px;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(14, 165, 233, 0.1));
-        mask:
-            linear-gradient(#fff 0 0) content-box,
-            linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 32px rgba(14, 165, 233, 0.15);
-        border-color: rgba(59, 130, 246, 0.2);
-
-        &::before {
-            opacity: 1;
-        }
-
-        .task-actions {
-            opacity: 1;
-            visibility: visible;
-        }
-    }
-}
-
-// 任务状态指示器
-.task-status-indicator {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    border-radius: 0 4px 4px 0;
-
-    &.status-pending {
-        background: linear-gradient(180deg, #ef4444, #dc2626);
-    }
-
-    &.status-in_progress {
-        background: linear-gradient(180deg, #f59e0b, #d97706);
-    }
-
-    &.status-completed {
-        background: linear-gradient(180deg, #22c55e, #16a34a);
-    }
-}
-
-// 任务内容
-.task-content {
-    position: relative;
-    z-index: 1;
-    padding-left: 1rem;
-}
-
-.task-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    gap: 1rem;
-}
-
-.task-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-    line-height: 1.4;
-    flex: 1;
-}
-
-.task-meta {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0;
-}
-
-.priority-badge {
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.25rem 0.5rem;
-    border-radius: 8px;
-}
-
-.status-badge {
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.25rem 0.5rem;
-    border-radius: 8px;
-}
-
-.task-description {
-    color: #6b7280;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin: 0 0 1rem 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.task-tags {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.tags-icon {
-    color: #9ca3af;
-    font-size: 14px;
-}
-
-.tags-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-}
-
-.tag {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.125rem 0.5rem;
-    border-radius: 6px;
-}
-
-.tag-more {
-    background: rgba(107, 114, 128, 0.1);
-    color: #6b7280;
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.125rem 0.5rem;
-    border-radius: 6px;
-}
-
-.task-timestamps {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    font-size: 0.75rem;
-    color: #9ca3af;
-}
-
-.timestamp {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-
-    .q-icon {
-        font-size: 14px;
-    }
-}
-
-// 任务操作按钮
-.task-actions {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    display: flex;
-    gap: 0.5rem;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 2;
-}
-
-.action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-
-    &:hover {
-        transform: scale(1.1);
-    }
-}
-
 // 动画
 @keyframes pulse {
     0%,
@@ -891,5 +1069,98 @@ onMounted(() => {
     right: auto;
     opacity: 1;
     visibility: visible;
+}
+
+.bulk-operations-toolbar {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 16px;
+    margin: 0 0 16px 0;
+    padding: 12px 16px;
+}
+
+.toolbar-content { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 12px; 
+}
+
+.selection-info { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+}
+
+.batch-actions { 
+    display: flex; 
+    gap: 8px; 
+    flex-wrap: wrap; 
+}
+
+.task-selected { 
+    outline: 2px solid rgba(59, 130, 246, 0.35); 
+}
+.drag-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px dashed rgba(59, 130, 246, 0.4);
+  color: #2563eb;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin: 12px 24px 0;
+}
+
+.tasks-grid.drag-disabled {
+  opacity: 0.8;
+}
+
+.task-ghost {
+  opacity: 0.5 !important;
+}
+
+.task-chosen {
+  transform: scale(1.02);
+}
+
+.task-drag {
+  cursor: grabbing !important;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  cursor: grab;
+}
+
+.drag-handle:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+// 任务网格
+.tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+    }
 }
 </style>

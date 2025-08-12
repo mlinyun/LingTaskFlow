@@ -698,6 +698,31 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
         if progress is None and hasattr(self.instance, 'progress'):
             progress = self.instance.progress
         
+        # 检查逾期限制
+        if self.instance and self.instance.is_overdue:
+            # 阻止对逾期任务开始或标记为完成
+            if status in ['IN_PROGRESS', 'COMPLETED']:
+                # 增加逾期次数计数
+                self.instance.overdue_count += 1
+                self.instance.save(update_fields=['overdue_count'])
+                
+                # 使用字典映射来获取状态显示名称
+                status_display_map = {
+                    'PENDING': '待处理',
+                    'IN_PROGRESS': '进行中',
+                    'COMPLETED': '已完成',
+                    'CANCELLED': '已取消',
+                    'ON_HOLD': '暂停'
+                }
+                status_display = status_display_map.get(status, status)
+                
+                raise serializers.ValidationError({
+                    'status': f'任务已逾期，不能更改为"{status_display}"状态。请先重设截止时间。',
+                    'is_overdue': True,
+                    'overdue_count': self.instance.overdue_count,
+                    'due_date': self.instance.due_date
+                })
+        
         # 时间验证
         if start_date and due_date:
             # 如果due_date是datetime，取其date部分进行比较
@@ -806,6 +831,31 @@ class TaskStatusUpdateSerializer(serializers.ModelSerializer):
         """验证状态变更"""
         status = attrs.get('status')
         progress = attrs.get('progress')
+        
+        # 检查逾期限制
+        if self.instance and self.instance.is_overdue:
+            # 阻止对逾期任务开始或标记为完成
+            if status in ['IN_PROGRESS', 'COMPLETED']:
+                # 增加逾期次数计数
+                self.instance.overdue_count += 1
+                self.instance.save(update_fields=['overdue_count'])
+                
+                # 使用字典映射来获取状态显示名称
+                status_display_map = {
+                    'PENDING': '待处理',
+                    'IN_PROGRESS': '进行中',
+                    'COMPLETED': '已完成',
+                    'CANCELLED': '已取消',
+                    'ON_HOLD': '暂停'
+                }
+                status_display = status_display_map.get(status, status)
+                
+                raise serializers.ValidationError({
+                    'status': f'任务已逾期，不能更改为"{status_display}"状态。请先重设截止时间。',
+                    'is_overdue': True,
+                    'overdue_count': self.instance.overdue_count,
+                    'due_date': self.instance.due_date
+                })
         
         # 如果状态为完成，进度应为100
         if status == 'COMPLETED' and progress is not None and progress < 100:

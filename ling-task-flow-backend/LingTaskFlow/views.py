@@ -1451,6 +1451,106 @@ class TaskViewSet(viewsets.ModelViewSet):
             'data': detail_serializer.data
         })
     
+    @action(detail=False, methods=['post'])
+    def bulk_action(self, request):
+        """批量操作统一入口: 支持 assign / update_status / update_priority"""
+        from .serializers import TaskBulkActionSerializer
+        
+        serializer = TaskBulkActionSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response({
+                'success': False,
+                'message': '参数验证失败',
+                'error': e.detail,
+                'error_code': 'validation_failed'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        action_type = data['action']
+        task_ids = data['task_ids']
+
+        if len(task_ids) > 50:
+            return Response({
+                'success': False,
+                'message': '批量操作最多支持50个任务',
+                'error': 'too_many_tasks'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        successes = []
+        failures = []
+
+        for tid in task_ids:
+            try:
+                try:
+                    task = Task.objects.get(id=tid, owner=request.user)
+                except Task.DoesNotExist:
+                    failures.append({'id': tid, 'error': '任务不存在或无权限访问'})
+                    continue
+
+                if not task.can_edit(request.user):
+                    failures.append({'id': tid, 'error': '没有权限编辑此任务'})
+                    continue
+
+                if action_type == 'assign':
+                    assigned_to_id = data.get('assigned_to')
+                    try:
+                        user = User.objects.get(id=assigned_to_id)
+                    except User.DoesNotExist:
+                        failures.append({'id': tid, 'error': '分配的用户不存在'})
+                        continue
+                    task.assigned_to = user
+                    task.save(update_fields=['assigned_to', 'updated_at'])
+                    successes.append({'id': tid, 'title': task.title, 'action': 'assign', 'assigned_to': user.username})
+
+                elif action_type == 'update_status':
+                    status_payload = {'status': data.get('status')}
+                    status_ser = TaskStatusUpdateSerializer(task, data=status_payload, partial=True)
+                    try:
+                        status_ser.is_valid(raise_exception=True)
+                        updated_task = status_ser.save()
+                        detail = TaskDetailSerializer(updated_task, context={'request': request}).data
+                        successes.append({'id': tid, 'title': task.title, 'action': 'update_status', 'data': detail})
+                    except ValidationError as ve:
+                        failures.append({'id': tid, 'error': ve.detail})
+
+                elif action_type == 'update_priority':
+                    task.priority = data.get('priority')
+                    task.save(update_fields=['priority', 'updated_at'])
+                    successes.append({'id': tid, 'title': task.title, 'action': 'update_priority', 'priority': task.priority})
+
+                else:
+                    failures.append({'id': tid, 'error': '不支持的操作类型'})
+
+            except Exception as e:
+                failures.append({'id': tid, 'error': str(e)})
+
+        total = len(task_ids)
+        successful_count = len(successes)
+        failed_count = len(failures)
+
+        if successful_count == total:
+            resp_status = status.HTTP_200_OK
+        elif successful_count > 0:
+            resp_status = status.HTTP_207_MULTI_STATUS
+        else:
+            resp_status = status.HTTP_400_BAD_REQUEST
+
+        return Response({
+            'success': successful_count > 0,
+            'message': f'批量操作完成: {successful_count}/{total} 成功',
+            'data': {
+                'stats': {
+                    'total_attempted': total,
+                    'successful': successful_count,
+                    'failed': failed_count,
+                },
+                'successful_items': successes,
+                'failed_items': failures
+            }
+        }, status=resp_status)
+    
     def destroy(self, request, *args, **kwargs):
         """软删除任务"""
         instance = self.get_object()

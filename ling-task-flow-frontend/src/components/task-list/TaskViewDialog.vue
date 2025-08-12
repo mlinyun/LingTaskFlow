@@ -176,16 +176,16 @@
                                         <q-icon
                                             name="event"
                                             size="16px"
-                                            :color="getDueDateColor(task.due_date)"
+                                            :color="getDueDateColor(task.due_date, task.status)"
                                         />
                                         <span class="time-label">截止时间：</span>
                                         <span
                                             class="time-value"
-                                            :class="getDueDateClass(task.due_date)"
+                                            :class="getDueDateClass(task.due_date, task.status)"
                                         >
                                             {{ formatDateTime(task.due_date) }}
                                             <span class="due-status">{{
-                                                getDueDateStatus(task.due_date)
+                                                getDueDateStatus(task.due_date, task.status)
                                             }}</span>
                                         </span>
                                     </div>
@@ -277,13 +277,13 @@
                                     <q-icon
                                         name="timer"
                                         size="16px"
-                                        :color="getDueDateColor(task.due_date)"
+                                        :color="getDueDateColor(task.due_date, task.status)"
                                     />
                                     <span
                                         class="stat-value"
-                                        :class="getDueDateClass(task.due_date)"
+                                        :class="getDueDateClass(task.due_date, task.status)"
                                     >
-                                        {{ getTimeRemaining(task.due_date) }}
+                                        {{ getTimeRemaining(task.due_date, task.status) }}
                                     </span>
                                     <span class="stat-label">剩余时间</span>
                                 </div>
@@ -474,10 +474,13 @@ const formatRelativeTime = (dateStr: string): string => {
     return date.toLocaleDateString('zh-CN');
 };
 
-const getDueDateColor = (dueDate: string): string => {
+const getDueDateColor = (dueDate: string, status?: TaskStatus): string => {
     const now = new Date();
     const due = new Date(dueDate);
     const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    // 已完成或已取消任务不标红
+    if (status === 'COMPLETED' || status === 'CANCELLED') return 'grey-6';
 
     if (diffDays < 0) return 'negative';
     if (diffDays <= 1) return 'warning';
@@ -485,10 +488,13 @@ const getDueDateColor = (dueDate: string): string => {
     return 'grey-6';
 };
 
-const getDueDateClass = (dueDate: string): string => {
+const getDueDateClass = (dueDate: string, status?: TaskStatus): string => {
     const now = new Date();
     const due = new Date(dueDate);
     const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    // 已完成或已取消任务不使用强调颜色
+    if (status === 'COMPLETED' || status === 'CANCELLED') return '';
 
     if (diffDays < 0) return 'text-negative';
     if (diffDays <= 1) return 'text-warning';
@@ -496,10 +502,15 @@ const getDueDateClass = (dueDate: string): string => {
     return '';
 };
 
-const getDueDateStatus = (dueDate: string): string => {
+const getDueDateStatus = (dueDate: string, status?: TaskStatus): string => {
     const now = new Date();
     const due = new Date(dueDate);
     const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    // 如果任务已完成或已取消，不显示逾期状态
+    if (status === 'COMPLETED' || status === 'CANCELLED') {
+        return '';
+    }
 
     if (diffDays < 0) return '(已逾期)';
     if (diffDays === 0) return '(今天到期)';
@@ -508,11 +519,19 @@ const getDueDateStatus = (dueDate: string): string => {
     return '';
 };
 
-const getTimeRemaining = (dueDate: string): string => {
+const getTimeRemaining = (dueDate: string, status?: TaskStatus): string => {
     const now = new Date();
     const due = new Date(dueDate);
     const diffMs = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    // 如果任务已完成或已取消，显示完成状态而不是时间
+    if (status === 'COMPLETED') {
+        return '已完成';
+    }
+    if (status === 'CANCELLED') {
+        return '已取消';
+    }
 
     if (diffMs < 0) return '已逾期';
     if (diffDays === 0) return '今天到期';

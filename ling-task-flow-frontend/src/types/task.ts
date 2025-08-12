@@ -18,6 +18,7 @@ export interface Task {
     owner: number; // 修正字段名从user改为owner
     owner_username?: string; // 负责人用户名，用于显示
     order?: number; // 排序字段，用于拖拽排序
+    is_overdue: boolean; // 是否逾期，来自后端序列化器
 }
 
 export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ON_HOLD';

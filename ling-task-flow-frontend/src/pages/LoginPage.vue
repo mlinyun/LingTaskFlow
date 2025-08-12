@@ -17,7 +17,7 @@
             <div class="info-section">
                 <div class="brand-section">
                     <div class="brand-logo">
-                        <q-icon name="psychology" size="4rem" color="white" />
+                        <q-icon color="white" name="psychology" size="4rem" />
                     </div>
                     <h1 class="brand-title">凌云智能任务管理平台</h1>
                     <p class="brand-subtitle">LingCloud Intelligence Task Management Platform</p>
@@ -25,19 +25,19 @@
 
                 <div class="features-list">
                     <div class="feature-item">
-                        <q-icon name="auto_awesome" size="24px" color="white" />
+                        <q-icon color="white" name="auto_awesome" size="24px" />
                         <span>AI 智能任务规划</span>
                     </div>
                     <div class="feature-item">
-                        <q-icon name="dashboard" size="24px" color="white" />
+                        <q-icon color="white" name="dashboard" size="24px" />
                         <span>实时数据仪表板</span>
                     </div>
                     <div class="feature-item">
-                        <q-icon name="cloud_sync" size="24px" color="white" />
+                        <q-icon color="white" name="cloud_sync" size="24px" />
                         <span>云端同步协作</span>
                     </div>
                     <div class="feature-item">
-                        <q-icon name="security" size="24px" color="white" />
+                        <q-icon color="white" name="security" size="24px" />
                         <span>企业级安全保障</span>
                     </div>
                 </div>
@@ -51,7 +51,7 @@
                         <p>登录您的账户以继续使用</p>
                     </div>
 
-                    <q-form @submit="handleLogin" class="futuristic-form">
+                    <q-form class="futuristic-form" @submit="handleLogin">
                         <!-- 表单标题装饰 -->
                         <div class="form-title-section">
                             <div class="title-line"></div>
@@ -65,14 +65,14 @@
                                 <div class="field-glow"></div>
                                 <q-input
                                     v-model="loginForm.username"
+                                    :loading="authStore.loading"
+                                    :rules="[val => !!val || '请输入用户名或邮箱']"
+                                    class="cyber-input"
+                                    color="primary"
+                                    dense
+                                    hide-bottom-space
                                     label="用户名 / 邮箱"
                                     outlined
-                                    dense
-                                    color="primary"
-                                    :rules="[val => !!val || '请输入用户名或邮箱']"
-                                    :loading="authStore.loading"
-                                    class="cyber-input"
-                                    hide-bottom-space
                                 >
                                     <template v-slot:prepend>
                                         <div class="input-icon-wrapper">
@@ -88,15 +88,15 @@
                                 <div class="field-glow"></div>
                                 <q-input
                                     v-model="loginForm.password"
+                                    :loading="authStore.loading"
+                                    :rules="[val => !!val || '请输入密码']"
                                     :type="showPassword ? 'text' : 'password'"
+                                    class="cyber-input"
+                                    color="primary"
+                                    dense
+                                    hide-bottom-space
                                     label="密码"
                                     outlined
-                                    dense
-                                    color="primary"
-                                    :rules="[val => !!val || '请输入密码']"
-                                    :loading="authStore.loading"
-                                    class="cyber-input"
-                                    hide-bottom-space
                                 >
                                     <template v-slot:prepend>
                                         <div class="input-icon-wrapper">
@@ -106,12 +106,12 @@
                                     </template>
                                     <template v-slot:append>
                                         <q-btn
-                                            flat
-                                            dense
-                                            round
                                             :icon="showPassword ? 'visibility_off' : 'visibility'"
-                                            @click="showPassword = !showPassword"
                                             class="visibility-toggle"
+                                            dense
+                                            flat
+                                            round
+                                            @click="showPassword = !showPassword"
                                         />
                                     </template>
                                 </q-input>
@@ -123,17 +123,17 @@
                         <div class="form-options-futuristic">
                             <q-checkbox
                                 v-model="rememberMe"
-                                label="记住我"
-                                color="primary"
-                                size="sm"
                                 class="cyber-checkbox"
+                                color="primary"
+                                label="记住我"
+                                size="sm"
                             />
                             <q-btn
-                                flat
-                                dense
-                                color="primary"
-                                label="忘记密码？"
                                 class="forgot-password-link"
+                                color="primary"
+                                dense
+                                flat
+                                label="忘记密码？"
                                 @click="$q.notify({ type: 'info', message: '功能开发中...' })"
                             />
                         </div>
@@ -141,17 +141,17 @@
                         <!-- 登录按钮 -->
                         <div class="submit-button-container">
                             <q-btn
-                                type="submit"
-                                class="cyber-submit-btn"
-                                size="lg"
                                 :loading="authStore.loading"
+                                class="cyber-submit-btn"
                                 no-caps
+                                size="lg"
+                                type="submit"
                                 unelevated
                             >
                                 <div class="btn-glow"></div>
                                 <div class="btn-text">
                                     <span>启动系统</span>
-                                    <q-icon name="login" size="20px" class="btn-icon" />
+                                    <q-icon class="btn-icon" name="login" size="20px" />
                                 </div>
                                 <div class="btn-circuit-pattern">
                                     <div class="circuit-line circuit-1"></div>
@@ -176,13 +176,13 @@
                             <div class="link-backdrop"></div>
                             <span class="link-text">还没有账户？</span>
                             <q-btn
-                                flat
-                                dense
-                                color="primary"
-                                label="立即注册"
-                                @click="goToRegister"
-                                no-caps
                                 class="register-link-btn"
+                                color="primary"
+                                dense
+                                flat
+                                label="立即注册"
+                                no-caps
+                                @click="goToRegister"
                             >
                                 <div class="link-glow"></div>
                             </q-btn>
@@ -194,7 +194,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth';
@@ -265,7 +265,7 @@ const goToRegister = async () => {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .login-page {
     min-height: 100vh;
     position: relative;

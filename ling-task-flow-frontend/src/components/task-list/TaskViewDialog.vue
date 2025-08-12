@@ -6,7 +6,7 @@
                 <div class="header-content">
                     <div class="task-info">
                         <div class="task-title-container">
-                            <q-icon name="visibility" size="32px" class="title-icon" />
+                            <q-icon class="title-icon" name="visibility" size="32px" />
                             <div class="title-info">
                                 <h4 class="task-title">{{ task?.title || '任务详情' }}</h4>
                             </div>
@@ -18,9 +18,9 @@
                                 v-if="task"
                                 :color="getStatusColor(task.status)"
                                 :icon="getStatusIcon(task.status)"
-                                text-color="white"
-                                size="md"
                                 class="status-chip"
+                                size="md"
+                                text-color="white"
                             >
                                 {{ getStatusLabel(task.status) }}
                             </q-chip>
@@ -29,9 +29,9 @@
                                 v-if="task"
                                 :color="getPriorityColor(task.priority)"
                                 :icon="getPriorityIcon(task.priority)"
-                                text-color="white"
-                                size="md"
                                 class="priority-chip"
+                                size="md"
+                                text-color="white"
                             >
                                 {{ getPriorityLabel(task.priority) }}
                             </q-chip>
@@ -41,37 +41,37 @@
                     <!-- 操作按钮 -->
                     <div class="header-actions">
                         <q-btn
-                            flat
-                            round
-                            icon="edit"
-                            size="md"
-                            color="primary"
-                            @click="openEditDialog"
                             class="action-btn"
+                            color="primary"
+                            flat
+                            icon="edit"
+                            round
+                            size="md"
+                            @click="openEditDialog"
                         >
                             <q-tooltip>编辑任务</q-tooltip>
                         </q-btn>
 
                         <q-btn
-                            flat
-                            round
-                            icon="content_copy"
-                            size="md"
-                            color="grey-7"
-                            @click="duplicateTask"
                             class="action-btn"
+                            color="grey-7"
+                            flat
+                            icon="content_copy"
+                            round
+                            size="md"
+                            @click="duplicateTask"
                         >
                             <q-tooltip>复制任务</q-tooltip>
                         </q-btn>
 
                         <q-btn
-                            flat
-                            round
-                            icon="delete"
-                            size="md"
-                            color="negative"
-                            @click="deleteTask"
                             class="action-btn"
+                            color="negative"
+                            flat
+                            icon="delete"
+                            round
+                            size="md"
+                            @click="deleteTask"
                         >
                             <q-tooltip>删除任务</q-tooltip>
                         </q-btn>
@@ -79,12 +79,12 @@
                         <q-separator vertical />
 
                         <q-btn
+                            class="close-btn"
                             flat
-                            round
                             icon="close"
+                            round
                             size="md"
                             @click="closeDialog"
-                            class="close-btn"
                         >
                             <q-tooltip>关闭</q-tooltip>
                         </q-btn>
@@ -96,7 +96,7 @@
 
             <!-- 对话框内容 -->
             <q-card-section class="dialog-content">
-                <div class="content-layout" v-if="task">
+                <div v-if="task" class="content-layout">
                     <!-- 左侧主要内容 -->
                     <div class="main-content">
                         <!-- 任务描述 -->
@@ -133,10 +133,10 @@
                                     <q-chip
                                         v-for="tag in getTaskTags(task.tags)"
                                         :key="tag"
-                                        color="grey-3"
-                                        text-color="grey-8"
-                                        size="sm"
                                         class="task-tag"
+                                        color="grey-3"
+                                        size="sm"
+                                        text-color="grey-8"
                                     >
                                         {{ tag }}
                                     </q-chip>
@@ -157,7 +157,7 @@
                             <div class="section-content">
                                 <div class="time-info">
                                     <div class="time-item">
-                                        <q-icon name="add" size="16px" color="green" />
+                                        <q-icon color="green" name="add" size="16px" />
                                         <span class="time-label">创建时间：</span>
                                         <span class="time-value">{{
                                             formatDateTime(task.created_at)
@@ -165,7 +165,7 @@
                                     </div>
 
                                     <div class="time-item">
-                                        <q-icon name="update" size="16px" color="blue" />
+                                        <q-icon color="blue" name="update" size="16px" />
                                         <span class="time-label">更新时间：</span>
                                         <span class="time-value">{{
                                             formatDateTime(task.updated_at)
@@ -174,14 +174,14 @@
 
                                     <div v-if="task.due_date" class="time-item">
                                         <q-icon
+                                            :color="getDueDateColor(task.due_date, task.status)"
                                             name="event"
                                             size="16px"
-                                            :color="getDueDateColor(task.due_date, task.status)"
                                         />
                                         <span class="time-label">截止时间：</span>
                                         <span
-                                            class="time-value"
                                             :class="getDueDateClass(task.due_date, task.status)"
+                                            class="time-value"
                                         >
                                             {{ formatDateTime(task.due_date) }}
                                             <span class="due-status">{{
@@ -191,7 +191,7 @@
                                     </div>
 
                                     <div v-else class="time-item">
-                                        <q-icon name="event_busy" size="16px" color="grey" />
+                                        <q-icon color="grey" name="event_busy" size="16px" />
                                         <span class="time-label">截止时间：</span>
                                         <span class="time-value text-grey">未设置</span>
                                     </div>
@@ -211,9 +211,9 @@
                                     <q-chip
                                         :color="getStatusColor(task.status)"
                                         :icon="getStatusIcon(task.status)"
-                                        text-color="white"
-                                        size="sm"
                                         dense
+                                        size="sm"
+                                        text-color="white"
                                     >
                                         {{ getStatusLabel(task.status) }}
                                     </q-chip>
@@ -224,9 +224,9 @@
                                     <q-chip
                                         :color="getPriorityColor(task.priority)"
                                         :icon="getPriorityIcon(task.priority)"
-                                        text-color="white"
-                                        size="sm"
                                         dense
+                                        size="sm"
+                                        text-color="white"
                                     >
                                         {{ getPriorityLabel(task.priority) }}
                                     </q-chip>
@@ -235,7 +235,7 @@
                                 <div class="info-item">
                                     <span class="info-label">负责人：</span>
                                     <div class="assignee-info">
-                                        <q-avatar size="24px" color="primary" text-color="white">
+                                        <q-avatar color="primary" size="24px" text-color="white">
                                             {{
                                                 task.owner_username
                                                     ? task.owner_username.charAt(0).toUpperCase()
@@ -258,7 +258,7 @@
                             <h6 class="panel-title">统计信息</h6>
                             <div class="stats-grid">
                                 <div class="stat-item">
-                                    <q-icon name="visibility" size="16px" color="grey-6" />
+                                    <q-icon color="grey-6" name="visibility" size="16px" />
                                     <span class="stat-value">{{
                                         formatRelativeTime(task.created_at)
                                     }}</span>
@@ -266,7 +266,7 @@
                                 </div>
 
                                 <div class="stat-item">
-                                    <q-icon name="update" size="16px" color="grey-6" />
+                                    <q-icon color="grey-6" name="update" size="16px" />
                                     <span class="stat-value">{{
                                         formatRelativeTime(task.updated_at)
                                     }}</span>
@@ -275,13 +275,13 @@
 
                                 <div v-if="task.due_date" class="stat-item">
                                     <q-icon
+                                        :color="getDueDateColor(task.due_date, task.status)"
                                         name="timer"
                                         size="16px"
-                                        :color="getDueDateColor(task.due_date, task.status)"
                                     />
                                     <span
-                                        class="stat-value"
                                         :class="getDueDateClass(task.due_date, task.status)"
+                                        class="stat-value"
                                     >
                                         {{ getTimeRemaining(task.due_date, task.status) }}
                                     </span>
@@ -294,7 +294,7 @@
 
                 <!-- 加载状态 -->
                 <div v-else class="loading-container">
-                    <q-spinner size="40px" color="primary" />
+                    <q-spinner color="primary" size="40px" />
                     <p>加载任务详情...</p>
                 </div>
             </q-card-section>
@@ -302,10 +302,10 @@
     </q-dialog>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 import { useQuasar } from 'quasar';
-import type { Task, TaskStatus, TaskPriority } from '../../types';
+import type { Task, TaskPriority, TaskStatus } from '../../types';
 
 interface Props {
     modelValue: boolean;
@@ -544,7 +544,7 @@ const getTimeRemaining = (dueDate: string, status?: TaskStatus): string => {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .task-view-dialog {
     display: flex;
     flex-direction: column;

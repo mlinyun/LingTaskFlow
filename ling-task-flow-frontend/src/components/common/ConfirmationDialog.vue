@@ -1,16 +1,16 @@
 <template>
     <q-dialog
         v-model="isVisible"
-        position="standard"
-        :persistent="persistent"
-        transition-show="scale"
-        transition-hide="scale"
         :maximized="false"
+        :persistent="persistent"
         class="confirm-dialog-wrapper"
+        position="standard"
+        transition-hide="scale"
+        transition-show="scale"
     >
         <q-card
-            class="confirm-dialog"
             :class="[`confirm-dialog--${type}`, { 'confirm-dialog--danger': isDanger }]"
+            class="confirm-dialog"
         >
             <!-- 科技感背景装饰 -->
             <div class="confirm-dialog__background">
@@ -26,8 +26,8 @@
             <!-- 对话框内容 -->
             <q-card-section class="confirm-dialog__header">
                 <div class="confirm-dialog__icon-wrapper">
-                    <div class="icon-container" :class="`icon-container--${type}`">
-                        <q-icon :name="iconName" :size="iconSize" :class="`text-${iconColor}`" />
+                    <div :class="`icon-container--${type}`" class="icon-container">
+                        <q-icon :class="`text-${iconColor}`" :name="iconName" :size="iconSize" />
                         <div class="icon-pulse"></div>
                     </div>
                 </div>
@@ -45,14 +45,14 @@
                     <!-- 详细信息 (可选) -->
                     <div v-if="details" class="confirm-dialog__details">
                         <q-expansion-item
-                            icon="info"
-                            label="详细信息"
                             class="details-expansion"
                             dense
+                            icon="info"
+                            label="详细信息"
                         >
                             <template v-slot:header>
                                 <q-item-section avatar>
-                                    <q-icon name="info_outline" color="blue" size="sm" />
+                                    <q-icon color="blue" name="info_outline" size="sm" />
                                 </q-item-section>
                                 <q-item-section class="text-caption text-grey-6">
                                     查看详细信息
@@ -68,7 +68,7 @@
                     <!-- 警告信息 (危险操作) -->
                     <div v-if="isDanger && warningText" class="confirm-dialog__warning">
                         <div class="warning-banner">
-                            <q-icon name="warning" class="warning-icon" />
+                            <q-icon class="warning-icon" name="warning" />
                             <span class="warning-text">{{ warningText }}</span>
                         </div>
                     </div>
@@ -76,33 +76,33 @@
             </q-card-section>
 
             <!-- 操作按钮 -->
-            <q-card-actions class="confirm-dialog__actions" align="right">
+            <q-card-actions align="right" class="confirm-dialog__actions">
                 <div class="action-buttons">
                     <!-- 取消按钮 -->
                     <q-btn
-                        :label="cancelText"
-                        flat
                         :color="cancelColor"
-                        class="cancel-btn"
-                        :loading="loading"
-                        @click="handleCancel"
                         :disable="loading"
+                        :label="cancelText"
+                        :loading="loading"
+                        class="cancel-btn"
+                        flat
+                        @click="handleCancel"
                     >
-                        <q-icon name="close" size="xs" class="q-mr-xs" />
+                        <q-icon class="q-mr-xs" name="close" size="xs" />
                     </q-btn>
 
                     <!-- 确认按钮 -->
                     <q-btn
-                        :label="confirmText"
-                        :color="confirmColor"
-                        class="confirm-btn"
                         :class="`confirm-btn--${type}`"
-                        :loading="loading"
-                        @click="handleConfirm"
+                        :color="confirmColor"
                         :disable="loading"
+                        :label="confirmText"
+                        :loading="loading"
+                        class="confirm-btn"
                         unelevated
+                        @click="handleConfirm"
                     >
-                        <q-icon :name="confirmIcon" size="xs" class="q-mr-xs" />
+                        <q-icon :name="confirmIcon" class="q-mr-xs" size="xs" />
                         <div class="btn-glow"></div>
                     </q-btn>
                 </div>
@@ -119,7 +119,7 @@
     </q-dialog>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 
 // 定义确认对话框类型

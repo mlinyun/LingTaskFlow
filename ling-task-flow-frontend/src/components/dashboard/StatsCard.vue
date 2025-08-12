@@ -1,7 +1,7 @@
 <template>
     <q-card
-        class="stats-card cursor-pointer"
         :class="[`stats-card--${color}`]"
+        class="stats-card cursor-pointer"
         @click="$emit('click')"
     >
         <q-card-section class="stats-card-content">
@@ -24,9 +24,9 @@
                     </div>
 
                     <!-- 右侧：趋势信息 -->
-                    <div class="stats-trend-container" v-if="trend">
+                    <div v-if="trend" class="stats-trend-container">
                         <div class="stats-trend">
-                            <q-icon :name="trendIcon" :color="trendColor" size="12px" />
+                            <q-icon :color="trendColor" :name="trendIcon" size="12px" />
                             <span :class="`text-${trendColor}`">
                                 {{ trend.value }}{{ trendUnit }}
                             </span>
@@ -37,7 +37,7 @@
                 <!-- 右侧：背景装饰图标 -->
                 <div class="stats-right">
                     <div class="stats-decoration">
-                        <q-icon :name="icon" size="48px" class="decoration-icon" />
+                        <q-icon :name="icon" class="decoration-icon" size="48px" />
                         <div class="decoration-glow"></div>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
     </q-card>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 
 interface Props {

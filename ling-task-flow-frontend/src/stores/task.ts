@@ -1,18 +1,18 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { api } from 'boot/axios';
 import { handleApiError } from 'src/utils/errorHandler';
 import type {
-    Task,
-    TaskCreateData,
-    TaskUpdateData,
-    TaskSearchParams,
-    TaskStats,
-    TrashStats,
     StatusDistribution,
     TagDistribution,
-    TimeDistribution,
+    Task,
+    TaskCreateData,
+    TaskSearchParams,
+    TaskStats,
     TaskStatus,
+    TaskUpdateData,
+    TimeDistribution,
+    TrashStats,
 } from '../types';
 
 export const useTaskStore = defineStore('task', () => {
@@ -40,21 +40,15 @@ export const useTaskStore = defineStore('task', () => {
     const draggedTask = ref<Task | null>(null);
 
     // 计算属性
-    const totalPages = computed(() =>
-        Math.ceil(totalTasks.value / pageSize.value),
-    );
+    const totalPages = computed(() => Math.ceil(totalTasks.value / pageSize.value));
     const hasNextPage = computed(() => currentPage.value < totalPages.value);
     const hasPrevPage = computed(() => currentPage.value > 1);
 
     const selectedTasksCount = computed(() => selectedTasks.value.length);
 
     // 任务列表筛选
-    const activeTasks = computed(() =>
-        tasks.value.filter(task => !task.deleted_at),
-    );
-    const deletedTasks = computed(() =>
-        tasks.value.filter(task => task.deleted_at),
-    );
+    const activeTasks = computed(() => tasks.value.filter(task => !task.deleted_at));
+    const deletedTasks = computed(() => tasks.value.filter(task => task.deleted_at));
 
     const tasksByStatus = computed(() => {
         const grouped: Record<string, Task[]> = {};
@@ -349,7 +343,7 @@ export const useTaskStore = defineStore('task', () => {
 
             // 尝试根据成功项更新本地任务列表
             const successfulItems = (resp?.data?.successful_items || []) as Array<{ data?: Task }>;
-            successfulItems.forEach((item) => {
+            successfulItems.forEach(item => {
                 const updated = item?.data as Task | undefined;
                 if (updated && updated.id) {
                     const idx = tasks.value.findIndex(t => t.id === updated.id);

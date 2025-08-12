@@ -2,10 +2,6 @@
     <q-page class="profile-page">
         <!-- 页面头部组件 -->
         <PageHeader
-            icon="account_circle"
-            title-primary="个人资料"
-            title-accent="管理中心"
-            subtitle="管理您的个人信息和账户设置"
             :primary-action="{
                 icon: isEditing ? 'save' : 'edit',
                 label: isEditing ? '保存更改' : '编辑资料',
@@ -25,6 +21,10 @@
                     class: 'download-btn',
                 },
             ]"
+            icon="account_circle"
+            subtitle="管理您的个人信息和账户设置"
+            title-accent="管理中心"
+            title-primary="个人资料"
             @primary-action="handlePrimaryAction"
             @secondary-action="handleSecondaryAction"
         />
@@ -34,10 +34,10 @@
             <!-- 加载状态 -->
             <LoadingState
                 v-if="loading && !userInfo"
-                variant="centered"
+                color="primary"
                 message="加载个人信息..."
                 spinner="gears"
-                color="primary"
+                variant="centered"
             />
 
             <!-- 个人资料内容 -->
@@ -48,24 +48,24 @@
                     <div class="identity-card">
                         <div class="identity-body">
                             <div class="avatar-wrap">
-                                <q-avatar size="120px" class="avatar">
+                                <q-avatar class="avatar" size="120px">
                                     <img
                                         v-if="userInfo?.profile?.avatar_url"
-                                        :src="userInfo.profile.avatar_url"
                                         :alt="userInfo.username"
+                                        :src="userInfo.profile.avatar_url"
                                     />
                                     <q-icon
                                         v-else
+                                        color="primary"
                                         name="account_circle"
                                         size="120px"
-                                        color="primary"
                                     />
                                 </q-avatar>
                                 <q-btn
                                     class="avatar-edit-btn"
+                                    color="primary"
                                     icon="photo_camera"
                                     round
-                                    color="primary"
                                     size="sm"
                                     @click="openAvatarUpload"
                                 >
@@ -97,7 +97,7 @@
                     <div class="stats-card">
                         <div class="card-header">
                             <h4>活动统计</h4>
-                            <q-icon name="analytics" color="primary" />
+                            <q-icon color="primary" name="analytics" />
                         </div>
                         <div class="stats-grid">
                             <div class="stat-item">
@@ -130,21 +130,21 @@
                     <div class="info-card">
                         <div class="card-header">
                             <h4>基本信息</h4>
-                            <q-icon name="person" color="primary" />
+                            <q-icon color="primary" name="person" />
                         </div>
 
                         <q-form class="info-form">
                             <div class="form-row">
                                 <q-input
                                     v-model="formData.username"
-                                    label="用户名"
-                                    :readonly="!isEditing"
-                                    :outlined="isEditing"
                                     :borderless="!isEditing"
+                                    :outlined="isEditing"
+                                    :readonly="!isEditing"
+                                    :rules="[val => !!val || '用户名不能为空']"
+                                    class="form-field"
                                     dense
                                     hide-bottom-space
-                                    class="form-field"
-                                    :rules="[val => !!val || '用户名不能为空']"
+                                    label="用户名"
                                 >
                                     <template v-slot:prepend>
                                         <q-icon name="account_circle" />
@@ -153,18 +153,18 @@
 
                                 <q-input
                                     v-model="formData.email"
-                                    label="邮箱地址"
-                                    type="email"
-                                    :readonly="!isEditing"
-                                    :outlined="isEditing"
                                     :borderless="!isEditing"
-                                    dense
-                                    hide-bottom-space
-                                    class="form-field"
+                                    :outlined="isEditing"
+                                    :readonly="!isEditing"
                                     :rules="[
                                         val => !!val || '邮箱不能为空',
                                         val => /.+@.+\..+/.test(val) || '请输入有效的邮箱地址',
                                     ]"
+                                    class="form-field"
+                                    dense
+                                    hide-bottom-space
+                                    label="邮箱地址"
+                                    type="email"
                                 >
                                     <template v-slot:prepend>
                                         <q-icon name="email" />
@@ -175,13 +175,13 @@
                             <div class="form-row">
                                 <q-input
                                     v-model="formData.nickname"
-                                    label="昵称"
-                                    :readonly="!isEditing"
-                                    :outlined="isEditing"
                                     :borderless="!isEditing"
+                                    :outlined="isEditing"
+                                    :readonly="!isEditing"
+                                    class="form-field"
                                     dense
                                     hide-bottom-space
-                                    class="form-field"
+                                    label="昵称"
                                 >
                                     <template v-slot:prepend>
                                         <q-icon name="badge" />
@@ -190,13 +190,13 @@
 
                                 <q-input
                                     v-model="formData.phone"
-                                    label="联系电话"
-                                    :readonly="!isEditing"
-                                    :outlined="isEditing"
                                     :borderless="!isEditing"
+                                    :outlined="isEditing"
+                                    :readonly="!isEditing"
+                                    class="form-field"
                                     dense
                                     hide-bottom-space
-                                    class="form-field"
+                                    label="联系电话"
                                 >
                                     <template v-slot:prepend>
                                         <q-icon name="phone" />
@@ -207,20 +207,20 @@
                             <div class="form-row form-row--single">
                                 <q-input
                                     v-model="formData.bio"
-                                    label="个人简介"
-                                    type="textarea"
-                                    :readonly="!isEditing"
-                                    :outlined="isEditing"
                                     :borderless="!isEditing"
-                                    rows="3"
+                                    :outlined="isEditing"
+                                    :readonly="!isEditing"
+                                    class="form-field bio-field"
+                                    counter
                                     dense
                                     hide-bottom-space
-                                    class="form-field bio-field"
+                                    label="个人简介"
                                     maxlength="500"
-                                    counter
+                                    rows="3"
+                                    type="textarea"
                                 >
                                     <template v-slot:prepend>
-                                        <q-icon name="description" class="self-start q-mt-sm" />
+                                        <q-icon class="self-start q-mt-sm" name="description" />
                                     </template>
                                 </q-input>
                             </div>
@@ -231,30 +231,30 @@
                     <div class="security-card">
                         <div class="card-header">
                             <h4>安全设置</h4>
-                            <q-icon name="security" color="primary" />
+                            <q-icon color="primary" name="security" />
                         </div>
 
                         <div class="security-actions">
                             <q-btn
+                                class="security-btn"
+                                color="primary"
                                 icon="lock"
                                 label="修改密码"
                                 outline
-                                color="primary"
-                                class="security-btn"
                                 @click="openPasswordDialog"
                             />
 
                             <q-btn
+                                class="security-btn"
+                                color="negative"
                                 icon="logout"
                                 label="登出所有设备"
                                 outline
-                                color="negative"
-                                class="security-btn"
                                 @click="logoutAllDevices"
                             />
                         </div>
 
-                        <div class="last-login" v-if="userInfo?.last_login">
+                        <div v-if="userInfo?.last_login" class="last-login">
                             <q-icon name="schedule" />
                             <span>上次登录：{{ formatDateTime(userInfo.last_login) }}</span>
                         </div>
@@ -268,7 +268,7 @@
             <q-card class="avatar-upload-dialog">
                 <q-card-section class="dialog-header">
                     <div class="text-h6">更换头像</div>
-                    <q-btn icon="close" flat round dense v-close-popup />
+                    <q-btn v-close-popup dense flat icon="close" round />
                 </q-card-section>
 
                 <q-card-section>
@@ -289,12 +289,12 @@
                 </q-card-section>
 
                 <q-card-actions align="right">
-                    <q-btn flat label="取消" v-close-popup />
+                    <q-btn v-close-popup flat label="取消" />
                     <q-btn
+                        :disable="!avatarFile"
+                        :loading="uploadingAvatar"
                         color="primary"
                         label="上传"
-                        :loading="uploadingAvatar"
-                        :disable="!avatarFile"
                         @click="uploadAvatar"
                     />
                 </q-card-actions>
@@ -307,9 +307,9 @@
                 <q-card-section class="dialog-header">
                     <div class="header-left">
                         <q-avatar
-                            size="32px"
                             class="header-icon"
                             color="primary"
+                            size="32px"
                             text-color="white"
                         >
                             <q-icon name="lock" />
@@ -319,28 +319,28 @@
                             <div class="subtitle">为了账号安全，请使用强密码</div>
                         </div>
                     </div>
-                    <q-btn icon="close" flat round dense v-close-popup />
+                    <q-btn v-close-popup dense flat icon="close" round />
                 </q-card-section>
 
                 <q-card-section>
                     <q-form @submit="changePassword">
                         <q-input
                             v-model="passwordForm.currentPassword"
-                            label="当前密码"
-                            :type="showCurrentPwd ? 'text' : 'password'"
-                            dense
                             :rules="[val => !!val || '请输入当前密码']"
+                            :type="showCurrentPwd ? 'text' : 'password'"
                             class="q-mb-md"
+                            dense
+                            label="当前密码"
                         >
                             <template #prepend>
                                 <q-icon name="vpn_key" />
                             </template>
                             <template #append>
                                 <q-btn
+                                    :icon="showCurrentPwd ? 'visibility_off' : 'visibility'"
+                                    dense
                                     flat
                                     round
-                                    dense
-                                    :icon="showCurrentPwd ? 'visibility_off' : 'visibility'"
                                     @click="showCurrentPwd = !showCurrentPwd"
                                 />
                             </template>
@@ -348,26 +348,26 @@
 
                         <q-input
                             v-model="passwordForm.newPassword"
-                            label="新密码"
-                            :type="showNewPwd ? 'text' : 'password'"
-                            dense
                             :rules="[
                                 val => !!val || '请输入新密码',
                                 val => val.length >= 8 || '密码长度至少8位',
                             ]"
+                            :type="showNewPwd ? 'text' : 'password'"
                             class="q-mb-xs"
-                            @focus="isPwdFocused = true"
+                            dense
+                            label="新密码"
                             @blur="isPwdFocused = false"
+                            @focus="isPwdFocused = true"
                         >
                             <template #prepend>
                                 <q-icon name="lock" />
                             </template>
                             <template #append>
                                 <q-btn
+                                    :icon="showNewPwd ? 'visibility_off' : 'visibility'"
+                                    dense
                                     flat
                                     round
-                                    dense
-                                    :icon="showNewPwd ? 'visibility_off' : 'visibility'"
                                     @click="showNewPwd = !showNewPwd"
                                 />
                             </template>
@@ -380,9 +380,9 @@
                         >
                             <div class="strength-line">
                                 <div
-                                    class="strength-progress"
                                     :class="getStrengthClass()"
                                     :style="{ width: `${(passwordStrength / 5) * 100}%` }"
+                                    class="strength-progress"
                                 ></div>
                             </div>
                             <div class="strength-text">{{ getStrengthText() }}</div>
@@ -390,23 +390,23 @@
 
                         <q-input
                             v-model="passwordForm.confirmPassword"
-                            label="确认新密码"
-                            :type="showConfirmPwd ? 'text' : 'password'"
-                            dense
                             :rules="[
                                 val => !!val || '请确认新密码',
                                 val => val === passwordForm.newPassword || '两次输入的密码不一致',
                             ]"
+                            :type="showConfirmPwd ? 'text' : 'password'"
+                            dense
+                            label="确认新密码"
                         >
                             <template #prepend>
                                 <q-icon name="check_circle" />
                             </template>
                             <template #append>
                                 <q-btn
+                                    :icon="showConfirmPwd ? 'visibility_off' : 'visibility'"
+                                    dense
                                     flat
                                     round
-                                    dense
-                                    :icon="showConfirmPwd ? 'visibility_off' : 'visibility'"
                                     @click="showConfirmPwd = !showConfirmPwd"
                                 />
                             </template>
@@ -417,7 +417,7 @@
                         <div class="password-policy">
                             <div class="policy-title">密码要求</div>
                             <div class="policy-list">
-                                <div class="policy-item" :class="{ ok: passwordPolicy.len }">
+                                <div :class="{ ok: passwordPolicy.len }" class="policy-item">
                                     <q-icon
                                         :name="
                                             passwordPolicy.len
@@ -427,7 +427,7 @@
                                     />
                                     至少 8 个字符
                                 </div>
-                                <div class="policy-item" :class="{ ok: passwordPolicy.upper }">
+                                <div :class="{ ok: passwordPolicy.upper }" class="policy-item">
                                     <q-icon
                                         :name="
                                             passwordPolicy.upper
@@ -437,7 +437,7 @@
                                     />
                                     包含大写字母 (A-Z)
                                 </div>
-                                <div class="policy-item" :class="{ ok: passwordPolicy.lower }">
+                                <div :class="{ ok: passwordPolicy.lower }" class="policy-item">
                                     <q-icon
                                         :name="
                                             passwordPolicy.lower
@@ -447,7 +447,7 @@
                                     />
                                     包含小写字母 (a-z)
                                 </div>
-                                <div class="policy-item" :class="{ ok: passwordPolicy.number }">
+                                <div :class="{ ok: passwordPolicy.number }" class="policy-item">
                                     <q-icon
                                         :name="
                                             passwordPolicy.number
@@ -457,7 +457,7 @@
                                     />
                                     包含数字 (0-9)
                                 </div>
-                                <div class="policy-item" :class="{ ok: passwordPolicy.special }">
+                                <div :class="{ ok: passwordPolicy.special }" class="policy-item">
                                     <q-icon
                                         :name="
                                             passwordPolicy.special
@@ -467,7 +467,7 @@
                                     />
                                     包含特殊字符
                                 </div>
-                                <div class="policy-item" :class="{ ok: passwordPolicy.match }">
+                                <div :class="{ ok: passwordPolicy.match }" class="policy-item">
                                     <q-icon
                                         :name="
                                             passwordPolicy.match
@@ -483,13 +483,13 @@
                 </q-card-section>
 
                 <q-card-actions align="right">
-                    <q-btn flat label="取消" v-close-popup />
+                    <q-btn v-close-popup flat label="取消" />
                     <q-btn
-                        color="primary"
-                        label="确认修改"
-                        icon="check_circle"
                         :disable="!canSubmit"
                         :loading="changingPassword"
+                        color="primary"
+                        icon="check_circle"
+                        label="确认修改"
                         @click="changePassword"
                     />
                 </q-card-actions>
@@ -498,8 +498,8 @@
     </q-page>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+<script lang="ts" setup>
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from 'src/stores/auth';
@@ -509,11 +509,11 @@ import type { User } from 'src/types';
 import { usePasswordStrength } from 'src/composables/usePasswordStrength';
 import { useGlobalConfirm } from 'src/composables/useGlobalConfirm';
 import {
+    changePassword as apiChangePassword,
     getUserProfile as apiGetUserProfile,
+    logoutAllDevices as apiLogoutAllDevices,
     updateUserProfile as apiUpdateUserProfile,
     uploadAvatar as apiUploadAvatar,
-    changePassword as apiChangePassword,
-    logoutAllDevices as apiLogoutAllDevices,
 } from 'src/services/profile';
 
 const $q = useQuasar();

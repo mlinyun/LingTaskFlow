@@ -6,8 +6,8 @@
     <slot />
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
+<script lang="ts" setup>
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGlobalShortcuts } from '../../composables/useKeyboardShortcuts';
 import ShortcutHelpDialog from './ShortcutHelpDialog.vue';

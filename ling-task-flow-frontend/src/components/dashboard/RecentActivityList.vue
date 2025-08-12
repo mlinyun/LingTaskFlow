@@ -1,7 +1,7 @@
 <template>
     <div class="recent-activity-list">
         <div v-if="!hasActivities" class="no-activity">
-            <q-icon name="history" size="48px" color="grey-5" />
+            <q-icon color="grey-5" name="history" size="48px" />
             <p class="text-grey-6">暂无最近活动</p>
         </div>
 
@@ -9,8 +9,8 @@
             <div v-for="activity in displayActivities" :key="activity.id" class="activity-item">
                 <div class="activity-icon">
                     <q-icon
-                        :name="getActionIcon(activity.action)"
                         :color="getActionColor(activity.action)"
+                        :name="getActionIcon(activity.action)"
                         size="sm"
                     />
                 </div>
@@ -28,11 +28,11 @@
 
                 <div class="activity-link">
                     <q-btn
+                        color="grey-6"
                         flat
+                        icon="open_in_new"
                         round
                         size="sm"
-                        icon="open_in_new"
-                        color="grey-6"
                         @click="goToTask(activity.task_id)"
                     >
                         <q-tooltip>查看任务</q-tooltip>
@@ -42,12 +42,12 @@
         </div>
 
         <div v-if="hasMoreActivities" class="load-more">
-            <q-btn flat color="primary" label="查看更多" @click="loadMore" />
+            <q-btn color="primary" flat label="查看更多" @click="loadMore" />
         </div>
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 

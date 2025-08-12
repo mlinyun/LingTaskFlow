@@ -3,19 +3,19 @@
     <Teleport to="body">
         <ConfirmationDialog
             v-model="confirmDialog.state.visible"
-            :type="confirmDialog.state.type"
-            :title="confirmDialog.state.title"
-            :message="confirmDialog.state.message"
-            :details="confirmDialog.state.details"
-            :warning-text="confirmDialog.state.warningText"
-            :confirm-text="confirmDialog.state.confirmText"
             :cancel-text="confirmDialog.state.cancelText"
             :confirm-icon="confirmDialog.state.confirmIcon"
-            :persistent="confirmDialog.state.persistent"
+            :confirm-text="confirmDialog.state.confirmText"
+            :details="confirmDialog.state.details"
             :loading="confirmDialog.state.loading"
             :loading-text="confirmDialog.state.loadingText"
-            @confirm="confirmDialog.handleConfirm"
+            :message="confirmDialog.state.message"
+            :persistent="confirmDialog.state.persistent"
+            :title="confirmDialog.state.title"
+            :type="confirmDialog.state.type"
+            :warning-text="confirmDialog.state.warningText"
             @cancel="confirmDialog.handleCancel"
+            @confirm="confirmDialog.handleConfirm"
         />
     </Teleport>
 
@@ -23,8 +23,8 @@
     <slot />
 </template>
 
-<script setup lang="ts">
-import { provide, onMounted } from 'vue';
+<script lang="ts" setup>
+import { onMounted, provide } from 'vue';
 import ConfirmationDialog from './ConfirmationDialog.vue';
 import { useConfirmDialog, type UseConfirmDialogReturn } from '../../composables/useConfirmDialog';
 

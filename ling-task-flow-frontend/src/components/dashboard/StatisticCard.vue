@@ -15,10 +15,10 @@
                     <span class="stat-label">{{ item.label }}</span>
                     <div class="stat-bar">
                         <q-linear-progress
-                            :value="item.percentage / 100"
                             :color="getItemColor(item)"
-                            size="6px"
+                            :value="item.percentage / 100"
                             rounded
+                            size="6px"
                         />
                         <span class="stat-value">{{ formatValue(item) }}</span>
                     </div>
@@ -29,7 +29,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 // 定义统计项的接口
 interface StatisticItem {
     key: string;

@@ -19,8 +19,8 @@
     </ConfirmationDialogProvider>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted, provide } from 'vue';
+<script lang="ts" setup>
+import { onMounted, provide, ref } from 'vue';
 import AppHeader from 'components/layout/AppHeader.vue';
 import AppDrawer from 'components/layout/AppDrawer.vue';
 import ErrorNotification from 'components/common/ErrorNotification.vue';

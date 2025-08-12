@@ -1,14 +1,14 @@
 <template>
     <div class="status-distribution-chart">
         <div v-if="!hasData" class="no-data">
-            <q-icon name="pie_chart" size="48px" color="grey-5" />
+            <q-icon color="grey-5" name="pie_chart" size="48px" />
             <p class="text-grey-6">暂无数据</p>
         </div>
 
         <div v-else class="chart-container">
             <!-- 饼图容器 -->
             <div class="pie-chart-container">
-                <canvas ref="chartCanvas" width="240" height="240"></canvas>
+                <canvas ref="chartCanvas" height="240" width="240"></canvas>
                 <div class="chart-center">
                     <div class="total-count">{{ totalTasks }}</div>
                     <div class="total-label">总任务</div>
@@ -23,7 +23,7 @@
                     class="legend-item cursor-pointer"
                     @click="handleStatusClick(item.status)"
                 >
-                    <div class="legend-color" :style="{ backgroundColor: item.color }"></div>
+                    <div :style="{ backgroundColor: item.color }" class="legend-color"></div>
                     <div class="legend-info">
                         <div class="legend-label">{{ item.label }}</div>
                         <div class="legend-value">
@@ -36,8 +36,8 @@
     </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+<script lang="ts" setup>
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 interface ChartDataItem {
     status: string;

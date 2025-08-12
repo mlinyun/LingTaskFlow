@@ -14,7 +14,7 @@
             <div class="title-section">
                 <div class="title-container">
                     <div class="icon-wrapper">
-                        <q-icon :name="icon" size="24px" class="title-icon" />
+                        <q-icon :name="icon" class="title-icon" size="24px" />
                         <div class="icon-glow"></div>
                     </div>
                     <div class="title-text">
@@ -23,7 +23,7 @@
                             <span class="title-accent">{{ titleAccent }}</span>
                         </h1>
                         <p class="page-subtitle">
-                            <q-icon name="insights" size="14px" class="q-mr-xs" />
+                            <q-icon class="q-mr-xs" name="insights" size="14px" />
                             {{ formatDate(new Date()) }} {{ subtitle }}
                         </p>
                     </div>
@@ -37,9 +37,9 @@
                         v-if="primaryAction"
                         :icon="primaryAction.icon"
                         :label="primaryAction.label"
+                        :loading="primaryAction.loading"
                         class="refresh-btn"
                         rounded
-                        :loading="primaryAction.loading"
                         @click="$emit('primary-action')"
                     />
 
@@ -47,8 +47,8 @@
                     <q-btn
                         v-for="action in secondaryActions"
                         :key="action.name"
-                        :icon="action.icon"
                         :class="action.class || 'fullscreen-btn'"
+                        :icon="action.icon"
                         flat
                         round
                         @click="$emit('secondary-action', action.name)"
@@ -74,7 +74,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 interface SecondaryAction {
     name: string;
     icon: string;
@@ -121,7 +121,7 @@ const formatDate = (date: Date): string => {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 // 页面头部设计 - 与Dashboard保持一致
 .page-header {
     margin-bottom: 2rem;

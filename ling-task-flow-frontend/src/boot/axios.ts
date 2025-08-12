@@ -1,7 +1,7 @@
 import { defineBoot } from '#q-app/wrappers';
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 import { LocalStorage } from 'quasar';
-import type { StandardAPIResponse, CustomError } from 'src/types';
+import type { CustomError, StandardAPIResponse } from 'src/types';
 
 // 扩展AxiosResponse类型
 interface ExtendedAxiosResponse<T = unknown> extends AxiosResponse<T> {

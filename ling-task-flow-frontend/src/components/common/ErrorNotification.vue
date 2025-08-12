@@ -29,8 +29,8 @@
     </q-banner>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+<script lang="ts" setup>
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 
 interface ErrorInfo {

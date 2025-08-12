@@ -3,7 +3,7 @@
         <!-- 顶部工具栏 -->
         <div class="filter-toolbar">
             <div class="toolbar-left">
-                <q-icon name="tune" size="18px" class="toolbar-icon" />
+                <q-icon class="toolbar-icon" name="tune" size="18px" />
                 <span class="toolbar-title">智能筛选</span>
                 <q-badge
                     v-if="hasActiveFilters"
@@ -15,13 +15,13 @@
             <div class="toolbar-right">
                 <q-btn
                     v-if="hasActiveFilters"
-                    flat
+                    class="reset-btn"
+                    color="grey-7"
                     dense
+                    flat
                     icon="refresh"
                     size="sm"
-                    color="grey-7"
                     @click="handleClearFilters"
-                    class="reset-btn"
                 >
                     <q-tooltip>清空所有筛选</q-tooltip>
                 </q-btn>
@@ -34,23 +34,23 @@
             <div class="search-section">
                 <q-input
                     :model-value="searchQuery"
-                    filled
-                    dense
-                    debounce="250"
-                    placeholder="🔍 搜索任务标题、描述..."
                     class="search-input-modern"
+                    debounce="250"
+                    dense
+                    filled
+                    placeholder="🔍 搜索任务标题、描述..."
                     @update:model-value="handleSearchChange"
                 >
                     <template v-slot:append>
-                        <q-icon v-if="!searchQuery" name="search" color="grey-5" />
+                        <q-icon v-if="!searchQuery" color="grey-5" name="search" />
                         <q-btn
                             v-else
-                            flat
-                            dense
-                            round
-                            icon="close"
-                            size="xs"
                             color="grey-6"
+                            dense
+                            flat
+                            icon="close"
+                            round
+                            size="xs"
                             @click="handleRemoveSearchFilter"
                         />
                     </template>
@@ -66,36 +66,36 @@
                         <q-btn
                             v-for="status in statusOptions"
                             :key="status.value"
-                            :outline="statusFilter !== status.value"
-                            :unelevated="statusFilter === status.value"
                             :color="
                                 statusFilter === status.value
                                     ? getStatusColor(status.value)
                                     : 'grey-4'
                             "
+                            :outline="statusFilter !== status.value"
                             :text-color="statusFilter === status.value ? 'white' : 'grey-7'"
-                            size="sm"
+                            :unelevated="statusFilter === status.value"
+                            class="filter-pill"
                             dense
                             no-caps
-                            class="filter-pill"
+                            size="sm"
                             @click="handleStatusToggle(status.value)"
                         >
                             <q-icon
                                 :name="getStatusIcon(status.value)"
-                                size="14px"
                                 class="q-mr-xs"
+                                size="14px"
                             />
                             {{ status.label }}
                         </q-btn>
                         <q-btn
                             v-if="statusFilter"
-                            flat
-                            dense
-                            round
-                            icon="close"
-                            size="xs"
-                            color="grey-5"
                             class="clear-pill-btn"
+                            color="grey-5"
+                            dense
+                            flat
+                            icon="close"
+                            round
+                            size="xs"
                             @click="handleRemoveStatusFilter"
                         />
                     </div>
@@ -108,36 +108,36 @@
                         <q-btn
                             v-for="priority in priorityOptions"
                             :key="priority.value"
-                            :outline="priorityFilter !== priority.value"
-                            :unelevated="priorityFilter === priority.value"
                             :color="
                                 priorityFilter === priority.value
                                     ? getPriorityColor(priority.value)
                                     : 'grey-4'
                             "
+                            :outline="priorityFilter !== priority.value"
                             :text-color="priorityFilter === priority.value ? 'white' : 'grey-7'"
-                            size="sm"
+                            :unelevated="priorityFilter === priority.value"
+                            class="filter-pill"
                             dense
                             no-caps
-                            class="filter-pill"
+                            size="sm"
                             @click="handlePriorityToggle(priority.value)"
                         >
                             <q-icon
                                 :name="getPriorityIcon(priority.value)"
-                                size="14px"
                                 class="q-mr-xs"
+                                size="14px"
                             />
                             {{ priority.label }}
                         </q-btn>
                         <q-btn
                             v-if="priorityFilter"
-                            flat
-                            dense
-                            round
-                            icon="close"
-                            size="xs"
-                            color="grey-5"
                             class="clear-pill-btn"
+                            color="grey-5"
+                            dense
+                            flat
+                            icon="close"
+                            round
+                            size="xs"
                             @click="handleRemovePriorityFilter"
                         />
                     </div>
@@ -161,10 +161,10 @@
                     <q-chip
                         v-if="searchQuery"
                         color="primary"
-                        text-color="white"
-                        size="sm"
-                        removable
                         icon="search"
+                        removable
+                        size="sm"
+                        text-color="white"
                         @remove="handleRemoveSearchFilter"
                     >
                         "{{ searchQuery }}"
@@ -172,10 +172,10 @@
                     <q-chip
                         v-if="statusFilter"
                         :color="getStatusColor(statusFilter)"
-                        text-color="white"
-                        size="sm"
-                        removable
                         :icon="getStatusIcon(statusFilter)"
+                        removable
+                        size="sm"
+                        text-color="white"
                         @remove="handleRemoveStatusFilter"
                     >
                         {{ getStatusLabel(statusFilter) }}
@@ -183,10 +183,10 @@
                     <q-chip
                         v-if="priorityFilter"
                         :color="getPriorityColor(priorityFilter)"
-                        text-color="white"
-                        size="sm"
-                        removable
                         :icon="getPriorityIcon(priorityFilter)"
+                        removable
+                        size="sm"
+                        text-color="white"
                         @remove="handleRemovePriorityFilter"
                     >
                         {{ getPriorityLabel(priorityFilter) }}
@@ -197,7 +197,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, nextTick } from 'vue';
 import type { TaskPriority, TaskStatus } from 'src/types/task';
 
@@ -325,21 +325,24 @@ const handlePriorityToggle = (value: TaskPriority) => {
 };
 
 const handleClearFilters = () => emit('clear-filters');
+
 const handleRemoveSearchFilter = () => {
     emit('update:search-query', '');
     void nextTick(() => emit('filter-change'));
 };
+
 const handleRemoveStatusFilter = () => {
     emit('update:status-filter', null);
     void nextTick(() => emit('filter-change'));
 };
+
 const handleRemovePriorityFilter = () => {
     emit('update:priority-filter', null);
     void nextTick(() => emit('filter-change'));
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 /* 容器 */
 .modern-filter-panel {
     background: rgba(255, 255, 255, 0.98);
@@ -350,6 +353,7 @@ const handleRemovePriorityFilter = () => {
         0 4px 16px rgba(59, 130, 246, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(14px);
+    margin-bottom: 1rem;
 }
 
 /* 工具栏 */
@@ -360,19 +364,23 @@ const handleRemovePriorityFilter = () => {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid rgba(59, 130, 246, 0.1);
 }
+
 .toolbar-left {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
+
 .toolbar-icon {
     color: #3b82f6;
 }
+
 .toolbar-title {
     font-size: 0.95rem;
     font-weight: 600;
     color: #1f2937;
 }
+
 .reset-btn {
     margin-left: 0.25rem;
 }
@@ -386,6 +394,7 @@ const handleRemovePriorityFilter = () => {
 .search-section {
     margin-bottom: 0.5rem;
 }
+
 .search-input-modern {
     :deep(.q-field__control) {
         border-radius: 12px;
@@ -402,27 +411,32 @@ const handleRemovePriorityFilter = () => {
         grid-template-columns: 1fr;
     }
 }
+
 .filter-pill-group {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
+
 .filter-label-compact {
     font-size: 12px;
     color: #6b7280;
     font-weight: 600;
     letter-spacing: 0.02em;
 }
+
 .pill-container {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     align-items: center;
 }
+
 .filter-pill {
     border-radius: 999px;
     padding: 4px 10px;
 }
+
 .clear-pill-btn {
     margin-left: -0.25rem;
 }
@@ -436,11 +450,13 @@ const handleRemovePriorityFilter = () => {
     padding: 0.5rem 1rem;
     background: rgba(248, 250, 252, 0.9);
 }
+
 .active-tags-label {
     font-size: 12px;
     color: #6b7280;
     white-space: nowrap;
 }
+
 .active-tags {
     display: flex;
     flex-wrap: wrap;
@@ -452,6 +468,7 @@ const handleRemovePriorityFilter = () => {
 .slide-up-leave-active {
     transition: all 0.18s ease;
 }
+
 .slide-up-enter-from,
 .slide-up-leave-to {
     opacity: 0;

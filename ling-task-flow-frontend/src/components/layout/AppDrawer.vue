@@ -1,5 +1,5 @@
 <template>
-    <q-drawer v-model="drawerOpen" show-if-above bordered class="app-drawer" :width="320">
+    <q-drawer v-model="drawerOpen" :width="320" bordered class="app-drawer" show-if-above>
         <!-- 科技感背景 -->
         <div class="drawer-background">
             <div class="tech-grid"></div>
@@ -11,16 +11,16 @@
             <div class="gradient-overlay"></div>
         </div>
 
-        <q-list padding class="drawer-content">
+        <q-list class="drawer-content" padding>
             <!-- 任务统计概览 -->
-            <q-item-label header class="section-header">
-                <q-icon name="insights" class="q-mr-sm" />
+            <q-item-label class="section-header" header>
+                <q-icon class="q-mr-sm" name="insights" />
                 任务概览
             </q-item-label>
 
             <!-- 加载状态 -->
             <div v-if="statsLoading" class="stats-loading">
-                <q-spinner-dots size="2rem" color="primary" />
+                <q-spinner-dots color="primary" size="2rem" />
                 <div class="loading-text">正在加载统计数据...</div>
             </div>
 
@@ -30,7 +30,7 @@
                     <!-- 基础统计卡片 -->
                     <div class="stats-cards-grid">
                         <div class="stat-card primary">
-                            <q-icon name="task_alt" class="stat-icon" />
+                            <q-icon class="stat-icon" name="task_alt" />
                             <div class="stat-content">
                                 <div class="stat-value">
                                     {{ taskStats.basic_stats.total_tasks }}
@@ -40,7 +40,7 @@
                         </div>
 
                         <div class="stat-card success">
-                            <q-icon name="check_circle" class="stat-icon" />
+                            <q-icon class="stat-icon" name="check_circle" />
                             <div class="stat-content">
                                 <div class="stat-value">
                                     {{ taskStats.basic_stats.completed_tasks }}
@@ -58,10 +58,10 @@
                         </div>
                         <q-linear-progress
                             :value="completionRate / 100"
-                            color="primary"
                             class="progress-bar"
-                            size="10px"
+                            color="primary"
                             rounded
+                            size="10px"
                         />
                         <div class="progress-details">
                             <span class="detail"
@@ -75,16 +75,16 @@
 
             <!-- 错误状态 -->
             <div v-else-if="statsError" class="stats-error">
-                <q-icon name="error_outline" size="2rem" color="negative" />
+                <q-icon color="negative" name="error_outline" size="2rem" />
                 <div class="error-text">加载统计数据失败</div>
-                <q-btn flat size="sm" color="primary" @click="loadTaskStats" class="retry-btn">
+                <q-btn class="retry-btn" color="primary" flat size="sm" @click="loadTaskStats">
                     重试
                 </q-btn>
             </div>
 
             <!-- 导航菜单 -->
-            <q-item-label header class="section-header">
-                <q-icon name="menu" class="q-mr-sm" />
+            <q-item-label class="section-header" header>
+                <q-icon class="q-mr-sm" name="menu" />
                 导航菜单
             </q-item-label>
 
@@ -93,8 +93,8 @@
     </q-drawer>
 </template>
 
-<script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+<script lang="ts" setup>
+import { computed, onMounted, ref } from 'vue';
 import { useTaskStore } from 'stores/task';
 import type { TaskStats } from 'src/types/task';
 import NavigationLink from './NavigationLink.vue';

@@ -4,7 +4,7 @@
         <div class="hero-section">
             <div class="hero-content">
                 <div class="brand-wrapper">
-                    <q-icon name="psychology" size="3rem" color="primary" class="brand-icon" />
+                    <q-icon class="brand-icon" color="primary" name="psychology" size="3rem" />
                     <div class="brand-text">
                         <h1 class="hero-title">凌云智能任务管理平台</h1>
                         <p class="hero-subtitle">AI 驱动的智能任务管理，提升团队协作效率</p>
@@ -18,7 +18,7 @@
             <div class="features-grid">
                 <div v-for="feature in features" :key="feature.id" class="feature-item">
                     <div class="feature-icon-wrapper">
-                        <q-icon :name="feature.icon" size="1.25rem" :color="feature.color" />
+                        <q-icon :color="feature.color" :name="feature.icon" size="1.25rem" />
                     </div>
                     <div class="feature-content">
                         <h4 class="feature-title">{{ feature.title }}</h4>
@@ -31,7 +31,7 @@
         <!-- 最近活动 -->
         <div class="activity-section">
             <h3 class="section-title">最近活动</h3>
-            <q-card flat bordered class="activity-card">
+            <q-card bordered class="activity-card" flat>
                 <q-card-section>
                     <div class="activity-list">
                         <div
@@ -40,10 +40,10 @@
                             class="activity-item"
                         >
                             <q-icon
-                                :name="activity.icon"
                                 :color="activity.color"
-                                size="1.25rem"
+                                :name="activity.icon"
                                 class="activity-icon"
+                                size="1.25rem"
                             />
                             <div class="activity-content">
                                 <span class="activity-text">{{ activity.text }}</span>
@@ -57,7 +57,7 @@
     </q-page>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue';
 
 // 平台特色功能
@@ -125,7 +125,7 @@ const recentActivities = ref([
 ]);
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .home-page {
     background: #ffffff;
     min-height: calc(100vh - 50px);

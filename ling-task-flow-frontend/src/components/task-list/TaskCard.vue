@@ -1,22 +1,22 @@
 <template>
-    <div 
-        class="task-card" 
+    <div
         :class="{ 'task-selected': selectable && selected }"
+        class="task-card"
         @click="() => emit('view', task)"
     >
         <!-- 拖拽手柄 -->
         <slot name="drag-handle" />
-        
+
         <!-- 选择复选框 -->
         <div v-if="selectable" class="task-checkbox" @click.stop>
             <q-checkbox
                 :model-value="selected"
-                @update:model-value="toggleSelect"
                 class="card-checkbox"
+                @update:model-value="toggleSelect"
             />
         </div>
 
-        <div class="task-status-indicator" :class="`status-${task.status.toLowerCase()}`" />
+        <div :class="`status-${task.status.toLowerCase()}`" class="task-status-indicator" />
 
         <div class="task-content">
             <div class="task-header">
@@ -30,30 +30,30 @@
                     <q-badge
                         :color="getStatusColor(task.status)"
                         :label="getStatusLabel(task.status)"
-                        outline
                         class="status-badge"
+                        outline
                     />
                     <!-- 逾期标识移到状态旁边 -->
                     <q-badge
                         v-if="isOverdue"
-                        color="red"
-                        text-color="white"
-                        label="已逾期"
                         class="overdue-badge"
+                        color="red"
+                        label="已逾期"
+                        text-color="white"
                     />
                 </div>
             </div>
 
             <!-- 截止时间展示 -->
-            <div v-if="task.due_date" class="due-date-info" :class="{ 'overdue': isOverdue }">
+            <div v-if="task.due_date" :class="{ overdue: isOverdue }" class="due-date-info">
                 <q-icon name="event" />
                 <span>截止：{{ formatDueDate(task.due_date) }}</span>
             </div>
 
             <p v-if="task.description" class="task-description">{{ task.description }}</p>
 
-            <div class="task-tags" v-if="tags.length > 0">
-                <q-icon name="label" class="tags-icon" />
+            <div v-if="tags.length > 0" class="task-tags">
+                <q-icon class="tags-icon" name="label" />
                 <div class="tags-list">
                     <span v-for="tag in tags.slice(0, 3)" :key="tag" class="tag">#{{ tag }}</span>
                     <span v-if="tags.length > 3" class="tag-more">+{{ tags.length - 3 }}</span>
@@ -75,34 +75,34 @@
                 <!-- 状态转换按钮 -->
                 <q-btn
                     v-if="task.status === 'PENDING'"
-                    icon="play_arrow"
                     color="blue"
-                    round
                     flat
+                    icon="play_arrow"
+                    round
                     size="sm"
                     @click="() => emit('start-task', task)"
                 >
                     <q-tooltip>开始任务</q-tooltip>
                 </q-btn>
-                
+
                 <q-btn
                     v-if="task.status === 'IN_PROGRESS'"
-                    icon="pause"
                     color="orange"
-                    round
                     flat
+                    icon="pause"
+                    round
                     size="sm"
                     @click="() => emit('pause-task', task)"
                 >
                     <q-tooltip>暂停任务</q-tooltip>
                 </q-btn>
-                
+
                 <q-btn
                     v-if="task.status === 'ON_HOLD'"
-                    icon="play_arrow"
                     color="blue"
-                    round
                     flat
+                    icon="play_arrow"
+                    round
                     size="sm"
                     @click="() => emit('resume-task', task)"
                 >
@@ -111,10 +111,10 @@
 
                 <!-- 完成/取消完成按钮 -->
                 <q-btn
-                    :icon="task.status === 'COMPLETED' ? 'undo' : 'check'"
                     :color="task.status === 'COMPLETED' ? 'orange' : 'green'"
-                    round
+                    :icon="task.status === 'COMPLETED' ? 'undo' : 'check'"
                     flat
+                    round
                     size="sm"
                     @click="() => emit('toggle-status', task)"
                 >
@@ -122,25 +122,25 @@
                         task.status === 'COMPLETED' ? '标记为未完成' : '标记为完成'
                     }}</q-tooltip>
                 </q-btn>
-                
+
                 <!-- 编辑按钮 -->
                 <q-btn
-                    icon="edit"
                     color="primary"
-                    round
                     flat
+                    icon="edit"
+                    round
                     size="sm"
                     @click="() => emit('edit', task)"
                 >
                     <q-tooltip>编辑任务</q-tooltip>
                 </q-btn>
-                
+
                 <!-- 删除按钮 -->
                 <q-btn
-                    icon="delete"
                     color="red"
-                    round
                     flat
+                    icon="delete"
+                    round
                     size="sm"
                     @click="() => emit('delete', task)"
                 >
@@ -151,7 +151,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 import type { Task, TaskPriority, TaskStatus } from 'src/types/task';
 import { getTaskTags } from 'src/utils/tagUtils';
@@ -168,10 +168,10 @@ const emit = defineEmits<{
     (e: 'toggle-select', id: string): void;
 }>();
 
-const props = defineProps<{ 
-    task: Task,
-    selectable?: boolean,
-    selected?: boolean,
+const props = defineProps<{
+    task: Task;
+    selectable?: boolean;
+    selected?: boolean;
 }>();
 
 const toggleSelect = () => {
@@ -183,12 +183,12 @@ const tags = computed(() => getTaskTags(props.task.tags));
 // 判断任务是否逾期
 const isOverdue = computed(() => {
     if (!props.task.due_date) return false;
-    
+
     // 已完成或已取消的任务不显示为逾期
     if (props.task.status === 'COMPLETED' || props.task.status === 'CANCELLED') {
         return false;
     }
-    
+
     const dueDate = new Date(props.task.due_date);
     const now = new Date();
     return dueDate < now;
@@ -261,7 +261,7 @@ const getStatusLabel = (status: TaskStatus) =>
     })[status] || '未知';
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 /***** 复用 TaskListPage 现有样式命名，保证视觉一致 *****/
 .task-card {
     position: relative;
@@ -358,7 +358,8 @@ const getStatusLabel = (status: TaskStatus) =>
 }
 
 @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
     }
     50% {
@@ -438,7 +439,9 @@ const getStatusLabel = (status: TaskStatus) =>
 }
 .task-card.task-selected {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25), 0 12px 32px rgba(14, 165, 233, 0.15);
+    box-shadow:
+        0 0 0 2px rgba(59, 130, 246, 0.25),
+        0 12px 32px rgba(14, 165, 233, 0.15);
 }
 .task-checkbox {
     position: absolute;

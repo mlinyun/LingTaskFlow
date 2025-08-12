@@ -1,5 +1,5 @@
 <template>
-    <q-dialog v-model="isOpen" persistent no-backdrop-dismiss>
+    <q-dialog v-model="isOpen" no-backdrop-dismiss persistent>
         <q-card class="task-dialog" style="min-width: 700px; max-width: 900px; width: 80vw">
             <!-- 科技感背景 -->
             <div class="dialog-background">
@@ -17,8 +17,8 @@
                     <div class="title-icon-container">
                         <q-icon
                             :name="isEditing ? 'edit' : 'add_task'"
-                            size="24px"
                             class="title-icon"
+                            size="24px"
                         />
                         <div class="icon-glow"></div>
                     </div>
@@ -30,20 +30,20 @@
                     </div>
                 </div>
                 <q-btn
-                    flat
-                    round
-                    dense
-                    icon="close"
-                    @click="onCancel"
                     :disable="loading"
                     class="close-btn"
+                    dense
+                    flat
+                    icon="close"
+                    round
+                    @click="onCancel"
                 />
             </q-card-section>
 
             <q-separator class="tech-separator" />
 
             <q-card-section class="dialog-content">
-                <q-form @submit="onSubmit" class="task-form">
+                <q-form class="task-form" @submit="onSubmit">
                     <!-- 任务标题 -->
                     <div class="form-group">
                         <div class="field-hint">
@@ -53,21 +53,21 @@
                         <div class="input-container">
                             <q-input
                                 v-model="formData.title"
-                                label="任务标题"
-                                outlined
-                                dense
-                                color="primary"
+                                :loading="loading"
                                 :rules="[
                                     val => !!val || '请输入任务标题',
                                     val => val.length <= 200 || '任务标题不能超过200个字符',
                                 ]"
-                                :loading="loading"
                                 class="tech-input"
+                                color="primary"
+                                dense
+                                label="任务标题"
                                 label-color="primary"
+                                outlined
                             >
                                 <template v-slot:prepend>
                                     <div class="input-icon-container">
-                                        <q-icon name="title" class="input-icon" />
+                                        <q-icon class="input-icon" name="title" />
                                         <div class="icon-pulse"></div>
                                     </div>
                                 </template>
@@ -92,23 +92,23 @@
                         <div class="input-container">
                             <q-input
                                 v-model="formData.description"
-                                label="任务描述"
-                                type="textarea"
-                                outlined
-                                dense
-                                color="primary"
-                                rows="4"
+                                :loading="loading"
                                 :rules="[
                                     val =>
                                         !val || val.length <= 1000 || '任务描述不能超过1000个字符',
                                 ]"
-                                :loading="loading"
                                 class="tech-input description-input"
+                                color="primary"
+                                dense
+                                label="任务描述"
                                 label-color="primary"
+                                outlined
+                                rows="4"
+                                type="textarea"
                             >
                                 <template v-slot:prepend>
                                     <div class="input-icon-container">
-                                        <q-icon name="description" class="input-icon" />
+                                        <q-icon class="input-icon" name="description" />
                                         <div class="icon-pulse"></div>
                                     </div>
                                 </template>
@@ -134,28 +134,28 @@
                             <div class="input-container">
                                 <q-select
                                     v-model="formData.priority"
-                                    label="优先级"
-                                    :options="priorityOptions"
-                                    outlined
-                                    dense
-                                    color="primary"
-                                    emit-value
-                                    map-options
                                     :loading="loading"
+                                    :options="priorityOptions"
                                     class="tech-input"
+                                    color="primary"
+                                    dense
+                                    emit-value
+                                    label="优先级"
                                     label-color="primary"
+                                    map-options
+                                    outlined
                                 >
                                     <template v-slot:prepend>
                                         <div class="input-icon-container">
-                                            <q-icon name="priority_high" class="input-icon" />
+                                            <q-icon class="input-icon" name="priority_high" />
                                             <div class="icon-pulse"></div>
                                         </div>
                                     </template>
                                     <template v-slot:selected>
                                         <div class="selected-priority">
                                             <q-icon
-                                                :name="getPriorityIcon(formData.priority)"
                                                 :color="getPriorityColor(formData.priority)"
+                                                :name="getPriorityIcon(formData.priority)"
                                                 size="18px"
                                             />
                                             <span>{{
@@ -166,11 +166,11 @@
                                         </div>
                                     </template>
                                     <template v-slot:option="{ itemProps, opt }">
-                                        <q-item v-bind="itemProps" class="priority-option">
+                                        <q-item class="priority-option" v-bind="itemProps">
                                             <q-item-section avatar>
                                                 <q-icon
-                                                    :name="getPriorityIcon(opt.value)"
                                                     :color="getPriorityColor(opt.value)"
+                                                    :name="getPriorityIcon(opt.value)"
                                                     size="20px"
                                                 />
                                             </q-item-section>
@@ -196,30 +196,30 @@
                             <div class="input-container">
                                 <q-input
                                     v-model="formData.due_date"
-                                    label="截止日期"
-                                    type="datetime-local"
-                                    outlined
-                                    dense
-                                    color="primary"
                                     :loading="loading"
                                     class="tech-input"
+                                    color="primary"
+                                    dense
+                                    label="截止日期"
                                     label-color="primary"
+                                    outlined
+                                    type="datetime-local"
                                 >
                                     <template v-slot:prepend>
                                         <div class="input-icon-container">
-                                            <q-icon name="event" class="input-icon" />
+                                            <q-icon class="input-icon" name="event" />
                                             <div class="icon-pulse"></div>
                                         </div>
                                     </template>
                                     <template v-slot:append>
                                         <q-btn
-                                            flat
-                                            round
-                                            dense
-                                            icon="clear"
-                                            @click="formData.due_date = ''"
                                             v-if="formData.due_date"
                                             class="clear-btn"
+                                            dense
+                                            flat
+                                            icon="clear"
+                                            round
+                                            @click="formData.due_date = ''"
                                         />
                                     </template>
                                 </q-input>
@@ -241,30 +241,30 @@
                         <div class="input-container">
                             <q-input
                                 v-model="tagInput"
-                                label="标签 (按回车添加)"
-                                outlined
-                                dense
-                                color="primary"
-                                @keydown.enter.prevent="addTag"
                                 :loading="loading"
                                 class="tech-input"
+                                color="primary"
+                                dense
+                                label="标签 (按回车添加)"
                                 label-color="primary"
+                                outlined
+                                @keydown.enter.prevent="addTag"
                             >
                                 <template v-slot:prepend>
                                     <div class="input-icon-container">
-                                        <q-icon name="local_offer" class="input-icon" />
+                                        <q-icon class="input-icon" name="local_offer" />
                                         <div class="icon-pulse"></div>
                                     </div>
                                 </template>
                                 <template v-slot:append>
                                     <q-btn
-                                        flat
-                                        round
-                                        dense
-                                        icon="add"
-                                        @click="addTag"
                                         :disable="!tagInput.trim()"
                                         class="add-tag-btn"
+                                        dense
+                                        flat
+                                        icon="add"
+                                        round
+                                        @click="addTag"
                                     />
                                 </template>
                             </q-input>
@@ -273,20 +273,20 @@
 
                         <!-- 标签显示 -->
                         <div
-                            class="tags-container"
                             v-if="formData.tags && formData.tags.length > 0"
+                            class="tags-container"
                         >
-                            <transition-group name="tag" tag="div" class="tags-grid">
+                            <transition-group class="tags-grid" name="tag" tag="div">
                                 <q-chip
                                     v-for="(tag, index) in formData.tags"
                                     :key="`tag-${index}-${tag}`"
-                                    removable
-                                    @remove="removeTag(index)"
                                     class="tech-chip"
+                                    removable
                                     size="sm"
+                                    @remove="removeTag(index)"
                                 >
                                     <template v-slot:default>
-                                        <q-icon name="label" size="14px" class="q-mr-xs" />
+                                        <q-icon class="q-mr-xs" name="label" size="14px" />
                                         {{ tag }}
                                     </template>
                                 </q-chip>
@@ -295,7 +295,7 @@
                     </div>
 
                     <!-- 任务状态 (仅编辑时显示) -->
-                    <div class="form-group" v-if="isEditing">
+                    <div v-if="isEditing" class="form-group">
                         <div class="field-hint">
                             <q-icon name="track_changes" size="14px" />
                             <span>更新任务的当前状态</span>
@@ -303,28 +303,28 @@
                         <div class="input-container">
                             <q-select
                                 v-model="formData.status"
-                                label="任务状态"
-                                :options="statusOptions"
-                                outlined
-                                dense
-                                color="primary"
-                                emit-value
-                                map-options
                                 :loading="loading"
+                                :options="statusOptions"
                                 class="tech-input"
+                                color="primary"
+                                dense
+                                emit-value
+                                label="任务状态"
                                 label-color="primary"
+                                map-options
+                                outlined
                             >
                                 <template v-slot:prepend>
                                     <div class="input-icon-container">
-                                        <q-icon name="assignment" class="input-icon" />
+                                        <q-icon class="input-icon" name="assignment" />
                                         <div class="icon-pulse"></div>
                                     </div>
                                 </template>
                                 <template v-slot:selected>
                                     <div class="selected-status">
                                         <q-icon
-                                            :name="getStatusIcon(formData.status)"
                                             :color="getStatusColor(formData.status)"
+                                            :name="getStatusIcon(formData.status)"
                                             size="18px"
                                         />
                                         <span>{{
@@ -334,11 +334,11 @@
                                     </div>
                                 </template>
                                 <template v-slot:option="{ itemProps, opt }">
-                                    <q-item v-bind="itemProps" class="status-option">
+                                    <q-item class="status-option" v-bind="itemProps">
                                         <q-item-section avatar>
                                             <q-icon
-                                                :name="getStatusIcon(opt.value)"
                                                 :color="getStatusColor(opt.value)"
+                                                :name="getStatusIcon(opt.value)"
                                                 size="20px"
                                             />
                                         </q-item-section>
@@ -359,32 +359,32 @@
             <q-card-actions align="right" class="dialog-actions">
                 <div class="actions-container">
                     <q-btn
+                        :disable="loading"
+                        class="cancel-btn"
                         flat
                         label="取消"
                         @click="onCancel"
-                        :disable="loading"
-                        class="cancel-btn"
                     >
-                        <q-icon name="close" size="18px" class="q-mr-sm" />
+                        <q-icon class="q-mr-sm" name="close" size="18px" />
                         <q-tooltip>取消 (Esc)</q-tooltip>
                     </q-btn>
                     <q-btn
-                        unelevated
                         :label="isEditing ? '保存' : '创建'"
-                        type="submit"
-                        @click="onSubmit"
                         :loading="loading"
                         class="submit-btn"
+                        type="submit"
+                        unelevated
+                        @click="onSubmit"
                     >
                         <template v-slot:loading>
                             <q-spinner-hourglass class="on-left" />
                             {{ isEditing ? '保存中...' : '创建中...' }}
                         </template>
                         <q-icon
-                            :name="isEditing ? 'save' : 'add_task'"
-                            size="18px"
-                            class="q-mr-sm"
                             v-if="!loading"
+                            :name="isEditing ? 'save' : 'add_task'"
+                            class="q-mr-sm"
+                            size="18px"
                         />
                         <q-tooltip>{{ isEditing ? '保存' : '创建' }} (Ctrl+S)</q-tooltip>
                     </q-btn>
@@ -394,13 +394,13 @@
     </q-dialog>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+<script lang="ts" setup>
+import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useTaskStore } from 'stores/task';
-import type { Task, TaskCreateData, TaskUpdateData, TaskStatus, TaskPriority } from 'src/types';
+import type { Task, TaskCreateData, TaskPriority, TaskStatus, TaskUpdateData } from 'src/types';
 import { useComponentShortcuts } from 'src/composables/useComponentShortcuts';
-import { parseTagsString, formatTagsArray } from 'src/utils/tagUtils';
+import { formatTagsArray, parseTagsString } from 'src/utils/tagUtils';
 
 interface Props {
     modelValue: boolean;
@@ -560,7 +560,10 @@ const loadTaskData = (task: Task) => {
         status: task.status,
         // 将后端 ISO 时间转换为本地 yyyy-MM-ddTHH:mm 字符串供输入控件使用
         due_date: task.due_date
-            ? new Date(task.due_date).toLocaleString('sv-SE', { hour12: false }).replace(' ', 'T').slice(0, 16)
+            ? new Date(task.due_date)
+                  .toLocaleString('sv-SE', { hour12: false })
+                  .replace(' ', 'T')
+                  .slice(0, 16)
             : '',
         // 解析tags字符串为数组
         tags: parseTagsString(task.tags),
@@ -603,7 +606,11 @@ const onSubmit = async () => {
         resetForm();
     } catch (error) {
         console.error('保存任务失败:', error);
-        $q.notify({ type: 'negative', message: isEditing.value ? '任务更新失败' : '任务创建失败', position: 'top' });
+        $q.notify({
+            type: 'negative',
+            message: isEditing.value ? '任务更新失败' : '任务创建失败',
+            position: 'top',
+        });
     } finally {
         loading.value = false;
     }
@@ -640,7 +647,7 @@ watch(
 );
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .task-dialog {
     position: relative;
     background: rgba(248, 250, 252, 0.95);

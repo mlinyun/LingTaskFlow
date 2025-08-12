@@ -2,10 +2,6 @@
     <q-page class="dashboard-page">
         <!-- 页面头部 - 使用公共组件 -->
         <PageHeader
-            icon="analytics"
-            title-primary="数据概览"
-            title-accent="仪表盘"
-            subtitle="实时数据监控与智能分析"
             :primary-action="{
                 icon: 'refresh',
                 label: '刷新数据',
@@ -15,6 +11,10 @@
                 { name: 'settings', icon: 'settings', tooltip: '设置', class: 'fullscreen-btn' },
                 { name: 'fullscreen', icon: 'fullscreen', tooltip: '全屏', class: 'download-btn' },
             ]"
+            icon="analytics"
+            subtitle="实时数据监控与智能分析"
+            title-accent="仪表盘"
+            title-primary="数据概览"
             @primary-action="refreshData"
             @secondary-action="handleSecondaryAction"
         />
@@ -27,10 +27,10 @@
             <!-- 一般加载状态 -->
             <LoadingState
                 v-else-if="taskStore.loading"
-                variant="centered"
+                color="primary"
                 message="加载仪表板数据..."
                 spinner="gears"
-                color="primary"
+                variant="centered"
             />
 
             <!-- 仪表板内容 -->
@@ -39,7 +39,7 @@
                 <div class="metrics-panel">
                     <div class="panel-header">
                         <h3>关键指标</h3>
-                        <q-chip icon="trending_up" color="positive" text-color="white" size="sm">
+                        <q-chip color="positive" icon="trending_up" size="sm" text-color="white">
                             实时更新
                         </q-chip>
                     </div>
@@ -48,44 +48,44 @@
                         <!-- 主要指标卡片 -->
                         <div class="metric-card primary">
                             <StatsCard
-                                icon="assignment"
-                                title="总任务数"
+                                :trend="getTrend('total')"
                                 :value="taskStats?.basic_stats?.total_tasks || 0"
                                 color="blue"
-                                :trend="getTrend('total')"
+                                icon="assignment"
+                                title="总任务数"
                                 @click="goToTasks()"
                             />
                         </div>
 
                         <div class="metric-card primary">
                             <StatsCard
-                                icon="done_all"
-                                title="已完成"
+                                :trend="getTrend('completed')"
                                 :value="taskStats?.basic_stats?.completed_tasks || 0"
                                 color="green"
-                                :trend="getTrend('completed')"
+                                icon="done_all"
+                                title="已完成"
                                 @click="goToTasks({ status: 'COMPLETED' })"
                             />
                         </div>
 
                         <div class="metric-card primary">
                             <StatsCard
-                                icon="schedule"
-                                title="进行中"
+                                :trend="getTrend('active')"
                                 :value="taskStats?.workload_stats?.total_active_tasks || 0"
                                 color="orange"
-                                :trend="getTrend('active')"
+                                icon="schedule"
+                                title="进行中"
                                 @click="goToTasks({ status: 'IN_PROGRESS' })"
                             />
                         </div>
 
                         <div class="metric-card primary">
                             <StatsCard
-                                icon="trending_up"
-                                title="完成率"
+                                :trend="getTrend('completion_rate')"
                                 :value="`${taskStats?.basic_stats?.completion_rate?.toFixed(1) || 0}%`"
                                 color="purple"
-                                :trend="getTrend('completion_rate')"
+                                icon="trending_up"
+                                title="完成率"
                                 @click="goToTasks()"
                             />
                         </div>
@@ -93,22 +93,22 @@
                         <!-- 次要指标卡片 -->
                         <div class="metric-card secondary">
                             <StatsCard
-                                icon="schedule_send"
-                                title="逾期任务"
+                                :trend="getTrend('overdue')"
                                 :value="taskStats?.overdue_analysis?.total_overdue || 0"
                                 color="red"
-                                :trend="getTrend('overdue')"
+                                icon="schedule_send"
+                                title="逾期任务"
                                 @click="goToTasks()"
                             />
                         </div>
 
                         <div class="metric-card secondary">
                             <StatsCard
-                                icon="timeline"
-                                title="平均进度"
+                                :trend="getTrend('progress')"
                                 :value="`${taskStats?.basic_stats?.average_progress?.toFixed(1) || 0}%`"
                                 color="blue"
-                                :trend="getTrend('progress')"
+                                icon="timeline"
+                                title="平均进度"
                                 @click="goToTasks()"
                             />
                         </div>
@@ -124,7 +124,7 @@
                                 <q-icon name="pie_chart" size="20px" />
                                 <span>任务状态分布</span>
                             </div>
-                            <q-btn icon="more_vert" flat round size="sm" />
+                            <q-btn flat icon="more_vert" round size="sm" />
                         </div>
                         <div class="chart-content">
                             <StatusDistributionChart
@@ -141,7 +141,7 @@
                                 <q-icon name="bar_chart" size="20px" />
                                 <span>优先级分布</span>
                             </div>
-                            <q-btn icon="more_vert" flat round size="sm" />
+                            <q-btn flat icon="more_vert" round size="sm" />
                         </div>
                         <div class="chart-content">
                             <PriorityDistributionChart
@@ -157,21 +157,21 @@
                     <div class="details-grid">
                         <!-- 标签统计 -->
                         <StatisticCard
-                            title="标签统计"
-                            icon="category"
                             :items="categoryStatItems"
-                            type="category"
+                            icon="category"
                             no-data-text="暂无标签数据"
+                            title="标签统计"
+                            type="category"
                             @item-click="handleCategoryClick"
                         />
 
                         <!-- 进度分析 -->
                         <StatisticCard
-                            title="进度分析"
-                            icon="analytics"
                             :items="progressStatItems"
-                            type="progress"
+                            icon="analytics"
                             no-data-text="暂无进度数据"
+                            title="进度分析"
+                            type="progress"
                             @item-click="handleProgressClick"
                         />
                     </div>
@@ -186,11 +186,11 @@
     </q-page>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+<script lang="ts" setup>
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTaskStore } from 'src/stores/task';
-import type { TaskStats, TaskSearchParams, TaskStatus, TaskPriority } from 'src/types';
+import type { TaskPriority, TaskSearchParams, TaskStats, TaskStatus } from 'src/types';
 import PageHeader from '../components/common/PageHeader.vue';
 import StatsCard from '../components/dashboard/StatsCard.vue';
 import StatusDistributionChart from '../components/dashboard/StatusDistributionChart.vue';

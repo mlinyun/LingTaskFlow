@@ -5,55 +5,55 @@
 -->
 
 <template>
-    <q-card class="task-card-skeleton q-mb-md" flat bordered>
+    <q-card bordered class="task-card-skeleton q-mb-md" flat>
         <q-card-section class="q-pa-md">
             <!-- 任务标题骨架 -->
             <div class="row items-center q-mb-sm">
-                <q-skeleton type="rect" width="60%" height="20px" class="q-mr-md" />
-                <q-skeleton type="QChip" width="60px" height="24px" />
+                <q-skeleton class="q-mr-md" height="20px" type="rect" width="60%" />
+                <q-skeleton height="24px" type="QChip" width="60px" />
             </div>
 
             <!-- 任务描述骨架 -->
-            <q-skeleton type="text" width="80%" height="16px" class="q-mb-sm" />
-            <q-skeleton type="text" width="60%" height="16px" class="q-mb-md" />
+            <q-skeleton class="q-mb-sm" height="16px" type="text" width="80%" />
+            <q-skeleton class="q-mb-md" height="16px" type="text" width="60%" />
 
             <!-- 标签骨架 -->
             <div class="row items-center q-mb-md q-gutter-xs">
-                <q-skeleton type="QChip" width="50px" height="22px" />
-                <q-skeleton type="QChip" width="60px" height="22px" />
-                <q-skeleton type="QChip" width="45px" height="22px" />
+                <q-skeleton height="22px" type="QChip" width="50px" />
+                <q-skeleton height="22px" type="QChip" width="60px" />
+                <q-skeleton height="22px" type="QChip" width="45px" />
             </div>
 
             <!-- 底部信息骨架 -->
             <div class="row items-center justify-between">
                 <div class="row items-center q-gutter-md">
                     <!-- 优先级骨架 -->
-                    <q-skeleton type="QChip" width="70px" height="24px" />
+                    <q-skeleton height="24px" type="QChip" width="70px" />
                     <!-- 进度骨架 -->
                     <div class="column">
-                        <q-skeleton type="text" width="40px" height="12px" class="q-mb-xs" />
-                        <q-skeleton type="rect" width="80px" height="4px" />
+                        <q-skeleton class="q-mb-xs" height="12px" type="text" width="40px" />
+                        <q-skeleton height="4px" type="rect" width="80px" />
                     </div>
                 </div>
 
                 <!-- 时间信息骨架 -->
                 <div class="column items-end">
-                    <q-skeleton type="text" width="80px" height="12px" class="q-mb-xs" />
-                    <q-skeleton type="text" width="60px" height="12px" />
+                    <q-skeleton class="q-mb-xs" height="12px" type="text" width="80px" />
+                    <q-skeleton height="12px" type="text" width="60px" />
                 </div>
             </div>
         </q-card-section>
 
         <!-- 操作按钮骨架 -->
         <q-card-actions align="right" class="q-pa-md q-pt-none">
-            <q-skeleton type="QBtn" width="60px" height="32px" class="q-mr-sm" />
-            <q-skeleton type="QBtn" width="60px" height="32px" class="q-mr-sm" />
-            <q-skeleton type="QBtn" width="60px" height="32px" />
+            <q-skeleton class="q-mr-sm" height="32px" type="QBtn" width="60px" />
+            <q-skeleton class="q-mr-sm" height="32px" type="QBtn" width="60px" />
+            <q-skeleton height="32px" type="QBtn" width="60px" />
         </q-card-actions>
     </q-card>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 // 无需逻辑，纯展示组件
 </script>
 

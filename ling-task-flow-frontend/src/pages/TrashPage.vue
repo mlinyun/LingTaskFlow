@@ -2,10 +2,6 @@
     <q-page class="trash-page">
         <!-- 页面头部组件 -->
         <PageHeader
-            icon="delete"
-            title-primary="回收站"
-            title-accent="管理中心"
-            subtitle="安全管理已删除的任务，支持智能恢复"
             :primary-action="{
                 icon: 'refresh',
                 label: '刷新数据',
@@ -25,6 +21,10 @@
                     class: 'download-btn',
                 },
             ]"
+            icon="delete"
+            subtitle="安全管理已删除的任务，支持智能恢复"
+            title-accent="管理中心"
+            title-primary="回收站"
             @primary-action="refreshTrash"
             @secondary-action="handleSecondaryAction"
         />
@@ -42,7 +42,7 @@
                     <div class="stats-card__content">
                         <div class="stats-card__icon-container">
                             <div class="stats-card__icon-bg"></div>
-                            <q-icon name="delete_outline" class="stats-card__icon" />
+                            <q-icon class="stats-card__icon" name="delete_outline" />
                             <div class="stats-card__icon-pulse"></div>
                         </div>
 
@@ -76,7 +76,7 @@
                     <div class="stats-card__content">
                         <div class="stats-card__icon-container">
                             <div class="stats-card__icon-bg"></div>
-                            <q-icon name="restore" class="stats-card__icon" />
+                            <q-icon class="stats-card__icon" name="restore" />
                             <div class="stats-card__icon-pulse"></div>
                         </div>
 
@@ -110,7 +110,7 @@
                     <div class="stats-card__content">
                         <div class="stats-card__icon-container">
                             <div class="stats-card__icon-bg"></div>
-                            <q-icon name="schedule" class="stats-card__icon" />
+                            <q-icon class="stats-card__icon" name="schedule" />
                             <div class="stats-card__icon-pulse"></div>
                         </div>
 
@@ -142,7 +142,7 @@
                     <div class="stats-card__content">
                         <div class="stats-card__icon-container">
                             <div class="stats-card__icon-bg"></div>
-                            <q-icon name="auto_delete" class="stats-card__icon" />
+                            <q-icon class="stats-card__icon" name="auto_delete" />
                             <div class="stats-card__icon-pulse"></div>
                         </div>
 
@@ -177,8 +177,8 @@
                         <q-checkbox
                             v-model="allSelected"
                             :indeterminate="someSelected"
-                            @update:model-value="toggleAllSelection"
                             class="all-select-checkbox"
+                            @update:model-value="toggleAllSelection"
                         />
                         <span class="selection-text">
                             已选择 {{ selectedTasks.length }} / {{ trashTasks.length }} 个任务
@@ -186,32 +186,32 @@
                     </div>
                     <div class="batch-actions">
                         <q-btn
-                            class="batch-btn batch-restore-btn"
-                            @click="batchRestore"
-                            :loading="batchRestoring"
                             :disable="selectedTasks.length === 0"
+                            :loading="batchRestoring"
+                            class="batch-btn batch-restore-btn"
                             icon="restore"
                             label="批量恢复"
                             no-caps
                             unelevated
+                            @click="batchRestore"
                         />
                         <q-btn
-                            class="batch-btn batch-delete-btn"
-                            @click="batchPermanentDelete"
-                            :loading="batchDeleting"
                             :disable="selectedTasks.length === 0"
+                            :loading="batchDeleting"
+                            class="batch-btn batch-delete-btn"
                             icon="delete_forever"
                             label="批量删除"
                             no-caps
                             unelevated
+                            @click="batchPermanentDelete"
                         />
                         <q-btn
                             class="clear-btn"
-                            @click="clearSelection"
+                            flat
                             icon="clear"
                             label="清空选择"
-                            flat
                             no-caps
+                            @click="clearSelection"
                         />
                     </div>
                 </div>
@@ -230,10 +230,10 @@
                     </p>
                     <q-btn
                         class="back-btn"
-                        to="/tasks"
                         icon="arrow_back"
                         label="返回任务列表"
                         no-caps
+                        to="/tasks"
                         unelevated
                     />
                 </div>
@@ -249,11 +249,11 @@
                     <div class="header-right">
                         <q-btn
                             class="clear-all-btn"
-                            @click="handleEmptyTrash"
                             icon="delete_forever"
                             label="清空回收站"
                             no-caps
                             outline
+                            @click="handleEmptyTrash"
                         />
                     </div>
                 </div>
@@ -262,15 +262,15 @@
                     <div
                         v-for="task in trashTasks"
                         :key="task.id"
-                        class="task-card"
                         :class="{ 'task-selected': selectedTasks.includes(task.id) }"
+                        class="task-card"
                     >
                         <!-- 选择复选框 -->
-                        <div class="task-checkbox" v-if="showBulkOperations">
+                        <div v-if="showBulkOperations" class="task-checkbox">
                             <q-checkbox
                                 :model-value="selectedTasks.includes(task.id)"
-                                @update:model-value="toggleTaskSelection(task.id)"
                                 class="card-checkbox"
+                                @update:model-value="toggleTaskSelection(task.id)"
                             />
                         </div>
 
@@ -287,8 +287,8 @@
                                     <q-badge
                                         :color="getStatusColor(task.status)"
                                         :label="getStatusLabel(task.status)"
-                                        outline
                                         class="status-badge"
+                                        outline
                                     />
                                 </div>
                             </div>
@@ -297,8 +297,8 @@
                                 {{ task.description }}
                             </p>
 
-                            <div class="task-tags" v-if="getTaskTags(task.tags).length > 0">
-                                <q-icon name="label" class="tags-icon" />
+                            <div v-if="getTaskTags(task.tags).length > 0" class="task-tags">
+                                <q-icon class="tags-icon" name="label" />
                                 <div class="tags-list">
                                     <span
                                         v-for="tag in getTaskTags(task.tags).slice(0, 3)"
@@ -314,14 +314,14 @@
 
                             <div class="task-delete-info">
                                 <div class="delete-time">
-                                    <q-icon name="schedule" class="time-icon" />
+                                    <q-icon class="time-icon" name="schedule" />
                                     <span>删除于 {{ formatDeleteTime(task.deleted_at) }}</span>
                                 </div>
                                 <div
-                                    class="remaining-days"
                                     :class="getRemainingDaysClass(task.deleted_at)"
+                                    class="remaining-days"
                                 >
-                                    <q-icon name="timer" class="timer-icon" />
+                                    <q-icon class="timer-icon" name="timer" />
                                     <span>{{ getRemainingDays(task.deleted_at) }}天后永久删除</span>
                                 </div>
                             </div>
@@ -331,19 +331,19 @@
                         <div class="task-actions">
                             <q-btn
                                 class="action-btn restore-btn"
-                                @click="restoreTask(task)"
                                 icon="restore"
                                 round
                                 unelevated
+                                @click="restoreTask(task)"
                             >
                                 <q-tooltip>恢复任务</q-tooltip>
                             </q-btn>
                             <q-btn
                                 class="action-btn delete-btn"
-                                @click="permanentDeleteTask(task)"
                                 icon="delete_forever"
                                 round
                                 unelevated
+                                @click="permanentDeleteTask(task)"
                             >
                                 <q-tooltip>永久删除</q-tooltip>
                             </q-btn>
@@ -357,10 +357,10 @@
                         v-model="currentPage"
                         :max="totalPages"
                         :max-pages="7"
-                        direction-links
                         boundary-numbers
-                        @update:model-value="onPageChange"
                         class="custom-pagination"
+                        direction-links
+                        @update:model-value="onPageChange"
                     />
                 </div>
             </div>
@@ -370,7 +370,7 @@
         <q-inner-loading :showing="loading" class="custom-loading">
             <div class="loading-content">
                 <div class="loading-spinner">
-                    <q-spinner-dots size="40px" color="primary" />
+                    <q-spinner-dots color="primary" size="40px" />
                 </div>
                 <div class="loading-text">正在加载回收站数据...</div>
             </div>
@@ -378,12 +378,12 @@
     </q-page>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+<script lang="ts" setup>
+import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useTaskStore } from 'stores/task';
 import type { Task, TrashStats } from '../types';
-import { formatDistanceToNow, differenceInDays } from 'date-fns';
+import { differenceInDays, formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useGlobalConfirm } from '../composables/useGlobalConfirm';
 import PageHeader from 'components/common/PageHeader.vue';
@@ -747,7 +747,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 // 页面整体样式 - 科技感设计
 .trash-page {
     min-height: calc(100vh - 50px);

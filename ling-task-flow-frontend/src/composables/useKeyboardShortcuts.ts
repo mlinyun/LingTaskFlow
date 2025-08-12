@@ -3,7 +3,7 @@
  * 提供全局快捷键管理功能
  */
 
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 // 快捷键配置类型
 export interface ShortcutConfig {

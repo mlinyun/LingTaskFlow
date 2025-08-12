@@ -1,11 +1,11 @@
 <template>
     <q-dialog
         v-model="isVisible"
-        position="standard"
-        transition-show="scale"
-        transition-hide="scale"
         :maximized="false"
         class="shortcut-help-wrapper"
+        position="standard"
+        transition-hide="scale"
+        transition-show="scale"
     >
         <q-card class="shortcut-help-dialog">
             <!-- 科技感背景装饰 -->
@@ -23,17 +23,17 @@
             <q-card-section class="dialog-header">
                 <div class="header-content">
                     <div class="title-section">
-                        <q-icon name="keyboard" size="md" class="title-icon" />
+                        <q-icon class="title-icon" name="keyboard" size="md" />
                         <h3 class="dialog-title">快捷键帮助</h3>
                     </div>
                     <q-btn
-                        flat
-                        round
-                        icon="close"
+                        class="close-btn"
                         color="grey-6"
+                        flat
+                        icon="close"
+                        round
                         size="sm"
                         @click="$emit('update:modelValue', false)"
-                        class="close-btn"
                     >
                         <q-tooltip>关闭 (Esc)</q-tooltip>
                     </q-btn>
@@ -50,7 +50,7 @@
                         class="shortcut-group"
                     >
                         <div class="group-header">
-                            <q-icon :name="group.icon" size="sm" class="group-icon" />
+                            <q-icon :name="group.icon" class="group-icon" size="sm" />
                             <h4 class="group-title">{{ group.title }}</h4>
                         </div>
 
@@ -58,8 +58,8 @@
                             <div
                                 v-for="shortcut in group.shortcuts"
                                 :key="shortcut.id"
-                                class="shortcut-item"
                                 :class="{ 'shortcut-disabled': shortcut.disabled }"
+                                class="shortcut-item"
                             >
                                 <div class="shortcut-keys">
                                     <kbd class="key-combination">
@@ -76,11 +76,11 @@
                     <!-- 提示信息 -->
                     <div class="help-tips">
                         <div class="tip-item">
-                            <q-icon name="info" size="sm" color="blue" />
+                            <q-icon color="blue" name="info" size="sm" />
                             <span>在输入框中时，部分快捷键会被禁用以避免冲突</span>
                         </div>
                         <div class="tip-item">
-                            <q-icon name="settings" size="sm" color="green" />
+                            <q-icon color="green" name="settings" size="sm" />
                             <span>可以在设置中自定义快捷键组合</span>
                         </div>
                     </div>
@@ -91,13 +91,13 @@
             <q-card-actions class="dialog-actions">
                 <div class="action-buttons">
                     <q-btn
+                        class="close-action-btn"
+                        color="grey-6"
                         flat
                         label="关闭"
-                        color="grey-6"
                         @click="$emit('update:modelValue', false)"
-                        class="close-action-btn"
                     >
-                        <q-icon name="close" size="xs" class="q-mr-xs" />
+                        <q-icon class="q-mr-xs" name="close" size="xs" />
                     </q-btn>
                 </div>
             </q-card-actions>
@@ -105,7 +105,7 @@
     </q-dialog>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 import { useGlobalShortcuts } from '../../composables/useKeyboardShortcuts';
 

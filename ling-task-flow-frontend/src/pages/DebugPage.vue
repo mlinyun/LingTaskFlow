@@ -13,14 +13,14 @@
             <p>User Info: {{ userInfo }}</p>
 
             <h2>操作:</h2>
-            <q-btn @click="clearStorage" color="warning">清除本地存储</q-btn>
-            <q-btn @click="refreshPage" color="primary" class="q-ml-sm">刷新页面</q-btn>
+            <q-btn color="warning" @click="clearStorage">清除本地存储</q-btn>
+            <q-btn class="q-ml-sm" color="primary" @click="refreshPage">刷新页面</q-btn>
         </div>
     </q-page>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
+<script lang="ts" setup>
+import { onMounted, ref } from 'vue';
 import { useAuthStore } from 'stores/auth';
 import { LocalStorage } from 'quasar';
 

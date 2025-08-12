@@ -8,18 +8,18 @@
     <div v-if="hasError" class="error-boundary">
         <q-card class="error-card">
             <q-card-section class="text-center q-pa-xl">
-                <q-icon name="error_outline" size="80px" color="negative" class="q-mb-md" />
+                <q-icon class="q-mb-md" color="negative" name="error_outline" size="80px" />
                 <h5 class="text-h5 q-mt-none q-mb-md">{{ errorTitle }}</h5>
                 <p class="text-body1 text-grey-7 q-mb-lg">{{ errorMessage }}</p>
 
                 <!-- 错误详情（开发模式下显示） -->
                 <q-expansion-item
                     v-if="showDetails && errorDetails"
+                    class="q-mb-lg"
                     icon="bug_report"
                     label="错误详情"
-                    class="q-mb-lg"
                 >
-                    <q-card flat bordered>
+                    <q-card bordered flat>
                         <q-card-section>
                             <pre class="error-details">{{ errorDetails }}</pre>
                         </q-card-section>
@@ -29,13 +29,13 @@
                 <!-- 操作按钮 -->
                 <div class="row justify-center q-gutter-md">
                     <q-btn color="primary" icon="refresh" label="重新加载" @click="handleReload" />
-                    <q-btn color="grey-7" icon="home" label="返回首页" flat @click="handleGoHome" />
+                    <q-btn color="grey-7" flat icon="home" label="返回首页" @click="handleGoHome" />
                     <q-btn
                         v-if="showReport"
                         color="orange"
+                        flat
                         icon="bug_report"
                         label="报告问题"
-                        flat
                         @click="handleReportError"
                     />
                 </div>
@@ -45,8 +45,8 @@
     <slot v-else />
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onErrorCaptured } from 'vue';
+<script lang="ts" setup>
+import { computed, onErrorCaptured, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 

@@ -6,8 +6,8 @@
 
 <template>
     <div
-        class="loading-state"
         :class="[`loading-state--${variant}`, { 'loading-state--overlay': overlay }]"
+        class="loading-state"
     >
         <!-- 覆盖层（当overlay为true时） -->
         <div v-if="overlay" class="loading-overlay" />
@@ -42,7 +42,7 @@
             </slot>
 
             <!-- 加载文本 -->
-            <div v-if="message" class="loading-message" :class="`text-${textColor}`">
+            <div v-if="message" :class="`text-${textColor}`" class="loading-message">
                 {{ message }}
             </div>
 
@@ -52,7 +52,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 interface Props {
     // 加载指示器类型
     spinner?:

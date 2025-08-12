@@ -1,14 +1,14 @@
 <template>
     <div class="priority-distribution-chart">
         <div v-if="!hasData" class="no-data">
-            <q-icon name="bar_chart" size="48px" color="grey-5" />
+            <q-icon color="grey-5" name="bar_chart" size="48px" />
             <p class="text-grey-6">暂无数据</p>
         </div>
 
         <div v-else class="chart-container">
             <!-- 柱状图容器 -->
             <div class="bar-chart-container">
-                <canvas ref="chartCanvas" width="350" height="200"></canvas>
+                <canvas ref="chartCanvas" height="200" width="350"></canvas>
             </div>
 
             <!-- 统计信息 -->
@@ -20,7 +20,7 @@
                     @click="handlePriorityClick(item.priority)"
                 >
                     <div class="stat-header">
-                        <div class="stat-color" :style="{ backgroundColor: item.color }"></div>
+                        <div :style="{ backgroundColor: item.color }" class="stat-color"></div>
                         <span class="stat-label">{{ item.label }}</span>
                     </div>
                     <div class="stat-value">{{ item.count }}</div>
@@ -31,8 +31,8 @@
     </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+<script lang="ts" setup>
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 interface ChartDataItem {
     priority: string;

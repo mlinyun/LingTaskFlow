@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { LocalStorage } from 'quasar';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { apiPost } from 'src/utils/api';
-import type { User, AuthData } from 'src/types';
+import type { AuthData, User } from 'src/types';
 
 export const useAuthStore = defineStore('auth', () => {
     // 状态

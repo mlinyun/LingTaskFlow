@@ -9,10 +9,10 @@
         <!-- 图表标题骨架 -->
         <q-skeleton
             v-if="showTitle"
-            type="text"
             :width="titleWidth"
-            height="24px"
             class="q-mb-lg"
+            height="24px"
+            type="text"
         />
 
         <!-- 图表内容区域 -->
@@ -20,15 +20,15 @@
             <!-- 饼图骨架 -->
             <div v-if="type === 'pie'" class="pie-chart-skeleton">
                 <div class="row justify-center q-mb-md">
-                    <q-skeleton type="circle" :size="chartSize" />
+                    <q-skeleton :size="chartSize" type="circle" />
                 </div>
 
                 <!-- 图例骨架 -->
                 <div class="legend-skeleton column q-gutter-sm">
                     <div v-for="i in legendItems" :key="i" class="row items-center q-gutter-sm">
-                        <q-skeleton type="circle" size="12px" />
-                        <q-skeleton type="text" width="80px" height="14px" />
-                        <q-skeleton type="text" width="40px" height="14px" />
+                        <q-skeleton size="12px" type="circle" />
+                        <q-skeleton height="14px" type="text" width="80px" />
+                        <q-skeleton height="14px" type="text" width="40px" />
                     </div>
                 </div>
             </div>
@@ -38,22 +38,22 @@
                 <!-- Y轴标签骨架 -->
                 <div class="y-axis-skeleton">
                     <div v-for="i in 5" :key="i" class="y-label">
-                        <q-skeleton type="text" width="30px" height="12px" />
+                        <q-skeleton height="12px" type="text" width="30px" />
                     </div>
                 </div>
 
                 <!-- 柱状图主体骨架 -->
                 <div class="bars-container">
                     <div
-                        class="row items-end justify-center q-gutter-sm q-mb-md"
                         :style="`height: ${parseInt(chartSize || '200')}px`"
+                        class="row items-end justify-center q-gutter-sm q-mb-md"
                     >
                         <q-skeleton
                             v-for="i in barCount"
                             :key="i"
+                            :height="`${Math.random() * 100 + 50}px`"
                             type="rect"
                             width="40px"
-                            :height="`${Math.random() * 100 + 50}px`"
                         />
                     </div>
 
@@ -62,9 +62,9 @@
                         <q-skeleton
                             v-for="i in barCount"
                             :key="i"
+                            height="14px"
                             type="text"
                             width="60px"
-                            height="14px"
                         />
                     </div>
                 </div>
@@ -72,50 +72,50 @@
 
             <!-- 线图骨架 -->
             <div v-else-if="type === 'line'" class="line-chart-skeleton">
-                <div class="chart-area" :style="`height: ${chartSize}`">
+                <div :style="`height: ${chartSize}`" class="chart-area">
                     <!-- 网格线骨架 -->
                     <div class="grid-lines">
                         <q-skeleton
                             v-for="i in 5"
                             :key="`h-${i}`"
+                            class="grid-line horizontal"
+                            height="1px"
                             type="rect"
                             width="100%"
-                            height="1px"
-                            class="grid-line horizontal"
                         />
                         <q-skeleton
                             v-for="i in 7"
                             :key="`v-${i}`"
+                            class="grid-line vertical"
+                            height="100%"
                             type="rect"
                             width="1px"
-                            height="100%"
-                            class="grid-line vertical"
                         />
                     </div>
 
                     <!-- 折线骨架 -->
                     <svg
-                        :width="chartSize || '200px'"
                         :height="chartSize || '200px'"
+                        :width="chartSize || '200px'"
                         class="line-path"
                     >
-                        <q-skeleton type="rect" width="80%" height="2px" class="line-skeleton" />
+                        <q-skeleton class="line-skeleton" height="2px" type="rect" width="80%" />
                     </svg>
                 </div>
             </div>
 
             <!-- 通用图表骨架（默认） -->
             <div v-else class="generic-chart-skeleton">
-                <q-skeleton type="rect" width="100%" :height="chartSize" />
+                <q-skeleton :height="chartSize" type="rect" width="100%" />
             </div>
         </div>
 
         <!-- 图表描述骨架 -->
-        <q-skeleton v-if="showDescription" type="text" width="60%" height="14px" class="q-mt-md" />
+        <q-skeleton v-if="showDescription" class="q-mt-md" height="14px" type="text" width="60%" />
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 interface Props {
     // 图表类型：pie(饼图), bar(柱状图), line(折线图), generic(通用)
     type?: 'pie' | 'bar' | 'line' | 'generic';

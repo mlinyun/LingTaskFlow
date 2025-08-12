@@ -11,15 +11,15 @@
                 <!-- 菜单按钮 -->
                 <div class="menu-section">
                     <q-btn
-                        flat
-                        dense
-                        round
-                        icon="menu"
                         aria-label="Menu"
-                        @click="handleMenuToggle"
                         class="menu-btn"
+                        dense
+                        flat
+                        icon="menu"
+                        round
+                        @click="handleMenuToggle"
                     >
-                        <q-tooltip anchor="bottom middle" self="top middle" :delay="800">
+                        <q-tooltip :delay="800" anchor="bottom middle" self="top middle">
                             导航菜单 (Ctrl+B)
                         </q-tooltip>
                     </q-btn>
@@ -31,7 +31,7 @@
                 <!-- 品牌区域 -->
                 <div class="brand-section">
                     <div class="brand-icon-wrapper">
-                        <q-icon name="psychology" class="brand-icon" />
+                        <q-icon class="brand-icon" name="psychology" />
                         <div class="icon-glow"></div>
                     </div>
                     <div class="brand-text">
@@ -59,63 +59,63 @@
                 <div class="action-buttons">
                     <!-- 通知按钮 -->
                     <q-btn
-                        flat
-                        dense
-                        round
-                        icon="notifications"
                         class="action-btn"
+                        dense
+                        flat
+                        icon="notifications"
+                        round
                         @click="$q.notify('通知功能开发中...')"
                     >
                         <q-badge color="red" floating>3</q-badge>
-                        <q-tooltip anchor="bottom middle" self="top middle" :delay="800">
+                        <q-tooltip :delay="800" anchor="bottom middle" self="top middle">
                             通知消息
                         </q-tooltip>
                     </q-btn>
 
                     <!-- 快捷键帮助按钮 -->
                     <q-btn
-                        flat
-                        dense
-                        round
-                        icon="help"
                         class="action-btn"
+                        dense
+                        flat
+                        icon="help"
+                        round
                         @click="showShortcutHelp = true"
                     >
-                        <q-tooltip anchor="bottom middle" self="top middle" :delay="800">
+                        <q-tooltip :delay="800" anchor="bottom middle" self="top middle">
                             快捷键帮助 (F1)
                         </q-tooltip>
                     </q-btn>
 
                     <!-- 设置按钮 -->
                     <q-btn
-                        flat
-                        dense
-                        round
-                        icon="settings"
                         class="action-btn"
+                        dense
+                        flat
+                        icon="settings"
+                        round
                         @click="handleSettings"
                     >
-                        <q-tooltip anchor="bottom middle" self="top middle" :delay="800">
+                        <q-tooltip :delay="800" anchor="bottom middle" self="top middle">
                             系统设置
                         </q-tooltip>
                     </q-btn>
 
                     <!-- 用户菜单 -->
                     <q-btn
-                        flat
-                        dense
-                        round
-                        icon="person"
                         class="user-menu-btn"
+                        dense
+                        flat
+                        icon="person"
+                        round
                         @mouseenter="showUserMenu"
                         @mouseleave="hideUserMenu"
                     >
                         <q-menu
                             v-model="userMenuVisible"
-                            fit
-                            anchor="bottom end"
-                            self="top end"
                             :offset="[0, 8]"
+                            anchor="bottom end"
+                            fit
+                            self="top end"
                             @mouseenter="showUserMenu"
                             @mouseleave="hideUserMenu"
                         >
@@ -151,12 +151,12 @@
                                 <!-- 菜单项目 -->
                                 <div class="menu-items">
                                     <q-item
+                                        class="dropdown-item"
                                         clickable
                                         @click="
                                             handleProfile();
                                             userMenuVisible = false;
                                         "
-                                        class="dropdown-item"
                                     >
                                         <q-item-section avatar class="item-icon">
                                             <div class="icon-container">
@@ -170,18 +170,18 @@
                                                 >查看和编辑个人信息</q-item-label
                                             >
                                         </q-item-section>
-                                        <q-item-section side class="item-arrow">
-                                            <q-icon name="chevron_right" class="chevron-icon" />
+                                        <q-item-section class="item-arrow" side>
+                                            <q-icon class="chevron-icon" name="chevron_right" />
                                         </q-item-section>
                                     </q-item>
 
                                     <q-item
+                                        class="dropdown-item"
                                         clickable
                                         @click="
                                             handleSettings;
                                             userMenuVisible = false;
                                         "
-                                        class="dropdown-item"
                                     >
                                         <q-item-section avatar class="item-icon">
                                             <div class="icon-container">
@@ -195,15 +195,15 @@
                                                 >偏好设置和配置</q-item-label
                                             >
                                         </q-item-section>
-                                        <q-item-section side class="item-arrow">
-                                            <q-icon name="chevron_right" class="chevron-icon" />
+                                        <q-item-section class="item-arrow" side>
+                                            <q-icon class="chevron-icon" name="chevron_right" />
                                         </q-item-section>
                                     </q-item>
 
                                     <q-item
+                                        class="dropdown-item"
                                         clickable
                                         @click="userMenuVisible = false"
-                                        class="dropdown-item"
                                     >
                                         <q-item-section avatar class="item-icon">
                                             <div class="icon-container">
@@ -217,8 +217,8 @@
                                                 >使用指南和技术支持</q-item-label
                                             >
                                         </q-item-section>
-                                        <q-item-section side class="item-arrow">
-                                            <q-icon name="chevron_right" class="chevron-icon" />
+                                        <q-item-section class="item-arrow" side>
+                                            <q-icon class="chevron-icon" name="chevron_right" />
                                         </q-item-section>
                                     </q-item>
 
@@ -226,12 +226,12 @@
 
                                     <!-- 退出登录项 -->
                                     <q-item
+                                        class="dropdown-item logout-item"
                                         clickable
                                         @click="
                                             handleLogout;
                                             userMenuVisible = false;
                                         "
-                                        class="dropdown-item logout-item"
                                     >
                                         <q-item-section avatar class="item-icon">
                                             <div class="icon-container logout-icon">
@@ -245,10 +245,10 @@
                                                 >安全退出系统</q-item-label
                                             >
                                         </q-item-section>
-                                        <q-item-section side class="item-arrow">
+                                        <q-item-section class="item-arrow" side>
                                             <q-icon
-                                                name="power_settings_new"
                                                 class="chevron-icon"
+                                                name="power_settings_new"
                                             />
                                         </q-item-section>
                                     </q-item>
@@ -265,7 +265,7 @@
     </q-header>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';

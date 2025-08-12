@@ -1,14 +1,14 @@
 <template>
     <q-item
-        clickable
         v-ripple
-        :to="link"
-        exact
-        class="navigation-link"
         :class="{ 'q-item--active': isActive }"
+        :to="link"
+        class="navigation-link"
+        clickable
+        exact
     >
         <q-item-section avatar>
-            <q-icon :name="icon" :color="color || 'grey-7'" size="sm" />
+            <q-icon :color="color || 'grey-7'" :name="icon" size="sm" />
         </q-item-section>
 
         <q-item-section>
@@ -18,7 +18,7 @@
     </q-item>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -43,7 +43,7 @@ const isActive = computed(() => {
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .navigation-link {
     border-radius: 12px;
     margin: 4px 8px;

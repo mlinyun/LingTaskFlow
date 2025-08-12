@@ -101,7 +101,7 @@ export {
 // 常用类型别名（便于使用）
 import type { StandardAPIResponse } from './api';
 import type { User } from './auth';
-import type { Task, Project } from './business';
+import type { Project, Task } from './business';
 
 export type APIResponse<T = unknown> = StandardAPIResponse<T>;
 export type UserType = User;

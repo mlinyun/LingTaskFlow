@@ -1,9 +1,8 @@
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 from django.utils.html import format_html
-from django.urls import reverse
-from django.utils.safestring import mark_safe
+
 from .models import UserProfile, LoginHistory, Task
 
 
@@ -13,7 +12,7 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = '用户档案'
     fields = (
-        'avatar', 'timezone', 'theme_preference', 
+        'avatar', 'timezone', 'theme_preference',
         'email_notifications', 'task_count', 'completed_task_count'
     )
     readonly_fields = ('task_count', 'completed_task_count')
@@ -27,7 +26,7 @@ class TaskInline(admin.TabularInline):
     readonly_fields = ('created_at',)
     extra = 0
     max_num = 5
-    
+
     def get_queryset(self, request):
         """只显示未删除的任务"""
         return super().get_queryset(request).filter(is_deleted=False)
@@ -44,7 +43,7 @@ class UserAdmin(BaseUserAdmin):
 class UserProfileAdmin(admin.ModelAdmin):
     """用户档案管理"""
     list_display = (
-        'user', 'timezone', 'theme_preference', 
+        'user', 'timezone', 'theme_preference',
         'task_count', 'completed_task_count', 'completion_rate',
         'email_notifications', 'created_at'
     )
@@ -71,6 +70,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     def completion_rate(self, obj):
         """显示完成率"""
         return f"{obj.completion_rate}%"
+
     completion_rate.short_description = '完成率'
 
 
@@ -83,23 +83,23 @@ admin.site.register(User, UserAdmin)
 class LoginHistoryAdmin(admin.ModelAdmin):
     """登录历史管理"""
     list_display = (
-        'username_attempted', 'user', 'status', 'ip_address', 
+        'username_attempted', 'user', 'status', 'ip_address',
         'location', 'login_time', 'is_suspicious'
     )
     list_filter = (
         'status', 'login_time', 'location'
     )
     search_fields = (
-        'username_attempted', 'user__username', 'user__email', 
+        'username_attempted', 'user__username', 'user__email',
         'ip_address', 'user_agent'
     )
     readonly_fields = (
-        'username_attempted', 'user', 'status', 'ip_address', 
-        'user_agent', 'device_fingerprint', 'location', 
+        'username_attempted', 'user', 'status', 'ip_address',
+        'user_agent', 'device_fingerprint', 'location',
         'login_time', 'failure_reason'
     )
     date_hierarchy = 'login_time'
-    
+
     fieldsets = (
         ('基本信息', {
             'fields': ('user', 'username_attempted', 'status', 'login_time')
@@ -121,6 +121,7 @@ class LoginHistoryAdmin(admin.ModelAdmin):
     def is_suspicious(self, obj):
         """显示是否为可疑登录"""
         return obj.is_suspicious
+
     is_suspicious.boolean = True
     is_suspicious.short_description = '可疑登录'
 
@@ -141,17 +142,17 @@ class TaskAdmin(admin.ModelAdmin):
         'progress_bar', 'due_date', 'is_overdue', 'created_at', 'is_deleted'
     )
     list_filter = (
-        'status', 'priority', 'category', 'is_deleted', 
+        'status', 'priority', 'category', 'is_deleted',
         'created_at', 'due_date', 'owner'
     )
     search_fields = ('title', 'description', 'tags', 'notes', 'owner__username')
     readonly_fields = (
-        'id', 'created_at', 'updated_at', 'completed_at', 
+        'id', 'created_at', 'updated_at', 'completed_at',
         'is_overdue', 'time_remaining'
     )
     date_hierarchy = 'created_at'
     ordering = ['-created_at']
-    
+
     fieldsets = (
         ('基本信息', {
             'fields': ('title', 'description', 'owner', 'assigned_to')
@@ -176,15 +177,15 @@ class TaskAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     # 过滤器
     list_per_page = 20
     actions = ['mark_as_completed', 'mark_as_pending', 'soft_delete_tasks', 'restore_tasks']
-    
+
     def get_queryset(self, request):
         """包含软删除的记录"""
         return Task.all_objects.all()
-    
+
     def status_colored(self, obj):
         """带颜色的状态显示"""
         color = obj.get_status_color()
@@ -193,8 +194,9 @@ class TaskAdmin(admin.ModelAdmin):
             color,
             obj.get_status_display()
         )
+
     status_colored.short_description = '状态'
-    
+
     def priority_colored(self, obj):
         """带颜色的优先级显示"""
         color = obj.get_priority_color()
@@ -203,8 +205,9 @@ class TaskAdmin(admin.ModelAdmin):
             color,
             obj.get_priority_display()
         )
+
     priority_colored.short_description = '优先级'
-    
+
     def progress_bar(self, obj):
         """进度条显示"""
         progress = obj.progress
@@ -215,14 +218,16 @@ class TaskAdmin(admin.ModelAdmin):
             'text-align: center; line-height: 20px; color: white; font-size: 12px;">{}</div></div>',
             progress, color, f'{progress}%'
         )
+
     progress_bar.short_description = '进度'
-    
+
     def is_overdue(self, obj):
         """是否过期"""
         return obj.is_overdue
+
     is_overdue.boolean = True
     is_overdue.short_description = '已过期'
-    
+
     def time_remaining(self, obj):
         """剩余时间"""
         remaining = obj.time_remaining
@@ -231,21 +236,24 @@ class TaskAdmin(admin.ModelAdmin):
             hours = remaining.seconds // 3600
             return f"{days}天{hours}小时"
         return "无"
+
     time_remaining.short_description = '剩余时间'
-    
+
     # 批量操作
     def mark_as_completed(self, request, queryset):
         """标记为已完成"""
         updated = queryset.update(status='COMPLETED', progress=100)
         self.message_user(request, f"已将 {updated} 个任务标记为完成。")
+
     mark_as_completed.short_description = "标记选中任务为已完成"
-    
+
     def mark_as_pending(self, request, queryset):
         """标记为待处理"""
         updated = queryset.update(status='PENDING')
         self.message_user(request, f"已将 {updated} 个任务标记为待处理。")
+
     mark_as_pending.short_description = "标记选中任务为待处理"
-    
+
     def soft_delete_tasks(self, request, queryset):
         """软删除任务"""
         count = 0
@@ -254,8 +262,9 @@ class TaskAdmin(admin.ModelAdmin):
                 task.soft_delete()
                 count += 1
         self.message_user(request, f"已软删除 {count} 个任务。")
+
     soft_delete_tasks.short_description = "软删除选中任务"
-    
+
     def restore_tasks(self, request, queryset):
         """恢复任务"""
         count = 0
@@ -264,4 +273,5 @@ class TaskAdmin(admin.ModelAdmin):
                 task.restore()
                 count += 1
         self.message_user(request, f"已恢复 {count} 个任务。")
+
     restore_tasks.short_description = "恢复选中任务"

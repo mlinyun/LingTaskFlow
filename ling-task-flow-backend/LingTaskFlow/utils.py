@@ -1,12 +1,12 @@
 """
 LingTaskFlow 工具函数和装饰器
 """
+import hashlib
 from functools import wraps
+
 from django.core.cache import cache
 from django.http import JsonResponse
 from rest_framework import status
-import hashlib
-import time
 
 
 def rate_limit(max_attempts=5, time_window=300, key_func=None):
@@ -18,6 +18,7 @@ def rate_limit(max_attempts=5, time_window=300, key_func=None):
         time_window: 时间窗口（秒）
         key_func: 生成缓存键的函数
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
@@ -28,27 +29,28 @@ def rate_limit(max_attempts=5, time_window=300, key_func=None):
                 # 默认使用IP地址作为键
                 ip = get_client_ip(request)
                 cache_key = f"rate_limit_{view_func.__name__}_{ip}"
-            
+
             # 获取当前尝试次数
             attempts = cache.get(cache_key, 0)
-            
+
             if attempts >= max_attempts:
                 return JsonResponse({
                     'success': False,
-                    'message': f'请求过于频繁，请{time_window//60}分钟后再试',
+                    'message': f'请求过于频繁，请{time_window // 60}分钟后再试',
                     'error': 'rate_limit_exceeded'
                 }, status=status.HTTP_429_TOO_MANY_REQUESTS)
-            
+
             # 执行原始视图
             response = view_func(request, *args, **kwargs)
-            
+
             # 如果请求失败，增加尝试计数
             if hasattr(response, 'status_code') and response.status_code >= 400:
                 cache.set(cache_key, attempts + 1, time_window)
-            
+
             return response
-        
+
         return wrapper
+
     return decorator
 
 
@@ -86,7 +88,7 @@ def validate_request_data(required_fields, request_data):
     for field in required_fields:
         if field not in request_data or not request_data[field]:
             missing_fields.append(field)
-    
+
     return len(missing_fields) == 0, missing_fields
 
 
@@ -102,7 +104,7 @@ def sanitize_user_input(data):
     """
     if not isinstance(data, dict):
         return data
-    
+
     sanitized = {}
     for key, value in data.items():
         if isinstance(value, str):
@@ -111,9 +113,9 @@ def sanitize_user_input(data):
             # 基本的XSS防护
             value = value.replace('<script>', '').replace('</script>', '')
             value = value.replace('<', '&lt;').replace('>', '&gt;')
-        
+
         sanitized[key] = value
-    
+
     return sanitized
 
 
@@ -124,16 +126,16 @@ def generate_device_fingerprint(request):
     基于用户代理、IP地址和其他HTTP头部信息生成设备唯一标识
     """
     import hashlib
-    
+
     # 收集设备特征信息
     user_agent = request.META.get('HTTP_USER_AGENT', '')
     accept_language = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
     accept_encoding = request.META.get('HTTP_ACCEPT_ENCODING', '')
     accept = request.META.get('HTTP_ACCEPT', '')
-    
+
     # 组合特征信息
     fingerprint_data = f"{user_agent}|{accept_language}|{accept_encoding}|{accept}"
-    
+
     # 生成MD5哈希
     return hashlib.md5(fingerprint_data.encode('utf-8')).hexdigest()
 
@@ -147,10 +149,10 @@ def get_client_location(ip_address):
     # 简单的内网IP检测
     if ip_address.startswith(('192.168.', '10.', '172.')):
         return '内网地址'
-    
+
     if ip_address in ['127.0.0.1', 'localhost']:
         return '本地主机'
-    
+
     # 这里可以集成第三方IP地理位置服务
     # 例如：ipapi.co, geoip2, ip-api.com等
     return '未知位置'
@@ -170,28 +172,28 @@ def log_login_attempt(user, username_attempted, status, request, failure_reason=
         **kwargs: 其他参数（向后兼容）
     """
     from .models import LoginHistory
-    
+
     # 处理kwargs中的参数（向后兼容旧的调用方式）
     if 'ip_address' in kwargs:
         ip_address = kwargs['ip_address']
     else:
         ip_address = get_client_ip(request)
-    
+
     if 'user_agent' in kwargs:
         user_agent = kwargs['user_agent']
     else:
         user_agent = request.META.get('HTTP_USER_AGENT', '')
-    
+
     device_fingerprint = generate_device_fingerprint(request)
     location = get_client_location(ip_address)
-    
+
     # 如果是token刷新类型，调整记录内容
     if login_type == 'token_refresh':
         if status == 'success':
             failure_reason = f"Token刷新成功 - {failure_reason}" if failure_reason else "Token刷新成功"
         else:
             failure_reason = f"Token刷新失败 - {failure_reason}" if failure_reason else "Token刷新失败"
-    
+
     LoginHistory.objects.create(
         user=user,
         username_attempted=username_attempted,
@@ -217,16 +219,16 @@ def get_enhanced_tokens_for_user(user, remember_me=False):
     """
     from rest_framework_simplejwt.tokens import RefreshToken
     from datetime import timedelta
-    
+
     refresh = RefreshToken.for_user(user)
-    
+
     # 如果用户选择记住登录状态，延长token有效期
     if remember_me:
         # 延长refresh token有效期到30天
         refresh.set_exp(lifetime=timedelta(days=30))
         # 延长access token有效期到1天
         refresh.access_token.set_exp(lifetime=timedelta(days=1))
-    
+
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -259,13 +261,13 @@ class StandardAPIResponse:
         "timestamp": "2025-08-02T12:00:00Z"
     }
     """
-    
+
     @staticmethod
     def success(
-        data: Any = None, 
-        message: str = "操作成功", 
-        meta: Optional[Dict] = None,
-        status_code: int = status.HTTP_200_OK
+            data: Any = None,
+            message: str = "操作成功",
+            meta: Optional[Dict] = None,
+            status_code: int = status.HTTP_200_OK
     ) -> Response:
         """
         创建成功响应
@@ -288,13 +290,13 @@ class StandardAPIResponse:
             "timestamp": datetime.now().isoformat()
         }
         return Response(response_data, status=status_code)
-    
+
     @staticmethod
     def error(
-        message: str = "操作失败",
-        error_details: Optional[Dict] = None,
-        status_code: int = status.HTTP_400_BAD_REQUEST,
-        error_code: Optional[str] = None
+            message: str = "操作失败",
+            error_details: Optional[Dict] = None,
+            status_code: int = status.HTTP_400_BAD_REQUEST,
+            error_code: Optional[str] = None
     ) -> Response:
         """
         创建错误响应
@@ -312,7 +314,7 @@ class StandardAPIResponse:
             "code": error_code,
             "details": error_details or {}
         }
-        
+
         response_data = {
             "success": False,
             "message": message,
@@ -322,12 +324,12 @@ class StandardAPIResponse:
             "timestamp": datetime.now().isoformat()
         }
         return Response(response_data, status=status_code)
-    
+
     @staticmethod
     def paginated_success(
-        data: Any,
-        paginator: PageNumberPagination,
-        message: str = "获取数据成功"
+            data: Any,
+            paginator: PageNumberPagination,
+            message: str = "获取数据成功"
     ) -> Response:
         """
         创建分页成功响应
@@ -352,7 +354,7 @@ class StandardAPIResponse:
                 "previous_page": paginator.page.previous_page_number() if paginator.page.has_previous() else None,
             }
         }
-        
+
         return StandardAPIResponse.success(
             data=data,
             message=message,
@@ -368,7 +370,7 @@ class StandardPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
     page_query_param = 'page'
-    
+
     def get_paginated_response(self, data):
         """
         返回标准化的分页响应
@@ -390,13 +392,13 @@ def format_validation_errors(errors: Dict) -> Dict:
         Dict: 格式化后的错误信息
     """
     formatted_errors = {}
-    
+
     for field, field_errors in errors.items():
         if isinstance(field_errors, list):
             formatted_errors[field] = [str(error) for error in field_errors]
         else:
             formatted_errors[field] = str(field_errors)
-    
+
     return formatted_errors
 
 
@@ -425,5 +427,5 @@ def get_error_message_from_exception(exc) -> str:
             return "; ".join([str(error) for error in exc.detail])
         else:
             return str(exc.detail)
-    
+
     return str(exc)

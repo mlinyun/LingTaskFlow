@@ -19,14 +19,14 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     - 已认证用户：可以读取所有内容，但只能修改自己拥有的对象
     - 管理员用户：拥有所有权限
     """
-    
+
     def has_permission(self, request, view):
         """
         检查用户是否有权限访问视图
         """
         # 只允许已认证用户访问
         return request.user and request.user.is_authenticated
-    
+
     def has_object_permission(self, request, view, obj):
         """
         检查用户是否有权限操作特定对象
@@ -34,11 +34,11 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         # 管理员拥有所有权限
         if request.user.is_staff or request.user.is_superuser:
             return True
-        
+
         # 读权限允许任何已认证用户
         if request.method in permissions.SAFE_METHODS:
             return True
-        
+
         # 写权限只允许对象的所有者
         # 检查对象是否有owner属性，如果没有则检查user属性
         if hasattr(obj, 'owner'):
@@ -56,17 +56,17 @@ class IsOwner(permissions.BasePermission):
     """
     严格的所有者权限：只有对象的所有者才能进行任何操作
     """
-    
+
     def has_permission(self, request, view):
         """检查用户是否已认证"""
         return request.user and request.user.is_authenticated
-    
+
     def has_object_permission(self, request, view, obj):
         """检查用户是否为对象所有者"""
         # 管理员拥有所有权限
         if request.user.is_staff or request.user.is_superuser:
             return True
-        
+
         # 只有所有者才能操作
         if hasattr(obj, 'owner'):
             return obj.owner == request.user
@@ -82,21 +82,21 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     """
     作者权限：作者可以编辑，其他人只能读取
     """
-    
+
     def has_permission(self, request, view):
         """所有已认证用户都有基本权限"""
         return request.user and request.user.is_authenticated
-    
+
     def has_object_permission(self, request, view, obj):
         """检查读写权限"""
         # 管理员拥有所有权限
         if request.user.is_staff or request.user.is_superuser:
             return True
-        
+
         # 读权限对所有已认证用户开放
         if request.method in permissions.SAFE_METHODS:
             return True
-        
+
         # 写权限只给作者
         if hasattr(obj, 'author'):
             return obj.author == request.user
@@ -110,23 +110,23 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     """
     管理员写权限：只有管理员能写，其他人只能读
     """
-    
+
     def has_permission(self, request, view):
         """检查基本权限"""
         # 读权限对所有已认证用户开放
         if request.method in permissions.SAFE_METHODS:
             return request.user and request.user.is_authenticated
-        
+
         # 写权限只给管理员
-        return (request.user and request.user.is_authenticated and 
+        return (request.user and request.user.is_authenticated and
                 (request.user.is_staff or request.user.is_superuser))
-    
+
     def has_object_permission(self, request, view, obj):
         """检查对象权限"""
         # 读权限对所有已认证用户开放
         if request.method in permissions.SAFE_METHODS:
             return True
-        
+
         # 写权限只给管理员
         return request.user.is_staff or request.user.is_superuser
 
@@ -135,21 +135,21 @@ class IsSelfOrReadOnly(permissions.BasePermission):
     """
     用户自身权限：用户只能修改自己的信息
     """
-    
+
     def has_permission(self, request, view):
         """检查用户是否已认证"""
         return request.user and request.user.is_authenticated
-    
+
     def has_object_permission(self, request, view, obj):
         """检查是否为用户自身"""
         # 管理员拥有所有权限
         if request.user.is_staff or request.user.is_superuser:
             return True
-        
+
         # 读权限对所有已认证用户开放
         if request.method in permissions.SAFE_METHODS:
             return True
-        
+
         # 写权限只给用户本人
         # 如果obj是User对象
         if hasattr(obj, 'username'):

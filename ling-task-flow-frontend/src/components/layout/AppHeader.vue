@@ -105,11 +105,26 @@
                         class="user-menu-btn"
                         dense
                         flat
-                        icon="person"
                         round
                         @mouseenter="showUserMenu"
                         @mouseleave="hideUserMenu"
                     >
+                        <q-avatar size="32px">
+                            <img
+                                v-if="authStore?.user?.profile?.avatar_url"
+                                v-lazy-load
+                                :alt="authStore.userDisplayName"
+                                :data-src="authStore.user.profile.avatar_url"
+                                style="
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: cover;
+                                    border-radius: 50%;
+                                "
+                                @lazy-error="handleAvatarError"
+                            />
+                            <q-icon v-else name="person" size="20px" />
+                        </q-avatar>
                         <q-menu
                             v-model="userMenuVisible"
                             :offset="[0, 8]"
@@ -128,7 +143,22 @@
                                     </div>
                                     <div class="dropdown-user-info">
                                         <div class="user-avatar-large">
-                                            <q-icon name="person" />
+                                            <q-avatar size="52px">
+                                                <img
+                                                    v-if="authStore?.user?.profile?.avatar_url"
+                                                    v-lazy-load
+                                                    :alt="authStore.userDisplayName"
+                                                    :data-src="authStore.user.profile.avatar_url"
+                                                    style="
+                                                        width: 100%;
+                                                        height: 100%;
+                                                        object-fit: cover;
+                                                        border-radius: 50%;
+                                                    "
+                                                    @lazy-error="handleAvatarError"
+                                                />
+                                                <q-icon v-else name="person" size="32px" />
+                                            </q-avatar>
                                             <div class="avatar-ring"></div>
                                         </div>
                                         <div class="user-text-info">
@@ -368,6 +398,12 @@ const handleLogout = async () => {
     } catch (error) {
         console.error('退出登录失败:', error);
     }
+};
+
+// 头像加载错误处理
+const handleAvatarError = (event: CustomEvent) => {
+    console.warn('Avatar loading failed:', event.detail);
+    // 可以在这里添加错误统计或用户提示
 };
 </script>
 

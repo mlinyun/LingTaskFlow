@@ -34,6 +34,7 @@ ling-task-flow-backend/
 ## 🛠️ 快速开始
 
 ### 环境安装
+
 详细安装说明请参考 **[INSTALL.md](INSTALL.md)**
 
 ```bash
@@ -54,11 +55,13 @@ python manage.py runserver
 ```
 
 ### 运行 API 测试
+
 ```bash
 python run_api_tests.py
 ```
 
 ### 运行完整测试套件
+
 ```bash
 python manage.py test tests.integration.test_task_api_integration
 ```

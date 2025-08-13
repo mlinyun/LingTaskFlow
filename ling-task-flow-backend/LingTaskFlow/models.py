@@ -2,13 +2,14 @@
 LingTaskFlow 数据模型
 定义用户扩展信息和任务管理相关的数据模型
 """
-from django.db import models
+import uuid
+
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
-from django.core.validators import MinValueValidator, MaxValueValidator
-import uuid
 
 
 class UserProfile(models.Model):
@@ -17,12 +18,12 @@ class UserProfile(models.Model):
     为Django内置User模型提供额外的字段信息
     """
     user = models.OneToOneField(
-        User, 
+        User,
         on_delete=models.CASCADE,
         related_name='profile',
         verbose_name='关联用户'
     )
-    
+
     # 用户个人信息
     avatar = models.ImageField(
         upload_to='avatars/%Y/%m/',
@@ -31,7 +32,7 @@ class UserProfile(models.Model):
         verbose_name='头像',
         help_text='用户头像图片'
     )
-    
+
     phone = models.CharField(
         max_length=20,
         null=True,
@@ -39,7 +40,7 @@ class UserProfile(models.Model):
         verbose_name='联系电话',
         help_text='用户联系电话'
     )
-    
+
     bio = models.TextField(
         max_length=500,
         null=True,
@@ -54,27 +55,27 @@ class UserProfile(models.Model):
         verbose_name='昵称',
         help_text='用户在系统中显示的昵称'
     )
-    
+
     timezone = models.CharField(
         max_length=50,
         default='Asia/Shanghai',
         verbose_name='时区',
         help_text='用户所在时区'
     )
-    
+
     # 统计信息
     task_count = models.PositiveIntegerField(
         default=0,
         verbose_name='任务总数',
         help_text='用户创建的任务总数量'
     )
-    
+
     completed_task_count = models.PositiveIntegerField(
         default=0,
         verbose_name='已完成任务数',
         help_text='用户已完成的任务数量'
     )
-    
+
     # 个人偏好设置
     theme_preference = models.CharField(
         max_length=20,
@@ -87,7 +88,7 @@ class UserProfile(models.Model):
         verbose_name='主题偏好',
         help_text='用户界面主题偏好'
     )
-    
+
     language = models.CharField(
         max_length=10,
         choices=[
@@ -98,19 +99,19 @@ class UserProfile(models.Model):
         verbose_name='语言偏好',
         help_text='用户界面语言偏好'
     )
-    
+
     email_notifications = models.BooleanField(
         default=True,
         verbose_name='邮件通知',
         help_text='是否接收邮件通知'
     )
-    
+
     # 时间戳
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='创建时间'
     )
-    
+
     updated_at = models.DateTimeField(
         auto_now=True,
         verbose_name='更新时间'
@@ -143,7 +144,7 @@ class UserProfile(models.Model):
         """更新任务统计数量"""
         self.task_count = self.user.owned_tasks.filter(is_deleted=False).count()
         self.completed_task_count = self.user.owned_tasks.filter(
-            is_deleted=False, 
+            is_deleted=False,
             status='COMPLETED'
         ).count()
         self.save(update_fields=['task_count', 'completed_task_count'])
@@ -205,29 +206,29 @@ class LoginHistory(models.Model):
         null=True,
         blank=True
     )
-    
+
     username_attempted = models.CharField(
         max_length=150,
         verbose_name='尝试的用户名',
         help_text='记录登录尝试时使用的用户名或邮箱'
     )
-    
+
     status = models.CharField(
         max_length=10,
         choices=LOGIN_STATUS_CHOICES,
         verbose_name='登录状态'
     )
-    
+
     ip_address = models.GenericIPAddressField(
         verbose_name='IP地址',
         help_text='用户登录时的IP地址'
     )
-    
+
     user_agent = models.TextField(
         verbose_name='用户代理',
         help_text='浏览器和设备信息'
     )
-    
+
     device_fingerprint = models.CharField(
         max_length=64,
         verbose_name='设备指纹',
@@ -235,7 +236,7 @@ class LoginHistory(models.Model):
         null=True,
         blank=True
     )
-    
+
     location = models.CharField(
         max_length=255,
         verbose_name='地理位置',
@@ -243,19 +244,19 @@ class LoginHistory(models.Model):
         blank=True,
         help_text='基于IP地址的大致地理位置'
     )
-    
+
     login_time = models.DateTimeField(
         auto_now_add=True,
         verbose_name='登录时间'
     )
-    
+
     session_duration = models.DurationField(
         null=True,
         blank=True,
         verbose_name='会话持续时间',
         help_text='从登录到登出的时间长度'
     )
-    
+
     failure_reason = models.CharField(
         max_length=255,
         null=True,
@@ -273,20 +274,20 @@ class LoginHistory(models.Model):
             models.Index(fields=['user', '-login_time'], name='login_user_time_idx'),
             models.Index(fields=['ip_address', '-login_time'], name='login_ip_time_idx'),
             models.Index(fields=['status', '-login_time'], name='login_status_time_idx'),
-            
+
             # 新增安全相关索引
             models.Index(fields=['username_attempted'], name='login_username_idx'),
             models.Index(fields=['device_fingerprint'], name='login_device_idx'),
             models.Index(fields=['location'], name='login_location_idx'),
-            
+
             # 复合查询索引
             models.Index(fields=['user', 'status', '-login_time'], name='login_usr_stat_time_idx'),
             models.Index(fields=['ip_address', 'status'], name='login_ip_status_idx'),
             models.Index(fields=['status', 'failure_reason'], name='login_stat_reason_idx'),
-            
+
             # 时间范围查询索引
             models.Index(fields=['-login_time', 'status'], name='login_time_stat_idx'),
-            
+
             # 会话相关索引
             models.Index(fields=['session_duration'], name='login_session_idx'),
         ]
@@ -307,11 +308,11 @@ class LoginHistory(models.Model):
                 status='success',
                 login_time__gte=timezone.now() - timezone.timedelta(days=30)
             ).exclude(id=self.id)
-            
+
             known_devices = recent_logins.values_list('device_fingerprint', flat=True)
             if self.device_fingerprint not in known_devices:
                 return True
-        
+
         return False
 
 
@@ -320,34 +321,35 @@ class SoftDeleteQuerySet(models.QuerySet):
     软删除查询集
     提供更强大的软删除查询功能
     """
+
     def active(self):
         """返回未删除的记录"""
         return self.filter(is_deleted=False)
-    
+
     def deleted(self):
         """返回已删除的记录"""
         return self.filter(is_deleted=True)
-    
+
     def soft_delete(self):
         """批量软删除"""
         return self.update(is_deleted=True, deleted_at=timezone.now())
-    
+
     def restore(self):
         """批量恢复"""
         return self.update(is_deleted=False, deleted_at=None)
-    
+
     def hard_delete(self):
         """批量硬删除（永久删除）"""
         return self.delete()
-    
+
     def deleted_before(self, date):
         """返回指定日期之前删除的记录"""
         return self.filter(is_deleted=True, deleted_at__lt=date)
-    
+
     def deleted_after(self, date):
         """返回指定日期之后删除的记录"""
         return self.filter(is_deleted=True, deleted_at__gt=date)
-    
+
     def deleted_between(self, start_date, end_date):
         """返回指定时间范围内删除的记录"""
         return self.filter(
@@ -362,18 +364,19 @@ class SoftDeleteManager(models.Manager):
     软删除管理器
     用于处理软删除的查询集，默认排除已删除的记录
     """
+
     def get_queryset(self):
         """返回使用软删除查询集的未删除记录"""
         return SoftDeleteQuerySet(self.model, using=self._db).active()
-    
+
     def all_with_deleted(self):
         """返回包含已删除记录的所有记录"""
         return SoftDeleteQuerySet(self.model, using=self._db)
-    
+
     def deleted_only(self):
         """仅返回已删除的记录"""
         return SoftDeleteQuerySet(self.model, using=self._db).deleted()
-    
+
     def soft_delete_queryset(self):
         """返回软删除查询集"""
         return SoftDeleteQuerySet(self.model, using=self._db)
@@ -389,14 +392,14 @@ class SoftDeleteModel(models.Model):
         verbose_name='是否删除',
         help_text='软删除标记，True表示已删除'
     )
-    
+
     deleted_at = models.DateTimeField(
         null=True,
         blank=True,
         verbose_name='删除时间',
         help_text='记录删除时间'
     )
-    
+
     deleted_by = models.ForeignKey(
         'auth.User',
         on_delete=models.SET_NULL,
@@ -406,15 +409,15 @@ class SoftDeleteModel(models.Model):
         verbose_name='删除者',
         help_text='执行删除操作的用户'
     )
-    
+
     # 默认管理器（排除已删除的记录）
     objects = SoftDeleteManager()
     # 包含所有记录的管理器
     all_objects = models.Manager()
-    
+
     class Meta:
         abstract = True
-    
+
     def soft_delete(self, user=None):
         """
         软删除
@@ -427,7 +430,7 @@ class SoftDeleteModel(models.Model):
         if user:
             self.deleted_by = user
         self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
-    
+
     def restore(self, user=None):
         """
         恢复删除
@@ -439,18 +442,18 @@ class SoftDeleteModel(models.Model):
         self.deleted_at = None
         self.deleted_by = None
         self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
-    
+
     def hard_delete(self):
         """硬删除（永久删除）"""
         super().delete()
-    
+
     def delete(self, using=None, keep_parents=False):
         """
         重写delete方法，默认执行软删除
         要执行硬删除，请使用hard_delete()方法
         """
         self.soft_delete()
-    
+
     @property
     def is_permanently_deleted(self):
         """检查是否已永久删除（硬删除）"""
@@ -459,24 +462,24 @@ class SoftDeleteModel(models.Model):
             return not bool(self.pk)
         except:
             return True
-    
+
     @property
     def deletion_age(self):
         """计算删除后的时间（天数）"""
         if not self.is_deleted or not self.deleted_at:
             return None
         return (timezone.now() - self.deleted_at).days
-    
+
     @property
     def can_be_restored(self):
         """检查是否可以被恢复"""
         return self.is_deleted and self.deleted_at is not None
-    
+
     def get_deletion_info(self):
         """获取删除信息"""
         if not self.is_deleted:
             return None
-        
+
         return {
             'is_deleted': True,
             'deleted_at': self.deleted_at,
@@ -491,7 +494,7 @@ class Task(SoftDeleteModel):
     任务模型
     核心任务管理功能的数据模型，包含软删除功能
     """
-    
+
     # 任务状态选择
     STATUS_CHOICES = [
         ('PENDING', '待处理'),
@@ -500,7 +503,7 @@ class Task(SoftDeleteModel):
         ('CANCELLED', '已取消'),
         ('ON_HOLD', '暂停'),
     ]
-    
+
     # 优先级选择
     PRIORITY_CHOICES = [
         ('LOW', '低'),
@@ -508,7 +511,7 @@ class Task(SoftDeleteModel):
         ('HIGH', '高'),
         ('URGENT', '紧急'),
     ]
-    
+
     # 基础字段
     id = models.UUIDField(
         primary_key=True,
@@ -516,19 +519,19 @@ class Task(SoftDeleteModel):
         editable=False,
         verbose_name='任务ID'
     )
-    
+
     title = models.CharField(
         max_length=200,
         verbose_name='任务标题',
         help_text='任务的简短描述'
     )
-    
+
     description = models.TextField(
         blank=True,
         verbose_name='任务描述',
         help_text='任务的详细说明'
     )
-    
+
     # 关联用户
     owner = models.ForeignKey(
         User,
@@ -536,7 +539,7 @@ class Task(SoftDeleteModel):
         related_name='owned_tasks',
         verbose_name='任务所有者'
     )
-    
+
     assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -546,7 +549,7 @@ class Task(SoftDeleteModel):
         verbose_name='任务执行者',
         help_text='分配给谁执行这个任务'
     )
-    
+
     # 任务状态和优先级
     status = models.CharField(
         max_length=20,
@@ -554,14 +557,14 @@ class Task(SoftDeleteModel):
         default='PENDING',
         verbose_name='任务状态'
     )
-    
+
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_CHOICES,
         default='MEDIUM',
         verbose_name='优先级'
     )
-    
+
     # 时间相关字段
     due_date = models.DateTimeField(
         null=True,
@@ -569,21 +572,21 @@ class Task(SoftDeleteModel):
         verbose_name='截止时间',
         help_text='任务需要完成的时间'
     )
-    
+
     start_date = models.DateTimeField(
         null=True,
         blank=True,
         verbose_name='开始时间',
         help_text='任务计划开始的时间'
     )
-    
+
     completed_at = models.DateTimeField(
         null=True,
         blank=True,
         verbose_name='完成时间',
         help_text='任务实际完成的时间'
     )
-    
+
     # 进度相关
     progress = models.IntegerField(
         default=0,
@@ -591,7 +594,7 @@ class Task(SoftDeleteModel):
         verbose_name='完成进度',
         help_text='任务完成百分比 (0-100)'
     )
-    
+
     estimated_hours = models.DecimalField(
         max_digits=8,
         decimal_places=2,
@@ -600,7 +603,7 @@ class Task(SoftDeleteModel):
         verbose_name='预估工时',
         help_text='预计完成任务需要的小时数'
     )
-    
+
     actual_hours = models.DecimalField(
         max_digits=8,
         decimal_places=2,
@@ -609,7 +612,7 @@ class Task(SoftDeleteModel):
         verbose_name='实际工时',
         help_text='实际花费的小时数'
     )
-    
+
     # 分类和标签
     category = models.CharField(
         max_length=50,
@@ -617,14 +620,14 @@ class Task(SoftDeleteModel):
         verbose_name='任务分类',
         help_text='任务所属的分类'
     )
-    
+
     tags = models.CharField(
         max_length=255,
         blank=True,
         verbose_name='标签',
         help_text='用逗号分隔的标签列表'
     )
-    
+
     # 附件和备注
     attachment = models.FileField(
         upload_to='task_attachments/%Y/%m/',
@@ -633,31 +636,31 @@ class Task(SoftDeleteModel):
         verbose_name='附件',
         help_text='任务相关的文件附件'
     )
-    
+
     notes = models.TextField(
         blank=True,
         verbose_name='备注',
         help_text='任务的额外备注信息'
     )
-    
+
     # 系统字段
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='创建时间'
     )
-    
+
     updated_at = models.DateTimeField(
         auto_now=True,
         verbose_name='更新时间'
     )
-    
+
     # 排序字段
     order = models.IntegerField(
         default=0,
         verbose_name='排序',
         help_text='用于任务排序的数值'
     )
-    
+
     overdue_count = models.PositiveIntegerField(
         default=0,
         verbose_name='逾期次数',
@@ -676,38 +679,38 @@ class Task(SoftDeleteModel):
             models.Index(fields=['status'], name='task_status_idx'),
             models.Index(fields=['priority'], name='task_priority_idx'),
             models.Index(fields=['order'], name='task_order_idx'),
-            
+
             # 用户相关复合索引 - 针对用户任务列表查询优化
             models.Index(fields=['owner', '-created_at'], name='task_owner_created_idx'),
             models.Index(fields=['assigned_to', '-created_at'], name='task_assign_created_idx'),
             models.Index(fields=['owner', 'status', '-created_at'], name='task_own_stat_crt_idx'),
             models.Index(fields=['assigned_to', 'status', '-created_at'], name='task_asn_stat_crt_idx'),
-            
+
             # 软删除相关索引 - 针对软删除查询优化
             models.Index(fields=['is_deleted', '-created_at'], name='task_del_created_idx'),
             models.Index(fields=['is_deleted', 'owner', '-created_at'], name='task_del_own_crt_idx'),
             models.Index(fields=['is_deleted', 'assigned_to', '-created_at'], name='task_del_asn_crt_idx'),
-            
+
             # 状态和优先级复合索引 - 针对任务筛选优化
             models.Index(fields=['status', 'priority'], name='task_status_priority_idx'),
             models.Index(fields=['priority', 'status', 'due_date'], name='task_pri_stat_due_idx'),
-            
+
             # 时间相关复合索引 - 针对时间范围查询优化
             models.Index(fields=['due_date', 'status'], name='task_due_status_idx'),
             models.Index(fields=['start_date', 'due_date'], name='task_start_due_idx'),
             models.Index(fields=['completed_at'], name='task_completed_at_idx'),
-            
+
             # 分类和状态复合索引 - 针对分类筛选优化
             models.Index(fields=['category', 'status'], name='task_cat_status_idx'),
             models.Index(fields=['category', 'priority'], name='task_cat_priority_idx'),
-            
+
             # 统计查询优化索引
             models.Index(fields=['owner', 'status', 'is_deleted'], name='task_own_stat_del_idx'),
             models.Index(fields=['assigned_to', 'status', 'is_deleted'], name='task_asn_stat_del_idx'),
-            
+
             # 过期任务查询优化
             models.Index(fields=['due_date', 'status', 'is_deleted'], name='task_due_stat_del_idx'),
-            
+
             # 更新时间索引 - 针对最近更新查询
             models.Index(fields=['-updated_at'], name='task_updated_idx'),
             models.Index(fields=['owner', '-updated_at'], name='task_owner_updated_idx'),
@@ -724,13 +727,13 @@ class Task(SoftDeleteModel):
         if self.status == 'COMPLETED' and not self.completed_at:
             self.completed_at = timezone.now()
             self.progress = 100
-        
+
         # 如果状态不是已完成，清除完成时间
         elif self.status != 'COMPLETED' and self.completed_at:
             self.completed_at = None
-        
+
         super().save(*args, **kwargs)
-        
+
         # 更新用户的任务统计
         if self.owner and hasattr(self.owner, 'profile'):
             self.owner.profile.update_task_count()
@@ -779,21 +782,21 @@ class Task(SoftDeleteModel):
     def get_priority_color(self):
         """获取优先级对应的颜色"""
         colors = {
-            'LOW': '#28a745',      # 绿色
-            'MEDIUM': '#ffc107',   # 黄色
-            'HIGH': '#fd7e14',     # 橙色
-            'URGENT': '#dc3545',   # 红色
+            'LOW': '#28a745',  # 绿色
+            'MEDIUM': '#ffc107',  # 黄色
+            'HIGH': '#fd7e14',  # 橙色
+            'URGENT': '#dc3545',  # 红色
         }
         return colors.get(self.priority, '#6c757d')
 
     def get_status_color(self):
         """获取状态对应的颜色"""
         colors = {
-            'PENDING': '#6c757d',      # 灰色
+            'PENDING': '#6c757d',  # 灰色
             'IN_PROGRESS': '#007bff',  # 蓝色
-            'COMPLETED': '#28a745',    # 绿色
-            'CANCELLED': '#dc3545',    # 红色
-            'ON_HOLD': '#ffc107',      # 黄色
+            'COMPLETED': '#28a745',  # 绿色
+            'CANCELLED': '#dc3545',  # 红色
+            'ON_HOLD': '#ffc107',  # 黄色
         }
         return colors.get(self.status, '#6c757d')
 
@@ -834,7 +837,7 @@ class Task(SoftDeleteModel):
         )
 
     # ==================== 软删除和恢复相关方法 ====================
-    
+
     def soft_delete(self, user=None):
         """
         软删除任务
@@ -844,11 +847,11 @@ class Task(SoftDeleteModel):
         """
         # 调用父类的软删除方法
         super().soft_delete(user)
-        
+
         # 更新用户的任务统计
         if self.owner and hasattr(self.owner, 'profile'):
             self.owner.profile.update_task_count()
-    
+
     def restore(self, user=None):
         """
         恢复已删除的任务
@@ -858,11 +861,11 @@ class Task(SoftDeleteModel):
         """
         # 调用父类的恢复方法
         super().restore(user)
-        
+
         # 更新用户的任务统计
         if self.owner and hasattr(self.owner, 'profile'):
             self.owner.profile.update_task_count()
-    
+
     def can_restore(self, user):
         """
         检查用户是否可以恢复此任务
@@ -875,10 +878,10 @@ class Task(SoftDeleteModel):
         """
         if not self.is_deleted:
             return False
-        
+
         # 只有任务所有者可以恢复任务
         return user == self.owner
-    
+
     def get_trash_info(self):
         """
         获取回收站信息
@@ -888,7 +891,7 @@ class Task(SoftDeleteModel):
         """
         if not self.is_deleted:
             return None
-        
+
         return {
             'task_id': str(self.id),
             'title': self.title,
@@ -901,7 +904,7 @@ class Task(SoftDeleteModel):
             'priority': self.get_priority_display(),
             'due_date': self.due_date
         }
-    
+
     @classmethod
     def get_user_trash(cls, user, include_assigned=False):
         """
@@ -917,9 +920,9 @@ class Task(SoftDeleteModel):
         query = models.Q(owner=user)
         if include_assigned:
             query |= models.Q(assigned_to=user)
-        
+
         return cls.all_objects.filter(query, is_deleted=True).order_by('-deleted_at')
-    
+
     @classmethod
     def cleanup_old_deleted_tasks(cls, days=30):
         """
@@ -936,13 +939,13 @@ class Task(SoftDeleteModel):
             is_deleted=True,
             deleted_at__lt=cutoff_date
         )
-        
+
         count = old_deleted_tasks.count()
         # 执行硬删除
         old_deleted_tasks.delete()
-        
+
         return count
-    
+
     @classmethod
     def restore_user_tasks(cls, user, task_ids):
         """
@@ -960,23 +963,23 @@ class Task(SoftDeleteModel):
             owner=user,
             is_deleted=True
         )
-        
+
         restored_count = 0
         failed_count = 0
-        
+
         for task in tasks:
             try:
                 task.restore(user)
                 restored_count += 1
             except Exception:
                 failed_count += 1
-        
+
         return {
             'restored': restored_count,
             'failed': failed_count,
             'total': len(task_ids)
         }
-    
+
     @classmethod
     def permanent_delete_user_tasks(cls, user, task_ids):
         """
@@ -994,16 +997,16 @@ class Task(SoftDeleteModel):
             owner=user,
             is_deleted=True
         )
-        
+
         deleted_count = tasks.count()
         # 执行硬删除
         tasks.delete()
-        
+
         return {
             'deleted': deleted_count,
             'total': len(task_ids)
         }
-    
+
     @classmethod
     def get_deletion_statistics(cls, user):
         """
@@ -1016,13 +1019,13 @@ class Task(SoftDeleteModel):
             dict: 删除统计信息
         """
         deleted_tasks = cls.all_objects.filter(owner=user, is_deleted=True)
-        
+
         # 按时间范围统计
         now = timezone.now()
         today = now.replace(hour=0, minute=0, second=0, microsecond=0)
         week_ago = today - timezone.timedelta(days=7)
         month_ago = today - timezone.timedelta(days=30)
-        
+
         return {
             'total_deleted': deleted_tasks.count(),
             'deleted_today': deleted_tasks.filter(deleted_at__gte=today).count(),

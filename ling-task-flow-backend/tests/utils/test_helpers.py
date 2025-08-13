@@ -5,6 +5,7 @@
 """
 import os
 import sys
+
 import django
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -19,28 +20,28 @@ sys.path.insert(0, project_root)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ling_task_flow_backend.settings')
 django.setup()
 
-from LingTaskFlow.models import UserProfile
-
 
 class MockUser:
     """模拟用户对象，用于权限测试"""
+
     def __init__(self, username, is_staff=False, is_superuser=False, is_authenticated=True):
         self.username = username
         self.is_authenticated = is_authenticated
         self.is_staff = is_staff
         self.is_superuser = is_superuser
-    
+
     def __eq__(self, other):
         if hasattr(other, 'username'):
             return self.username == other.username
         return False
-    
+
     def __str__(self):
         return f"MockUser({self.username})"
 
 
 class MockRequest:
     """模拟HTTP请求对象"""
+
     def __init__(self, user=None, method='GET'):
         self.user = user or MockUser('anonymous', is_authenticated=False)
         self.method = method
@@ -48,6 +49,7 @@ class MockRequest:
 
 class MockObject:
     """模拟数据库对象"""
+
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -55,14 +57,14 @@ class MockObject:
 
 class BaseTestCase(TestCase):
     """基础测试类，提供常用的测试工具方法"""
-    
+
     @classmethod
     def setUpTestData(cls):
         """设置测试数据"""
         super().setUpTestData()
         cls.test_users = {}
         cls.create_test_users()
-    
+
     @classmethod
     def create_test_users(cls):
         """创建测试用户"""
@@ -72,7 +74,7 @@ class BaseTestCase(TestCase):
             email='regular@test.com',
             password='TestPass123!'
         )
-        
+
         # 管理员用户
         cls.test_users['admin'] = User.objects.create_user(
             username='testuser_admin',
@@ -80,7 +82,7 @@ class BaseTestCase(TestCase):
             password='AdminPass123!',
             is_staff=True
         )
-        
+
         # 超级用户
         cls.test_users['superuser'] = User.objects.create_user(
             username='testuser_super',
@@ -88,20 +90,20 @@ class BaseTestCase(TestCase):
             password='SuperPass123!',
             is_superuser=True
         )
-    
+
     def create_user(self, username=None, email=None, password=None, **kwargs):
         """创建测试用户的便捷方法"""
         username = username or f'testuser_{len(User.objects.all())}'
         email = email or f'{username}@test.com'
         password = password or 'TestPass123!'
-        
+
         return User.objects.create_user(
             username=username,
             email=email,
             password=password,
             **kwargs
         )
-    
+
     def get_user_tokens(self, user):
         """获取用户的JWT Token"""
         refresh = RefreshToken.for_user(user)
@@ -113,14 +115,14 @@ class BaseTestCase(TestCase):
 
 class BaseAPITestCase(APITestCase):
     """API测试基类"""
-    
+
     @classmethod
     def setUpTestData(cls):
         """设置测试数据"""
         super().setUpTestData()
         cls.test_users = {}
         cls.create_test_users()
-    
+
     @classmethod
     def create_test_users(cls):
         """创建测试用户"""
@@ -130,7 +132,7 @@ class BaseAPITestCase(APITestCase):
             email='regular@test.com',
             password='TestPass123!'
         )
-        
+
         # 管理员用户
         cls.test_users['admin'] = User.objects.create_user(
             username='testuser_admin',
@@ -138,7 +140,7 @@ class BaseAPITestCase(APITestCase):
             password='AdminPass123!',
             is_staff=True
         )
-        
+
         # 超级用户
         cls.test_users['superuser'] = User.objects.create_user(
             username='testuser_super',
@@ -146,28 +148,28 @@ class BaseAPITestCase(APITestCase):
             password='SuperPass123!',
             is_superuser=True
         )
-    
+
     def setUp(self):
         """设置测试环境"""
         super().setUp()
         self.client = APIClient()
-    
+
     def authenticate_user(self, user):
         """认证用户"""
         refresh = RefreshToken.for_user(user)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
         return str(refresh.access_token)
-    
+
     def logout_user(self):
         """用户登出"""
         self.client.credentials()
-    
+
     def create_user(self, username=None, email=None, password=None, **kwargs):
         """创建测试用户的便捷方法"""
         username = username or f'testuser_{len(User.objects.all())}'
         email = email or f'{username}@test.com'
         password = password or 'TestPass123!'
-        
+
         return User.objects.create_user(
             username=username,
             email=email,
@@ -178,21 +180,21 @@ class BaseAPITestCase(APITestCase):
 
 class TestDataFactory:
     """测试数据工厂类"""
-    
+
     @staticmethod
     def create_user_data(username=None, email=None, password=None):
         """创建用户数据"""
         username = username or 'testuser'
         email = email or f'{username}@test.com'
         password = password or 'TestPass123!'
-        
+
         return {
             'username': username,
             'email': email,
             'password': password,
             'password_confirm': password
         }
-    
+
     @staticmethod
     def create_login_data(username=None, password=None):
         """创建登录数据"""
@@ -204,11 +206,13 @@ class TestDataFactory:
 
 def run_test_with_setup(test_func):
     """测试装饰器，自动设置Django环境"""
+
     def wrapper(*args, **kwargs):
         # 确保Django已配置
         if not django.apps.apps.ready:
             django.setup()
         return test_func(*args, **kwargs)
+
     return wrapper
 
 

@@ -298,7 +298,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import VueDraggableNext from 'vue3-draggable-next';
 import PageHeader from 'components/common/PageHeader.vue';
@@ -311,6 +311,9 @@ import type { Task, TaskPriority, TaskStatus } from 'src/types/task';
 import { useGlobalConfirm } from 'src/composables/useGlobalConfirm';
 import { ConfirmPresets } from 'src/composables/useConfirmDialog';
 import { format } from 'date-fns';
+import { cachedApi } from 'src/utils/cachedApi';
+import { CacheConfigs } from 'src/utils/cache';
+import { debounce, performanceMonitor } from 'src/utils/performance';
 
 const $q = useQuasar();
 const taskStore = useTaskStore();
@@ -328,6 +331,21 @@ const showFilters = ref(false);
 const searchQuery = ref('');
 const filterStatus = ref<TaskStatus | null>(null);
 const filterPriority = ref<TaskPriority | null>(null);
+
+// 防抖搜索
+const debouncedSearch = debounce(() => {
+    performanceMonitor.mark('search-start');
+    // 搜索逻辑在 filteredTasks 计算属性中处理
+    const duration = performanceMonitor.measure('search-execution', 'search-start');
+    if (duration > 100) {
+        console.warn(`搜索耗时: ${duration.toFixed(2)}ms`);
+    }
+}, 300);
+
+// 监听搜索查询变化
+watch(searchQuery, () => {
+    debouncedSearch();
+});
 
 // 排序
 type SortKey = 'created_at' | 'updated_at' | 'priority' | 'title' | 'order';
@@ -545,7 +563,9 @@ async function batchUpdateSelectedStatus(targetStatus: TaskStatus) {
 const handleSecondaryAction = (name: string) => {
     switch (name) {
         case 'refresh':
-            void fetchTasks();
+            // 强制刷新，不使用缓存
+            void fetchTasks(false);
+            $q.notify({ type: 'info', message: '正在刷新数据...', timeout: 1000 });
             break;
         case 'filter':
             showFilters.value = !showFilters.value;
@@ -742,10 +762,46 @@ const handleCancelEdit = () => {
     showCreateDialog.value = false;
 };
 
-const fetchTasks = async () => {
+// 获取任务列表（使用缓存API）
+const fetchTasks = async (useCache = true) => {
     try {
         loading.value = true;
-        await taskStore.fetchTasks();
+        performanceMonitor.mark('fetchTasks-start');
+
+        if (useCache) {
+            // 使用缓存API获取任务列表
+            try {
+                const response = await cachedApi.get('/api/tasks', {
+                    params: {
+                        page: taskStore.currentPage,
+                        limit: taskStore.pageSize,
+                        status: taskStore.searchParams.status,
+                        priority: taskStore.searchParams.priority,
+                        search: taskStore.searchParams.search,
+                        ordering: taskStore.searchParams.ordering,
+                    },
+                    cache: {
+                        key: 'tasks',
+                        config: CacheConfigs.TASKS,
+                        forceRefresh: false,
+                    },
+                });
+                taskStore.setTasks(response.data.results || []);
+            } catch (error: unknown) {
+                console.error('获取任务列表失败', error);
+                $q.notify({ type: 'negative', message: '获取任务列表失败' });
+            }
+        } else {
+            // 强制刷新，不使用缓存
+            await taskStore.fetchTasks();
+            // 清除相关缓存
+            cachedApi.invalidateCache('tasks', CacheConfigs.TASKS);
+        }
+
+        const duration = performanceMonitor.measure('fetchTasks-execution', 'fetchTasks-start');
+        if (duration > 1000) {
+            console.warn(`任务列表加载耗时: ${duration.toFixed(2)}ms`);
+        }
     } catch (e) {
         console.error('获取任务列表失败', e);
         $q.notify({ type: 'negative', message: '获取任务列表失败' });
@@ -755,7 +811,17 @@ const fetchTasks = async () => {
 };
 
 onMounted(() => {
+    performanceMonitor.mark('component-mount-start');
     void fetchTasks();
+    const mountDuration = performanceMonitor.measure('component-mount', 'component-mount-start');
+    console.log(`TaskListPage 组件挂载耗时: ${mountDuration.toFixed(2)}ms`);
+});
+
+onUnmounted(() => {
+    // 清理性能监控数据
+    performanceMonitor.clear();
+    // 清理选中状态
+    clearSelection();
 });
 
 // 大数据渲染优化：虚拟滚动开关（默认：当任务数>=200时自动开启）
@@ -781,12 +847,13 @@ const virtualItems = computed(() => draggableTasks.value);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--q-color-grey-1);
-    border: 1px solid var(--q-color-grey-4);
-    border-radius: 8px;
-    padding: 8px 12px;
-    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 16px;
+    padding: 0.5rem 1rem;
+    margin: 2rem 2rem 0;
 }
+
 .toolbar-content {
     display: flex;
     align-items: center;
@@ -1147,14 +1214,6 @@ const virtualItems = computed(() => draggableTasks.value);
     right: auto;
     opacity: 1;
     visibility: visible;
-}
-
-.bulk-operations-toolbar {
-    background: rgba(255, 255, 255, 0.98);
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    border-radius: 16px;
-    margin: 0 0 16px 0;
-    padding: 12px 16px;
 }
 
 .toolbar-content {

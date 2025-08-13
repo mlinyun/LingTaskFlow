@@ -4,6 +4,7 @@
 """
 import os
 import sys
+
 import django
 
 # 设置 Django 项目路径
@@ -25,17 +26,18 @@ from LingTaskFlow.permissions import (
 
 class MockUser:
     """模拟用户对象"""
+
     def __init__(self, username, is_staff=False, is_superuser=False):
         self.username = username
         self.is_authenticated = True
         self.is_staff = is_staff
         self.is_superuser = is_superuser
-    
+
     def __eq__(self, other):
         if hasattr(other, 'username'):
             return self.username == other.username
         return False
-    
+
     def __str__(self):
         return f"MockUser({self.username})"
 
@@ -46,13 +48,14 @@ class AnonymousUser:
     is_authenticated = False
     is_staff = False
     is_superuser = False
-    
+
     def __eq__(self, other):
         return False
 
 
 class MockRequest:
     """模拟HTTP请求对象"""
+
     def __init__(self, user=None, method='GET'):
         self.user = user
         self.method = method
@@ -60,30 +63,33 @@ class MockRequest:
 
 class TestObject:
     """测试对象 - 带owner属性"""
+
     def __init__(self, owner=None):
         self.owner = owner
 
 
 class TestUserProfile:
     """测试用户资料对象 - 带user属性"""
+
     def __init__(self, user=None):
         self.user = user
 
 
 class TestPost:
     """测试文章对象 - 带author属性"""
+
     def __init__(self, author=None):
         self.author = author
 
 
 def test_permission_class(permission_class, class_name, test_scenarios):
     """测试权限类"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"测试权限类: {class_name}")
-    print(f"{'='*60}")
-    
+    print(f"{'=' * 60}")
+
     permission = permission_class()
-    
+
     for scenario in test_scenarios:
         user = scenario['user']
         method = scenario['method']
@@ -91,21 +97,21 @@ def test_permission_class(permission_class, class_name, test_scenarios):
         expected_view = scenario['expected_view']
         expected_object = scenario['expected_object']
         description = scenario['description']
-        
+
         # 测试视图权限
         request = MockRequest(user, method)
         view_result = permission.has_permission(request, None)
-        
+
         # 测试对象权限
         if hasattr(user, 'is_authenticated') and user.is_authenticated:
             object_result = permission.has_object_permission(request, None, obj)
         else:
             object_result = False
-        
+
         # 检查结果
         view_status = "✅" if view_result == expected_view else "❌"
         object_status = "✅" if object_result == expected_object else "❌"
-        
+
         print(f"{view_status}{object_status} {description}")
         print(f"    视图权限: {view_result} (期望: {expected_view})")
         print(f"    对象权限: {object_result} (期望: {expected_object})")
@@ -116,19 +122,19 @@ def main():
     """主测试函数"""
     print("LingTaskFlow 权限系统完整测试")
     print("测试所有权限类的功能")
-    
+
     # 创建测试用户
     anonymous = AnonymousUser()
     regular_user = MockUser("regular")
     admin_user = MockUser("admin", is_staff=True)
     super_user = MockUser("super", is_superuser=True)
     other_user = MockUser("other")
-    
+
     # 创建测试对象
     task_owned_by_regular = TestObject(owner=regular_user)
     profile_owned_by_regular = TestUserProfile(user=regular_user)
     post_by_regular = TestPost(author=regular_user)
-    
+
     # 1. 测试 IsOwnerOrReadOnly
     test_scenarios = [
         {
@@ -163,7 +169,7 @@ def main():
         },
     ]
     test_permission_class(IsOwnerOrReadOnly, "IsOwnerOrReadOnly", test_scenarios)
-    
+
     # 2. 测试 IsOwner
     test_scenarios = [
         {
@@ -183,7 +189,7 @@ def main():
         },
     ]
     test_permission_class(IsOwner, "IsOwner", test_scenarios)
-    
+
     # 3. 测试 IsAuthorOrReadOnly
     test_scenarios = [
         {
@@ -208,7 +214,7 @@ def main():
         },
     ]
     test_permission_class(IsAuthorOrReadOnly, "IsAuthorOrReadOnly", test_scenarios)
-    
+
     # 4. 测试 IsAdminOrReadOnly
     test_scenarios = [
         {
@@ -233,7 +239,7 @@ def main():
         },
     ]
     test_permission_class(IsAdminOrReadOnly, "IsAdminOrReadOnly", test_scenarios)
-    
+
     # 5. 测试 IsSelfOrReadOnly
     test_scenarios = [
         {
@@ -263,10 +269,10 @@ def main():
         },
     ]
     test_permission_class(IsSelfOrReadOnly, "IsSelfOrReadOnly", test_scenarios)
-    
-    print(f"\n{'='*60}")
+
+    print(f"\n{'=' * 60}")
     print("所有权限类测试完成！")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

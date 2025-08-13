@@ -14,7 +14,7 @@ LingTaskFlow (凌云智能任务管理平台) is a full-stack task management sy
 ### Backend (`ling-task-flow-backend/`)
 
 - **Framework**: Django 5.2.4 + Django REST Framework 3.16.0
-- **Authentication**: JWT via `djangorestframework-simplejwt` 
+- **Authentication**: JWT via `djangorestframework-simplejwt`
 - **Database**: SQLite (dev), PostgreSQL-ready (production)
 - **Features**: CORS support, filtering, pagination, caching, media uploads
 - **Documentation**: DRF Spectacular for OpenAPI schema generation
@@ -93,7 +93,7 @@ ling-task-flow-frontend/src/
 ### Configuration Details
 
 - **Backend Port**: 8000 (Django dev server)
-- **Frontend Port**: 9000 (Quasar dev server) 
+- **Frontend Port**: 9000 (Quasar dev server)
 - **CORS**: Configured for localhost:9000 in Django settings
 - **API Base URL**: `http://localhost:8000/api/`
 - **Documentation**: Available at `http://127.0.0.1:8000/api/docs/`
@@ -156,4 +156,5 @@ ling-task-flow-frontend/src/
 5. **Testing**: API testing via generated documentation interface
 6. **Build**: Separate build processes for backend (collectstatic) and frontend (Quasar build)
 
-This architecture supports rapid development while maintaining production readiness with proper separation of concerns, comprehensive type safety, and automated API documentation.
+This architecture supports rapid development while maintaining production readiness with proper separation of concerns,
+comprehensive type safety, and automated API documentation.

@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("LingTaskFlow", "0004_optimize_database_indexes"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

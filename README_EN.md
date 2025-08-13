@@ -11,9 +11,12 @@
 
 ## 📋 Project Overview
 
-LingTaskFlow (Intelligent Task Management Platform) is a modern, full-stack task management system built with Django 5.2 and Vue 3. It provides an intuitive interface for managing tasks, projects, and team collaboration with real-time updates and comprehensive workflow management capabilities.
+LingTaskFlow (Intelligent Task Management Platform) is a modern, full-stack task management system built with Django 5.2
+and Vue 3. It provides an intuitive interface for managing tasks, projects, and team collaboration with real-time
+updates and comprehensive workflow management capabilities.
 
-The system combines the robustness of Django's backend architecture with the reactivity of Vue 3's frontend framework, delivering a seamless user experience for task organization, priority management, and team productivity enhancement.
+The system combines the robustness of Django's backend architecture with the reactivity of Vue 3's frontend framework,
+delivering a seamless user experience for task organization, priority management, and team productivity enhancement.
 
 ## ✨ Key Features
 

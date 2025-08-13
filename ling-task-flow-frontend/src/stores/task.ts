@@ -71,6 +71,14 @@ export const useTaskStore = defineStore('task', () => {
     // API 调用方法
 
     /**
+     * 设置任务列表（用于缓存API）
+     */
+    const setTasks = (taskList: Task[]) => {
+        tasks.value = taskList;
+        totalTasks.value = taskList.length;
+    };
+
+    /**
      * 获取任务列表
      */
     const fetchTasks = async (params: TaskSearchParams = {}) => {
@@ -715,6 +723,7 @@ export const useTaskStore = defineStore('task', () => {
         tasksByPriority,
 
         // 方法
+        setTasks,
         fetchTasks,
         fetchTaskById,
         createTask,

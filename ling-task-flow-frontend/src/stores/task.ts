@@ -75,7 +75,15 @@ export const useTaskStore = defineStore('task', () => {
      */
     const setTasks = (taskList: Task[]) => {
         tasks.value = taskList;
-        totalTasks.value = taskList.length;
+        // 注意：totalTasks应该从API响应的分页信息中设置，而不是当前页的任务数量
+        // totalTasks.value = taskList.length; // 这行代码是错误的
+    };
+
+    /**
+     * 设置任务总数
+     */
+    const setTotalTasks = (total: number) => {
+        totalTasks.value = total;
     };
 
     /**
@@ -724,6 +732,7 @@ export const useTaskStore = defineStore('task', () => {
 
         // 方法
         setTasks,
+        setTotalTasks,
         fetchTasks,
         fetchTaskById,
         createTask,

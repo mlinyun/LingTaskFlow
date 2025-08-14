@@ -101,7 +101,7 @@ function handleOffline() {
 
 function checkConnection() {
     // 尝试发送一个简单的请求来检查网络连接
-    fetch('/api/health', { method: 'HEAD' })
+    fetch('/health', { method: 'HEAD' })
         .then(() => {
             isOnline.value = true;
         })

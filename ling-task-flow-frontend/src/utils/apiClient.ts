@@ -147,7 +147,7 @@ async function handleTokenExpired(): Promise<void> {
 
     try {
         // 尝试刷新token
-        const response = await axios.post('/api/auth/refresh/', {
+        const response = await axios.post('/auth/refresh/', {
             refresh: refreshToken,
         });
 

@@ -771,10 +771,10 @@ const fetchTasks = async (useCache = true) => {
         if (useCache) {
             // 使用缓存API获取任务列表
             try {
-                const response = await cachedApi.get('/api/tasks', {
+                const response = await cachedApi.get('/tasks/', {
                     params: {
                         page: taskStore.currentPage,
-                        limit: taskStore.pageSize,
+                        page_size: taskStore.pageSize,
                         status: taskStore.searchParams.status,
                         priority: taskStore.searchParams.priority,
                         search: taskStore.searchParams.search,
@@ -786,7 +786,59 @@ const fetchTasks = async (useCache = true) => {
                         forceRefresh: false,
                     },
                 });
-                taskStore.setTasks(response.data.results || []);
+
+                // 设置任务数据和分页信息（axios拦截器已将标准响应解包）
+                let taskData = response.data || [];
+                let meta = (response as unknown as { meta?: Record<string, unknown> }).meta || {};
+                let pagination =
+                    (meta as { pagination?: Record<string, unknown> }).pagination || {};
+
+                // 如果是从缓存返回且数据为空，执行一次强制刷新，避免长期缓存空数据
+                if (
+                    (response as unknown as { fromCache?: boolean }).fromCache &&
+                    (!Array.isArray(taskData) || taskData.length === 0)
+                ) {
+                    // 先清理缓存，再强制刷新
+                    cachedApi.invalidateCache('tasks', CacheConfigs.TASKS);
+                    const fresh = await cachedApi.get('/tasks/', {
+                        params: {
+                            page: taskStore.currentPage,
+                            page_size: taskStore.pageSize,
+                            status: taskStore.searchParams.status,
+                            priority: taskStore.searchParams.priority,
+                            search: taskStore.searchParams.search,
+                            ordering: taskStore.searchParams.ordering,
+                        },
+                        cache: {
+                            key: 'tasks',
+                            config: CacheConfigs.TASKS,
+                            forceRefresh: true,
+                        },
+                    });
+                    taskData = fresh.data || [];
+                    meta = (fresh as unknown as { meta?: Record<string, unknown> }).meta || {};
+                    pagination =
+                        (meta as { pagination?: Record<string, unknown> }).pagination || {};
+                }
+
+                // Debug: Log the data structure to console
+                console.log('[fetchTasks] taskData:', taskData);
+                console.log('[fetchTasks] meta:', meta);
+                console.log('[fetchTasks] pagination:', pagination);
+
+                taskStore.setTasks(taskData);
+                const totalCountRaw = (pagination as Record<string, unknown>)['total_count'];
+                const totalCount =
+                    typeof totalCountRaw === 'number'
+                        ? totalCountRaw
+                        : Array.isArray(taskData)
+                          ? taskData.length
+                          : 0;
+                taskStore.setTotalTasks(totalCount);
+
+                // Debug: Log the store state after setting
+                console.log('[fetchTasks] Store tasks count:', taskStore.tasks.length);
+                console.log('[fetchTasks] Store totalTasks:', taskStore.totalTasks);
             } catch (error: unknown) {
                 console.error('获取任务列表失败', error);
                 $q.notify({ type: 'negative', message: '获取任务列表失败' });
